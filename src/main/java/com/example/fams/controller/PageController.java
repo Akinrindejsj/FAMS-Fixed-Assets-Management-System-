@@ -29,16 +29,6 @@ public class PageController {
         return "dashboard";
     }
 
-    @GetMapping("/assets")
-    public String assetsList() {
-        return "assets/assets-list";
-    }
-
-    @GetMapping("/assets/register")
-    public String registerAsset() {
-        return "assets/register-assets";
-    }
-
     @GetMapping("/assets/details")
     public String assetDetails() {
         return "assets/assets-details";
