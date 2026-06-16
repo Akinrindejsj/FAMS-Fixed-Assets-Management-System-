@@ -99,10 +99,10 @@ java -jar target/FAMS-0.0.1-SNAPSHOT.jar
 1. Open browser to `http://localhost:9090`
 2. Navigate to **Depreciation** in sidebar
 3. Verify these pages are accessible:
-   - `/assets/depreciation` - Main dashboard
-   - `/assets/depreciation/configure` - Configuration page
-   - `/assets/depreciation/run` - Period close page
-   - `/assets/depreciation/history` - Asset history page
+   - `/depreciation` - Main dashboard
+   - `/depreciation/configure` - Configuration page
+   - `/depreciation/run` - Period close page
+   - `/depreciation/history` - Asset history page
 
 ### Step 6: Test API Endpoints
 

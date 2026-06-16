@@ -2,25 +2,177 @@
 <html class="light" lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layouts/app}">
 <head>
     <title>Depreciation Management | JustJava FAMS</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        /* ── Responsive overrides ── */
+
+        /* Page header: stack title + buttons vertically on small screens */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .page-header__title { min-width: 0; flex: 1 1 200px; }
+
+        .page-header__actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            flex: 0 0 auto;
+        }
+
+        @media (max-width: 639px) {
+            .page-header { align-items: stretch; }
+            .page-header__actions {
+                width: 100%;
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+            }
+            .page-header__actions a,
+            .page-header__actions button {
+                justify-content: center;
+            }
+        }
+
+        /* Hero card: side image hidden on mobile, shown from md */
+        .hero-card__image-panel {
+            display: none;
+        }
+        @media (min-width: 768px) {
+            .hero-card__image-panel {
+                display: flex;
+            }
+        }
+
+        /* Filters bar: stack label + select vertically on xs, row from sm */
+        .filters-bar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+            flex: 1 1 140px;
+            min-width: 120px;
+        }
+
+        @media (max-width: 479px) {
+            .filter-group {
+                flex: 1 1 100%;
+            }
+            .filters-bar .filter-actions {
+                width: 100%;
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+            }
+            .filters-bar .filter-actions button {
+                justify-content: center;
+            }
+        }
+
+        .filter-group label {
+            display: block;
+        }
+
+        .filter-group select {
+            width: 100%;
+        }
+
+        /* Table: horizontal scroll with sticky first column on very narrow screens */
+        .table-scroll-wrapper {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .table-scroll-wrapper table {
+            min-width: 640px;
+        }
+
+        @media (max-width: 639px) {
+            .dep-table td:nth-child(3),
+            .dep-table th:nth-child(3) {
+                display: none; /* hide Category column on xs */
+            }
+        }
+
+        /* KPI grid — ensure text doesn't overflow on very narrow cards */
+        .kpi-value {
+            word-break: break-all;
+            font-size: clamp(1.25rem, 4vw, 1.75rem) !important;
+        }
+
+        /* Main content grid: full-width below lg */
+        .main-grid {
+            display: grid;
+            gap: 1.5rem;
+            grid-template-columns: 1fr;
+        }
+
+        @media (min-width: 1024px) {
+            .main-grid {
+                grid-template-columns: 8fr 4fr;
+            }
+        }
+
+        /* Sidebar cards: side-by-side on md screens (below lg) */
+        @media (min-width: 768px) and (max-width: 1023px) {
+            .sidebar-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 1.5rem;
+            }
+        }
+
+        /* Animations */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .animate-spin { animation: spin 1s linear infinite; }
+
+        /* Touch-friendly tap targets */
+        @media (max-width: 767px) {
+            .dep-table tbody tr td {
+                padding-top: 0.875rem;
+                padding-bottom: 0.875rem;
+            }
+        }
+    </style>
 </head>
 <body>
 <main id="main-content" class="space-y-6" layout:fragment="content">
-    <!-- Page Title Row (matches Dashboard) -->
-    <div class="flex justify-between items-end">
-        <div>
+
+    <!-- ── Page Header ── -->
+    <div class="page-header">
+        <div class="page-header__title">
             <h2 class="font-page-title text-page-title text-on-background">Depreciation Management</h2>
             <p class="text-body-default text-secondary">Track the reducing value of your fixed assets over time across your entire portfolio.</p>
         </div>
-        <div class="flex gap-2 flex-wrap">
-            <a href="/assets/depreciation/configure" class="h-[38px] px-4 bg-primary text-on-primary rounded-lg font-body-medium hover:bg-brand-primary-dark transition-all flex items-center gap-2">
+        <div class="page-header__actions">
+            <a href="/depreciation/configure"
+               class="h-[38px] px-4 bg-primary text-on-primary rounded-lg font-body-medium hover:bg-brand-primary-dark transition-all flex items-center gap-2">
                 <span class="material-symbols-outlined text-[18px]">tune</span>
                 Configure
             </a>
-            <a href="/assets/depreciation/run" class="h-[38px] px-4 bg-primary text-on-primary rounded-lg font-body-medium hover:bg-brand-primary-dark transition-all flex items-center gap-2">
+            <a href="/depreciation/run"
+               class="h-[38px] px-4 bg-primary text-on-primary rounded-lg font-body-medium hover:bg-brand-primary-dark transition-all flex items-center gap-2">
                 <span class="material-symbols-outlined text-[18px]">play_circle</span>
                 Run Depreciation
             </a>
-            <a href="/assets/depreciation/history" class="h-[38px] px-4 bg-surface-card border border-border-default text-on-surface rounded-lg font-body-medium hover:bg-surface-canvas transition-all flex items-center gap-2">
+            <a href="/depreciation/history"
+               class="h-[38px] px-4 bg-surface-card border border-border-default text-on-surface rounded-lg font-body-medium hover:bg-surface-canvas transition-all flex items-center gap-2">
                 <span class="material-symbols-outlined text-[18px]">history</span>
                 History
             </a>
@@ -31,10 +183,10 @@
         </div>
     </div>
 
-    <!-- Hero Info Card (matches dashboard banner style) -->
-    <div class="bg-surface-card border border-border-default rounded-xl card-shadow overflow-hidden flex flex-col md:flex-row">
-        <div class="flex-1 p-6">
-            <div class="flex items-center gap-4 mb-4 flex-wrap">
+    <!-- ── Hero Info Card ── -->
+    <div class="bg-surface-card border border-border-default rounded-xl card-shadow overflow-hidden flex">
+        <div class="flex-1 p-5 sm:p-6">
+            <div class="flex flex-wrap items-center gap-3 mb-4">
                 <div class="flex items-center gap-1 text-status-success text-label-small font-medium">
                     <span class="material-symbols-outlined text-[16px]">check_circle</span>
                     <span>Audit Compliant</span>
@@ -46,12 +198,14 @@
             </div>
             <p class="text-body-default text-secondary">Monitor accumulated depreciation, book values, and tax implications across your entire portfolio.</p>
         </div>
-        <div class="w-full md:w-48 bg-primary/5 flex items-center justify-center p-4">
-            <img alt="Depreciation illustration" class="max-h-24 object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA7HiFJm0FgP-CXMNQjJ7SN5juACLSJymzMgZIdQFrcGfF8HZLIFL_p1uOiV0xTaGve9nQ-y7kZFjNgZSbWDqxkU28EpME6EbmymbRs9HrjgL-QoPokK9BV0hyhEhzpHXssDhQe3s1iOUb_1QHD2wvBsJuMwaxNFxTEBRRwH245p9qkwWiK0Mu5N1UA2Nbnev4jQxxSb-dpiB-rK-cgqXQlC41uKx1QHYf6O8L6a6_ltyQ-jMmR7eFl">
+        <!-- Hidden on mobile to save space -->
+        <div class="hero-card__image-panel w-48 bg-primary/5 items-center justify-center p-4 flex-shrink-0">
+            <img alt="Depreciation illustration" class="max-h-24 object-contain"
+                 src="https://lh3.googleusercontent.com/aida-public/AB6AXuA7HiFJm0FgP-CXMNQjJ7SN5juACLSJymzMgZIdQFrcGfF8HZLIFL_p1uOiV0xTaGve9nQ-y7kZFjNgZSbWDqxkU28EpME6EbmymbRs9HrjgL-QoPokK9BV0hyhEhzpHXssDhQe3s1iOUb_1QHD2wvBsJuMwaxNFxTEBRRwH245p9qkwWiK0Mu5N1UA2Nbnev4jQxxSb-dpiB-rK-cgqXQlC41uKx1QHYf6O8L6a6_ltyQ-jMmR7eFl">
         </div>
     </div>
 
-    <!-- KPI Strip (4 cards) - Loading State -->
+    <!-- ── KPI Strip — Loading State ── -->
     <div id="kpiLoadingState" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div class="bg-surface-card p-5 rounded-xl card-shadow border border-border-default animate-pulse">
             <div class="h-4 bg-surface-canvas rounded w-3/4 mb-3"></div>
@@ -75,30 +229,30 @@
         </div>
     </div>
 
-    <!-- KPI Strip (4 cards) - Dynamic Content -->
+    <!-- ── KPI Strip — Dynamic Content ── -->
     <div id="kpiContent" class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div class="bg-surface-card p-5 rounded-xl card-shadow border border-border-default">
             <div class="flex justify-between items-start mb-3">
                 <span class="text-label-small text-secondary uppercase tracking-wider">Total Original Cost</span>
-                <span class="material-symbols-outlined text-secondary">account_balance_wallet</span>
+                <span class="material-symbols-outlined text-secondary flex-shrink-0">account_balance_wallet</span>
             </div>
-            <p id="kpiTotalCost" class="font-page-title text-[28px] font-bold text-on-surface">₦0.00</p>
+            <p id="kpiTotalCost" class="kpi-value font-page-title font-bold text-on-surface">₦0.00</p>
             <div class="mt-2 text-label-small text-secondary" id="kpiCostTrend">--</div>
         </div>
         <div class="bg-surface-card p-5 rounded-xl card-shadow border border-border-default">
             <div class="flex justify-between items-start mb-3">
                 <span class="text-label-small text-secondary uppercase tracking-wider">Total Book Value</span>
-                <span class="material-symbols-outlined text-secondary">menu_book</span>
+                <span class="material-symbols-outlined text-secondary flex-shrink-0">menu_book</span>
             </div>
-            <p id="kpiBookValue" class="font-page-title text-[28px] font-bold text-on-surface">₦0.00</p>
+            <p id="kpiBookValue" class="kpi-value font-page-title font-bold text-on-surface">₦0.00</p>
             <div class="mt-2 text-label-small text-secondary" id="kpiRecoveryPotential">--</div>
         </div>
         <div class="bg-surface-card p-5 rounded-xl card-shadow border border-border-default">
             <div class="flex justify-between items-start mb-3">
                 <span class="text-label-small text-secondary uppercase tracking-wider">Accumulated Depreciation</span>
-                <span class="material-symbols-outlined text-secondary">trending_down</span>
+                <span class="material-symbols-outlined text-secondary flex-shrink-0">trending_down</span>
             </div>
-            <p id="kpiAccumulatedDep" class="font-page-title text-[28px] font-bold text-primary">₦0.00</p>
+            <p id="kpiAccumulatedDep" class="kpi-value font-page-title font-bold text-primary">₦0.00</p>
             <div class="mt-2 text-badge-label text-status-warning flex items-center gap-1" id="kpiDepPercentage">
                 <span class="material-symbols-outlined text-[16px]">history</span>
                 <span>--</span>
@@ -107,64 +261,69 @@
         <div class="bg-surface-card p-5 rounded-xl card-shadow border border-border-default">
             <div class="flex justify-between items-start mb-3">
                 <span class="text-label-small text-secondary uppercase tracking-wider">Fully Depreciated Assets</span>
-                <span class="material-symbols-outlined text-secondary">done_all</span>
+                <span class="material-symbols-outlined text-secondary flex-shrink-0">done_all</span>
             </div>
-            <p id="kpiFullyDepreciated" class="font-page-title text-[28px] font-bold text-on-surface">0</p>
+            <p id="kpiFullyDepreciated" class="kpi-value font-page-title font-bold text-on-surface">0</p>
             <div class="mt-2 text-label-small text-secondary" id="kpiAssetCount">of 0 assets</div>
         </div>
     </div>
 
-    <!-- Filters Bar (matches dashboard control style) -->
-    <div class="bg-surface-card border border-border-default rounded-xl p-4 flex flex-wrap items-center gap-3">
-        <div class="flex items-center gap-2 flex-1 min-w-[140px]">
-            <label class="text-label-small text-secondary">Category</label>
-            <select class="flex-1 h-[38px] px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none">
-                <option>All Categories</option>
-                <option>IT Equipment</option>
-                <option>Vehicles</option>
-                <option>Office Furniture</option>
-            </select>
+    <!-- ── Filters Bar ── -->
+    <div class="bg-surface-card border border-border-default rounded-xl p-4">
+        <div class="filters-bar">
+            <div class="filter-group">
+                <label class="text-label-small text-secondary">Category</label>
+                <select class="h-[38px] px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                    <option>All Categories</option>
+                    <option>IT Equipment</option>
+                    <option>Vehicles</option>
+                    <option>Office Furniture</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label class="text-label-small text-secondary">Department</label>
+                <select class="h-[38px] px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                    <option>All Departments</option>
+                    <option>Engineering</option>
+                    <option>Sales &amp; Marketing</option>
+                    <option>Operations</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label class="text-label-small text-secondary">Method</label>
+                <select class="h-[38px] px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                    <option>All Methods</option>
+                    <option>Straight-Line (SL)</option>
+                    <option>Reducing Balance (RB)</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label class="text-label-small text-secondary">Year Range</label>
+                <select class="h-[38px] px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                    <option>Current Year (2024)</option>
+                    <option>2023</option>
+                    <option>2022</option>
+                </select>
+            </div>
+            <div class="filter-actions flex gap-2 flex-shrink-0">
+                <button class="h-[38px] px-4 bg-surface-card border border-border-default text-on-surface rounded-lg font-body-medium hover:bg-surface-canvas transition-all flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[18px]">filter_alt</span>
+                    <span class="hidden sm:inline">More Filters</span>
+                </button>
+                <button class="h-[38px] px-4 bg-surface-card border border-border-default text-on-surface rounded-lg font-body-medium hover:bg-surface-canvas transition-all flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[18px]">download</span>
+                    <span class="hidden sm:inline">Export</span>
+                </button>
+            </div>
         </div>
-        <div class="flex items-center gap-2 flex-1 min-w-[140px]">
-            <label class="text-label-small text-secondary">Department</label>
-            <select class="flex-1 h-[38px] px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none">
-                <option>All Departments</option>
-                <option>Engineering</option>
-                <option>Sales &amp; Marketing</option>
-                <option>Operations</option>
-            </select>
-        </div>
-        <div class="flex items-center gap-2 flex-1 min-w-[140px]">
-            <label class="text-label-small text-secondary">Method</label>
-            <select class="flex-1 h-[38px] px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none">
-                <option>All Methods</option>
-                <option>Straight-Line (SL)</option>
-                <option>Reducing Balance (RB)</option>
-            </select>
-        </div>
-        <div class="flex items-center gap-2 flex-1 min-w-[140px]">
-            <label class="text-label-small text-secondary">Year Range</label>
-            <select class="flex-1 h-[38px] px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none">
-                <option>Current Year (2024)</option>
-                <option>2023</option>
-                <option>2022</option>
-            </select>
-        </div>
-        <button class="h-[38px] px-4 bg-surface-card border border-border-default text-on-surface rounded-lg font-body-medium hover:bg-surface-canvas transition-all flex items-center gap-2">
-            <span class="material-symbols-outlined text-[18px]">filter_alt</span>
-            More Filters
-        </button>
-        <button class="h-[38px] px-4 bg-surface-card border border-border-default text-on-surface rounded-lg font-body-medium hover:bg-surface-canvas transition-all flex items-center gap-2">
-            <span class="material-symbols-outlined text-[18px]">download</span>
-            Export
-        </button>
     </div>
 
-    <!-- Main Data Grid (12 columns) -->
-    <div class="grid grid-cols-12 gap-6">
-        <!-- Left: Depreciation Table (8 columns) -->
-        <div class="col-span-12 lg:col-span-8 bg-surface-card rounded-xl card-shadow border border-border-default overflow-hidden">
-            <div class="p-5 border-b border-border-default flex justify-between items-center flex-wrap gap-3">
+    <!-- ── Main Data Grid ── -->
+    <div class="main-grid">
+
+        <!-- Left: Depreciation Table (8 cols on lg+) -->
+        <div class="bg-surface-card rounded-xl card-shadow border border-border-default overflow-hidden">
+            <div class="p-4 sm:p-5 border-b border-border-default flex justify-between items-center flex-wrap gap-3">
                 <h3 class="font-section-header text-section-header text-on-surface">Asset Depreciation Schedule</h3>
                 <div class="flex items-center gap-2">
                     <span id="tableShowingText" class="text-label-small text-secondary">--</span>
@@ -180,31 +339,32 @@
             </div>
 
             <!-- Empty State -->
-            <div id="tableEmptyState" class="hidden p-12 flex flex-col items-center text-center">
+            <div id="tableEmptyState" class="hidden p-8 sm:p-12 flex flex-col items-center text-center">
                 <span class="material-symbols-outlined text-[64px] text-secondary opacity-30 mb-4">inventory_2</span>
                 <h4 class="font-section-header text-section-header text-on-surface mb-2">No Assets Configured</h4>
                 <p class="text-body-default text-secondary max-w-sm mb-6">
                     No assets have been configured for depreciation yet. Start by configuring depreciation parameters for your assets.
                 </p>
-                <a href="/assets/depreciation/configure" class="h-[36px] px-4 bg-primary text-on-primary rounded-lg font-body-medium hover:bg-brand-primary-dark transition-all flex items-center gap-2">
+                <a href="/depreciation/configure"
+                   class="h-[36px] px-4 bg-primary text-on-primary rounded-lg font-body-medium hover:bg-brand-primary-dark transition-all flex items-center gap-2">
                     <span class="material-symbols-outlined text-[18px]">tune</span>
                     Configure First Asset
                 </a>
             </div>
 
-            <!-- Table -->
-            <div id="tableContent" class="hidden overflow-x-auto">
-                <table class="w-full text-left border-collapse">
+            <!-- Table with horizontal scroll -->
+            <div id="tableContent" class="hidden table-scroll-wrapper">
+                <table class="dep-table w-full text-left border-collapse">
                     <thead>
                     <tr class="bg-surface-canvas border-b border-border-default">
-                        <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Asset Code</th>
-                        <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Name</th>
-                        <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Category</th>
-                        <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Method</th>
-                        <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Cost</th>
-                        <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Accum. Dep.</th>
-                        <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Book Value</th>
-                        <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider text-right">Status</th>
+                        <th class="px-4 sm:px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider whitespace-nowrap">Asset Code</th>
+                        <th class="px-4 sm:px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider whitespace-nowrap">Name</th>
+                        <th class="px-4 sm:px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider whitespace-nowrap">Category</th>
+                        <th class="px-4 sm:px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider whitespace-nowrap">Method</th>
+                        <th class="px-4 sm:px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider whitespace-nowrap">Cost</th>
+                        <th class="px-4 sm:px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider whitespace-nowrap">Accum. Dep.</th>
+                        <th class="px-4 sm:px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider whitespace-nowrap">Book Value</th>
+                        <th class="px-4 sm:px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider text-right whitespace-nowrap">Status</th>
                     </tr>
                     </thead>
                     <tbody id="tableBody" class="divide-y divide-border-default">
@@ -214,13 +374,14 @@
             </div>
         </div>
 
-        <!-- Right: Charts & Analysis (4 columns) -->
-        <div class="col-span-12 lg:col-span-4 space-y-6">
+        <!-- Right: Charts & Analysis (4 cols on lg+) -->
+        <div class="sidebar-grid space-y-6 lg:space-y-6">
+
             <!-- Depreciation Summary Card -->
             <div class="bg-surface-card rounded-xl card-shadow border border-border-default overflow-hidden">
                 <div class="p-5 border-b border-border-default flex justify-between items-center">
                     <h3 class="font-card-header text-card-header text-on-surface">Portfolio Summary</h3>
-                    <span class="material-symbols-outlined text-secondary">summarize</span>
+                    <span class="material-symbols-outlined text-secondary flex-shrink-0">summarize</span>
                 </div>
 
                 <!-- Loading -->
@@ -264,7 +425,7 @@
             <div class="bg-surface-card rounded-xl card-shadow border border-border-default overflow-hidden">
                 <div class="p-5 border-b border-border-default flex justify-between items-center">
                     <h3 class="font-card-header text-card-header text-on-surface">Methods Used</h3>
-                    <span class="text-label-small bg-surface-canvas px-2 py-0.5 rounded text-secondary">Distribution</span>
+                    <span class="text-label-small bg-surface-canvas px-2 py-0.5 rounded text-secondary flex-shrink-0">Distribution</span>
                 </div>
 
                 <!-- Loading -->
@@ -281,47 +442,20 @@
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
 
-    <style>
-        @keyframes pulse {
-            0%, 100% {
-                opacity: 1;
-            }
-            50% {
-                opacity: 0.5;
-            }
-        }
-
-        .animate-pulse {
-            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-        }
-
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
-
-        .animate-spin {
-            animation: spin 1s linear infinite;
-        }
-    </style>
+        </div><!-- /sidebar-grid -->
+    </div><!-- /main-grid -->
 
     <script>
-        document.addEventListener('DOMContentLoaded', async function() {
-            // Load depreciation dashboard data
+        document.addEventListener('DOMContentLoaded', async function () {
             await loadDepreciationDashboard();
         });
 
         async function loadDepreciationDashboard() {
             try {
-                // Fetch dashboard data
                 const response = await fetch('/api/depreciation/dashboard?limit=20');
                 const data = await response.json();
 
-                // Update last calculated time
                 if (data.lastCalculatedAt) {
                     const timeAgo = getTimeAgoString(new Date(data.lastCalculatedAt));
                     document.getElementById('lastCalcDisplay').innerHTML = `
@@ -330,13 +464,9 @@
                     `;
                 }
 
-                // Load KPIs
                 await loadKPIs(data.summary);
-
-                // Load chart data
                 loadChartData(data);
 
-                // Load table data
                 if (data.latestPostings && data.latestPostings.length > 0) {
                     loadTableData(data.latestPostings);
                 } else {
@@ -344,7 +474,6 @@
                 }
             } catch (error) {
                 console.error('Error loading depreciation dashboard:', error);
-                // Show empty states on error
                 document.getElementById('kpiLoadingState').classList.add('hidden');
                 document.getElementById('kpiContent').classList.remove('hidden');
                 showTableEmptyState();
@@ -353,12 +482,10 @@
         }
 
         async function loadKPIs(summary) {
-            // Hide loading, show content
             document.getElementById('kpiLoadingState').classList.add('hidden');
             document.getElementById('kpiContent').classList.remove('hidden');
 
             if (!summary || summary.assetCount === 0) {
-                // Show default values for empty state
                 document.getElementById('kpiTotalCost').textContent = '₦0.00';
                 document.getElementById('kpiBookValue').textContent = '₦0.00';
                 document.getElementById('kpiAccumulatedDep').textContent = '₦0.00';
@@ -370,13 +497,11 @@
                 return;
             }
 
-            // Populate KPI cards with summary data
             document.getElementById('kpiTotalCost').textContent = formatCurrency(summary.totalOriginalCost);
             document.getElementById('kpiBookValue').textContent = formatCurrency(summary.totalBookValue);
             document.getElementById('kpiAccumulatedDep').textContent = formatCurrency(summary.totalAccumulatedDepreciation);
             document.getElementById('kpiFullyDepreciated').textContent = summary.fullyDepreciatedCount;
 
-            // Calculate and show percentages
             const totalCost = parseFloat(summary.totalOriginalCost || 0);
             const bookValue = parseFloat(summary.totalBookValue || 0);
             const accumulated = parseFloat(summary.totalAccumulatedDepreciation || 0);
@@ -386,7 +511,7 @@
 
             document.getElementById('kpiRecoveryPotential').textContent = recoveryPercent + '% recovery potential';
             document.getElementById('kpiDepPercentage').innerHTML =
-                '<span class="material-symbols-outlined text-[16px]">history</span><span>' + depPercent.toFixed(1) + '% of total asset cost</span>';
+                '<span class="material-symbols-outlined text-[16px]">history</span><span>' + depPercent + '% of total asset cost</span>';
             document.getElementById('kpiAssetCount').textContent = 'of ' + summary.assetCount + ' assets';
         }
 
@@ -396,18 +521,14 @@
             if (!summary || summary.assetCount === 0) {
                 document.getElementById('chartLoadingState').classList.add('hidden');
                 document.getElementById('methodLoadingState').classList.add('hidden');
-                document.getElementById('chartContent').classList.add('hidden');
-                document.getElementById('methodContent').classList.add('hidden');
                 return;
             }
 
-            // Hide loading
             document.getElementById('chartLoadingState').classList.add('hidden');
             document.getElementById('methodLoadingState').classList.add('hidden');
             document.getElementById('chartContent').classList.remove('hidden');
             document.getElementById('methodContent').classList.remove('hidden');
 
-            // Update summary card
             document.getElementById('chartTotalAssets').textContent = summary.assetCount;
             document.getElementById('chartFullyDepreciated').textContent = summary.fullyDepreciatedCount;
 
@@ -423,7 +544,6 @@
                 document.getElementById('chartDepRateBar').style.width = depRate + '%';
             }
 
-            // Display method distribution
             displayMethodDistribution(data.latestPostings);
         }
 
@@ -437,21 +557,18 @@
                 return;
             }
 
-            // Count by method
             const methodCounts = {};
             postings.forEach(posting => {
                 const method = posting.depreciationMethod || 'Unknown';
                 methodCounts[method] = (methodCounts[method] || 0) + 1;
             });
 
-            // Get method colors
             const methodColors = {
                 'STRAIGHT_LINE': { color: '#98001a', label: 'Straight-Line' },
                 'REDUCING_BALANCE': { color: '#A05C00', label: 'Reducing Balance' },
                 'DOUBLE_DECLINING_BALANCE': { color: '#1558A8', label: 'Double Declining' }
             };
 
-            // Build HTML
             const methodsList = document.getElementById('methodsList');
             let html = '';
             Object.entries(methodCounts).forEach(([method, count]) => {
@@ -461,7 +578,7 @@
                 html += `
                     <div>
                         <div class="flex items-center gap-2 mb-1">
-                            <div class="w-3 h-3 rounded-full" style="background-color: ${config.color}"></div>
+                            <div class="w-3 h-3 rounded-full flex-shrink-0" style="background-color: ${config.color}"></div>
                             <span class="font-body-medium text-on-surface">${config.label}</span>
                         </div>
                         <div class="ml-5">
@@ -501,18 +618,18 @@
 
             const methodBadge = getMethodBadge(posting.depreciationMethod);
             const statusBadge = posting.fullyDepreciated
-                ? '<span class="px-2 py-0.5 rounded-full bg-status-warning/10 text-status-warning text-badge-label">Fully Depreciated</span>'
-                : '<span class="px-2 py-0.5 rounded-full bg-status-success/10 text-status-success text-badge-label">Active</span>';
+                ? '<span class="px-2 py-0.5 rounded-full bg-status-warning/10 text-status-warning text-badge-label whitespace-nowrap">Fully Depreciated</span>'
+                : '<span class="px-2 py-0.5 rounded-full bg-status-success/10 text-status-success text-badge-label whitespace-nowrap">Active</span>';
 
             row.innerHTML = `
-                <td class="px-5 py-3 font-technical-data text-technical-data text-primary">${posting.assetCode}</td>
-                <td class="px-5 py-3 text-body-default text-on-surface">${posting.assetName}</td>
-                <td class="px-5 py-3 text-body-default text-secondary">${posting.category}</td>
-                <td class="px-5 py-3">${methodBadge}</td>
-                <td class="px-5 py-3 font-technical-data text-on-surface">₦${formatNumberOnly(posting.assetCost)}</td>
-                <td class="px-5 py-3 font-technical-data text-error">₦${formatNumberOnly(posting.closingAccumulatedDepreciation)}</td>
-                <td class="px-5 py-3 font-technical-data font-bold text-on-surface">₦${formatNumberOnly(posting.bookValue)}</td>
-                <td class="px-5 py-3 text-right">${statusBadge}</td>
+                <td class="px-4 sm:px-5 py-3 font-technical-data text-technical-data text-primary whitespace-nowrap">${posting.assetCode}</td>
+                <td class="px-4 sm:px-5 py-3 text-body-default text-on-surface">${posting.assetName}</td>
+                <td class="px-4 sm:px-5 py-3 text-body-default text-secondary whitespace-nowrap">${posting.category}</td>
+                <td class="px-4 sm:px-5 py-3">${methodBadge}</td>
+                <td class="px-4 sm:px-5 py-3 font-technical-data text-on-surface whitespace-nowrap">₦${formatNumberOnly(posting.assetCost)}</td>
+                <td class="px-4 sm:px-5 py-3 font-technical-data text-error whitespace-nowrap">₦${formatNumberOnly(posting.closingAccumulatedDepreciation)}</td>
+                <td class="px-4 sm:px-5 py-3 font-technical-data font-bold text-on-surface whitespace-nowrap">₦${formatNumberOnly(posting.bookValue)}</td>
+                <td class="px-4 sm:px-5 py-3 text-right">${statusBadge}</td>
             `;
 
             row.addEventListener('click', () => {
@@ -530,7 +647,7 @@
                 'DOUBLE_DECLINING_BALANCE': { label: 'DDB', color: 'bg-status-info/10 text-status-info' }
             };
             const config = methods[method] || { label: method, color: 'bg-surface-canvas text-on-surface' };
-            return `<span class="px-2 py-0.5 rounded-full ${config.color} text-badge-label font-badge-label">${config.label}</span>`;
+            return `<span class="px-2 py-0.5 rounded-full ${config.color} text-badge-label font-badge-label whitespace-nowrap">${config.label}</span>`;
         }
 
         function showTableEmptyState() {
@@ -560,17 +677,13 @@
 
         function getTimeAgoString(date) {
             const seconds = Math.floor((new Date() - date) / 1000);
-
             if (seconds < 60) return 'just now';
             const minutes = Math.floor(seconds / 60);
             if (minutes < 60) return minutes + ' minute' + (minutes !== 1 ? 's' : '') + ' ago';
-
             const hours = Math.floor(minutes / 60);
             if (hours < 24) return hours + ' hour' + (hours !== 1 ? 's' : '') + ' ago';
-
             const days = Math.floor(hours / 24);
             if (days < 7) return days + ' day' + (days !== 1 ? 's' : '') + ' ago';
-
             return date.toLocaleDateString();
         }
     </script>

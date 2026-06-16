@@ -11,7 +11,7 @@
             <h2 class="font-page-title text-page-title text-on-background">Configure Depreciation Parameters</h2>
             <p class="text-body-default text-secondary">Set up depreciation rules for assets or asset categories.</p>
         </div>
-        <a href="/assets/depreciation" class="h-[38px] px-4 bg-surface-card border border-border-default text-on-surface rounded-lg font-body-medium hover:bg-surface-canvas transition-all flex items-center gap-2">
+        <a href="/depreciation" class="h-[38px] px-4 bg-surface-card border border-border-default text-on-surface rounded-lg font-body-medium hover:bg-surface-canvas transition-all flex items-center gap-2">
             <span class="material-symbols-outlined text-[18px]">arrow_back</span>
             Back
         </a>
@@ -197,7 +197,7 @@
 
             // Cancel button
             cancelBtn.addEventListener('click', () => {
-                window.location.href = '/assets/depreciation';
+                window.location.href = '/depreciation';
             });
 
             // Save configuration
@@ -282,7 +282,7 @@
                         if (data.success) {
                             showAlert('Configuration saved successfully!', 'success');
                             setTimeout(() => {
-                                window.location.href = '/assets/depreciation';
+                                window.location.href = '/depreciation';
                             }, 1500);
                         } else {
                             showAlert(data.message || 'Error saving configuration', 'error');

@@ -205,10 +205,10 @@
 
 | Route | Page | Status | Components |
 |-------|------|--------|------------|
-| /assets/depreciation | Management | ✓ | Dashboard, filters, table |
-| /assets/depreciation/configure | Configure | ✓ | Forms, validation, save |
-| /assets/depreciation/run | Run Period | ✓ | Period selector, confirmation |
-| /assets/depreciation/history | History | ✓ | Asset selection, history table |
+| /depreciation | Management | ✓ | Dashboard, filters, table |
+| /depreciation/configure | Configure | ✓ | Forms, validation, save |
+| /depreciation/run | Run Period | ✓ | Period selector, confirmation |
+| /depreciation/history | History | ✓ | Asset selection, history table |
 | /api/assets | JSON API | ✓ | Asset list for dropdowns |
 
 ## ✅ Calculation Verification

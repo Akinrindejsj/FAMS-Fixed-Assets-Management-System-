@@ -11,7 +11,7 @@
             <h2 class="font-page-title text-page-title text-on-background">Close Depreciation Period</h2>
             <p class="text-body-default text-secondary">Calculate and record depreciation for all configured assets.</p>
         </div>
-        <a href="/assets/depreciation" class="h-[38px] px-4 bg-surface-card border border-border-default text-on-surface rounded-lg font-body-medium hover:bg-surface-canvas transition-all flex items-center gap-2">
+        <a href="/depreciation" class="h-[38px] px-4 bg-surface-card border border-border-default text-on-surface rounded-lg font-body-medium hover:bg-surface-canvas transition-all flex items-center gap-2">
             <span class="material-symbols-outlined text-[18px]">arrow_back</span>
             Back
         </a>
@@ -230,8 +230,8 @@
                     <p id="errorMessage" class="text-label-small text-on-surface">--</p>
                 </div>
                 <div class="border-t border-border-default pt-3 flex gap-2">
-                    <button class="flex-1 h-[36px] bg-primary text-on-primary rounded-lg font-body-medium hover:bg-brand-primary-dark" onclick="window.location.href='/assets/depreciation/run'">Close</button>
-                    <button class="flex-1 h-[36px] bg-surface-canvas border border-border-default text-on-surface rounded-lg font-body-medium hover:bg-surface-variant" onclick="window.location.href='/assets/depreciation'">View Report</button>
+                    <button class="flex-1 h-[36px] bg-primary text-on-primary rounded-lg font-body-medium hover:bg-brand-primary-dark" onclick="window.location.href='/depreciation/run'">Close</button>
+                    <button class="flex-1 h-[36px] bg-surface-canvas border border-border-default text-on-surface rounded-lg font-body-medium hover:bg-surface-variant" onclick="window.location.href='/depreciation'">View Report</button>
                 </div>
             </div>
         </div>
@@ -291,7 +291,7 @@
             runBtn.disabled = true;
 
             cancelBtn.addEventListener('click', () => {
-                window.location.href = '/assets/depreciation';
+                window.location.href = '/depreciation';
             });
 
             runBtn.addEventListener('click', runDepreciation);

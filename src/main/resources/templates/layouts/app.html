@@ -378,8 +378,8 @@
 
         <div class="nav-link-wrap">
             <a class="nav-link flex items-center px-4 py-2.5 rounded-xl text-body-default font-body-medium transition-all"
-               th:classappend="${currentPath == '/assets/depreciation'} ? ' sidebar-active' : ' text-nav-text nav-item-hover'"
-               th:href="@{/assets/depreciation}">
+               th:classappend="${#strings.startsWith(currentPath, '/depreciation')} ? ' sidebar-active' : ' text-nav-text nav-item-hover'"
+               th:href="@{/depreciation}">
                 <span class="material-symbols-outlined flex-shrink-0 mr-3 text-secondary">payments</span>
                 <span class="sidebar-label">Depreciation</span>
             </a>

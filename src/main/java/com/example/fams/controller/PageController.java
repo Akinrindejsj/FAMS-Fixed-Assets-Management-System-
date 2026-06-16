@@ -41,22 +41,22 @@ public class PageController {
         return "assets/assets-disposal";
     }
 
-    @GetMapping("/assets/depreciation")
+    @GetMapping("/depreciation")
     public String depreciationManagement() {
         return "assets/depreciation-management";
     }
 
-    @GetMapping("/assets/depreciation/configure")
+    @GetMapping("/depreciation/configure")
     public String depreciationConfigure() {
         return "assets/depreciation-configure";
     }
 
-    @GetMapping("/assets/depreciation/history")
+    @GetMapping("/depreciation/history")
     public String depreciationHistory() {
         return "assets/depreciation-history";
     }
 
-    @GetMapping("/assets/depreciation/run")
+    @GetMapping("/depreciation/run")
     public String depreciationRun() {
         return "assets/depreciation-run";
     }

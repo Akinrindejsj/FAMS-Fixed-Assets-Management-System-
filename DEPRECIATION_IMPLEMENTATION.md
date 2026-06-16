@@ -219,10 +219,10 @@ Generic API response wrapper:
 ### 8. Page Routing
 
 New endpoints added to PageController:
-- `GET /assets/depreciation` - Main depreciation dashboard
-- `GET /assets/depreciation/configure` - Configuration page
-- `GET /assets/depreciation/history` - Asset history page
-- `GET /assets/depreciation/run` - Period close page
+- `GET /depreciation` - Main depreciation dashboard
+- `GET /depreciation/configure` - Configuration page
+- `GET /depreciation/history` - Asset history page
+- `GET /depreciation/run` - Period close page
 
 Updated AssetController:
 - `GET /api/assets` - REST endpoint returning all assets as JSON
