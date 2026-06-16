@@ -11,14 +11,22 @@
             <h2 class="font-page-title text-page-title text-on-background">Depreciation Management</h2>
             <p class="text-body-default text-secondary">Track the reducing value of your fixed assets over time across your entire portfolio.</p>
         </div>
-        <div class="flex gap-2">
+        <div class="flex gap-2 flex-wrap">
+            <a href="/assets/depreciation/configure" class="h-[38px] px-4 bg-primary text-on-primary rounded-lg font-body-medium hover:bg-brand-primary-dark transition-all flex items-center gap-2">
+                <span class="material-symbols-outlined text-[18px]">tune</span>
+                Configure
+            </a>
+            <a href="/assets/depreciation/run" class="h-[38px] px-4 bg-primary text-on-primary rounded-lg font-body-medium hover:bg-brand-primary-dark transition-all flex items-center gap-2">
+                <span class="material-symbols-outlined text-[18px]">play_circle</span>
+                Run Depreciation
+            </a>
+            <a href="/assets/depreciation/history" class="h-[38px] px-4 bg-surface-card border border-border-default text-on-surface rounded-lg font-body-medium hover:bg-surface-canvas transition-all flex items-center gap-2">
+                <span class="material-symbols-outlined text-[18px]">history</span>
+                History
+            </a>
             <button class="h-[38px] px-4 bg-surface-card border border-border-default text-on-surface rounded-lg font-body-medium hover:bg-surface-canvas transition-all flex items-center gap-2">
                 <span class="material-symbols-outlined text-[18px]">download</span>
-                Export Report
-            </button>
-            <button class="h-[38px] px-4 bg-primary text-on-primary rounded-lg font-body-medium hover:bg-brand-primary-dark transition-all flex items-center gap-2">
-                <span class="material-symbols-outlined text-[18px]">add</span>
-                Register Asset
+                Export
             </button>
         </div>
     </div>
@@ -26,14 +34,14 @@
     <!-- Hero Info Card (matches dashboard banner style) -->
     <div class="bg-surface-card border border-border-default rounded-xl card-shadow overflow-hidden flex flex-col md:flex-row">
         <div class="flex-1 p-6">
-            <div class="flex items-center gap-4 mb-4">
+            <div class="flex items-center gap-4 mb-4 flex-wrap">
                 <div class="flex items-center gap-1 text-status-success text-label-small font-medium">
                     <span class="material-symbols-outlined text-[16px]">check_circle</span>
                     <span>Audit Compliant</span>
                 </div>
-                <div class="flex items-center gap-1 text-status-info text-label-small font-medium">
+                <div id="lastCalcDisplay" class="flex items-center gap-1 text-status-info text-label-small font-medium">
                     <span class="material-symbols-outlined text-[16px]">update</span>
-                    <span>Last calculated: 2 hours ago</span>
+                    <span>Last calculated: --</span>
                 </div>
             </div>
             <p class="text-body-default text-secondary">Monitor accumulated depreciation, book values, and tax implications across your entire portfolio.</p>
@@ -43,36 +51,57 @@
         </div>
     </div>
 
-    <!-- KPI Strip (4 cards) -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <!-- KPI Strip (4 cards) - Loading State -->
+    <div id="kpiLoadingState" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-surface-card p-5 rounded-xl card-shadow border border-border-default animate-pulse">
+            <div class="h-4 bg-surface-canvas rounded w-3/4 mb-3"></div>
+            <div class="h-8 bg-surface-canvas rounded w-1/2 mb-2"></div>
+            <div class="h-3 bg-surface-canvas rounded w-1/3"></div>
+        </div>
+        <div class="bg-surface-card p-5 rounded-xl card-shadow border border-border-default animate-pulse">
+            <div class="h-4 bg-surface-canvas rounded w-3/4 mb-3"></div>
+            <div class="h-8 bg-surface-canvas rounded w-1/2 mb-2"></div>
+            <div class="h-3 bg-surface-canvas rounded w-1/3"></div>
+        </div>
+        <div class="bg-surface-card p-5 rounded-xl card-shadow border border-border-default animate-pulse">
+            <div class="h-4 bg-surface-canvas rounded w-3/4 mb-3"></div>
+            <div class="h-8 bg-surface-canvas rounded w-1/2 mb-2"></div>
+            <div class="h-3 bg-surface-canvas rounded w-1/3"></div>
+        </div>
+        <div class="bg-surface-card p-5 rounded-xl card-shadow border border-border-default animate-pulse">
+            <div class="h-4 bg-surface-canvas rounded w-3/4 mb-3"></div>
+            <div class="h-8 bg-surface-canvas rounded w-1/2 mb-2"></div>
+            <div class="h-3 bg-surface-canvas rounded w-1/3"></div>
+        </div>
+    </div>
+
+    <!-- KPI Strip (4 cards) - Dynamic Content -->
+    <div id="kpiContent" class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div class="bg-surface-card p-5 rounded-xl card-shadow border border-border-default">
             <div class="flex justify-between items-start mb-3">
                 <span class="text-label-small text-secondary uppercase tracking-wider">Total Original Cost</span>
                 <span class="material-symbols-outlined text-secondary">account_balance_wallet</span>
             </div>
-            <p class="font-page-title text-[28px] font-bold text-on-surface">&#8358;1,420,500.00</p>
-            <div class="mt-2 text-badge-label text-status-success flex items-center gap-1">
-                <span class="material-symbols-outlined text-[16px]">trending_up</span>
-                <span>+2.4% vs last quarter</span>
-            </div>
+            <p id="kpiTotalCost" class="font-page-title text-[28px] font-bold text-on-surface">₦0.00</p>
+            <div class="mt-2 text-label-small text-secondary" id="kpiCostTrend">--</div>
         </div>
         <div class="bg-surface-card p-5 rounded-xl card-shadow border border-border-default">
             <div class="flex justify-between items-start mb-3">
                 <span class="text-label-small text-secondary uppercase tracking-wider">Total Book Value</span>
                 <span class="material-symbols-outlined text-secondary">menu_book</span>
             </div>
-            <p class="font-page-title text-[28px] font-bold text-on-surface">&#8358;984,200.00</p>
-            <div class="mt-2 text-label-small text-secondary">69.3% recovery potential</div>
+            <p id="kpiBookValue" class="font-page-title text-[28px] font-bold text-on-surface">₦0.00</p>
+            <div class="mt-2 text-label-small text-secondary" id="kpiRecoveryPotential">--</div>
         </div>
         <div class="bg-surface-card p-5 rounded-xl card-shadow border border-border-default">
             <div class="flex justify-between items-start mb-3">
                 <span class="text-label-small text-secondary uppercase tracking-wider">Accumulated Depreciation</span>
                 <span class="material-symbols-outlined text-secondary">trending_down</span>
             </div>
-            <p class="font-page-title text-[28px] font-bold text-primary">&#8358;436,300.00</p>
-            <div class="mt-2 text-badge-label text-status-warning flex items-center gap-1">
+            <p id="kpiAccumulatedDep" class="font-page-title text-[28px] font-bold text-primary">₦0.00</p>
+            <div class="mt-2 text-badge-label text-status-warning flex items-center gap-1" id="kpiDepPercentage">
                 <span class="material-symbols-outlined text-[16px]">history</span>
-                <span>30.7% of total asset cost</span>
+                <span>--</span>
             </div>
         </div>
         <div class="bg-surface-card p-5 rounded-xl card-shadow border border-border-default">
@@ -80,11 +109,8 @@
                 <span class="text-label-small text-secondary uppercase tracking-wider">Fully Depreciated Assets</span>
                 <span class="material-symbols-outlined text-secondary">done_all</span>
             </div>
-            <p class="font-page-title text-[28px] font-bold text-on-surface">12</p>
-            <div class="mt-2 text-badge-label text-status-info flex items-center gap-1">
-                <span class="material-symbols-outlined text-[16px]">priority_high</span>
-                <span>Replacement needed for 4 items</span>
-            </div>
+            <p id="kpiFullyDepreciated" class="font-page-title text-[28px] font-bold text-on-surface">0</p>
+            <div class="mt-2 text-label-small text-secondary" id="kpiAssetCount">of 0 assets</div>
         </div>
     </div>
 
@@ -141,189 +167,412 @@
             <div class="p-5 border-b border-border-default flex justify-between items-center flex-wrap gap-3">
                 <h3 class="font-section-header text-section-header text-on-surface">Asset Depreciation Schedule</h3>
                 <div class="flex items-center gap-2">
-                    <span class="text-label-small text-secondary">Showing 6 of 42 assets</span>
-                    <div class="flex border border-border-default rounded-lg overflow-hidden">
-                        <button class="p-1 px-2 hover:bg-surface-canvas border-r border-border-default"><span class="material-symbols-outlined text-[18px]">chevron_left</span></button>
-                        <button class="p-1 px-2 hover:bg-surface-canvas"><span class="material-symbols-outlined text-[18px]">chevron_right</span></button>
-                    </div>
+                    <span id="tableShowingText" class="text-label-small text-secondary">--</span>
                 </div>
             </div>
-            <div class="overflow-x-auto">
+
+            <!-- Loading State -->
+            <div id="tableLoadingState" class="p-8 flex justify-center">
+                <div class="flex flex-col items-center gap-3">
+                    <div class="animate-spin rounded-full h-8 w-8 border-4 border-primary border-t-transparent"></div>
+                    <p class="text-body-default text-secondary">Loading depreciation data...</p>
+                </div>
+            </div>
+
+            <!-- Empty State -->
+            <div id="tableEmptyState" class="hidden p-12 flex flex-col items-center text-center">
+                <span class="material-symbols-outlined text-[64px] text-secondary opacity-30 mb-4">inventory_2</span>
+                <h4 class="font-section-header text-section-header text-on-surface mb-2">No Assets Configured</h4>
+                <p class="text-body-default text-secondary max-w-sm mb-6">
+                    No assets have been configured for depreciation yet. Start by configuring depreciation parameters for your assets.
+                </p>
+                <a href="/assets/depreciation/configure" class="h-[36px] px-4 bg-primary text-on-primary rounded-lg font-body-medium hover:bg-brand-primary-dark transition-all flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[18px]">tune</span>
+                    Configure First Asset
+                </a>
+            </div>
+
+            <!-- Table -->
+            <div id="tableContent" class="hidden overflow-x-auto">
                 <table class="w-full text-left border-collapse">
                     <thead>
                     <tr class="bg-surface-canvas border-b border-border-default">
-                        <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Asset ID</th>
+                        <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Asset Code</th>
                         <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Name</th>
                         <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Category</th>
                         <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Method</th>
-                        <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Acq. Cost</th>
+                        <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Cost</th>
                         <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Accum. Dep.</th>
                         <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Book Value</th>
-                        <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider text-right">Action</th>
+                        <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider text-right">Status</th>
                     </tr>
                     </thead>
-                    <tbody class="divide-y divide-border-default">
-                    <tr class="hover:bg-surface-canvas/50 transition-colors cursor-pointer border-l-4 border-primary">
-                        <td class="px-5 py-3 font-technical-data text-technical-data text-primary">#ASSET-78291</td>
-                        <td class="px-5 py-3 text-body-default text-on-surface">MacBook Pro M3 Max</td>
-                        <td class="px-5 py-3 text-body-default text-secondary">IT Equipment</td>
-                        <td class="px-5 py-3"><span class="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-badge-label font-badge-label">Straight-Line</span></td>
-                        <td class="px-5 py-3 font-technical-data text-on-surface">&#8358;4,200.00</td>
-                        <td class="px-5 py-3 font-technical-data text-error">&#8358;1,400.00</td>
-                        <td class="px-5 py-3 font-technical-data font-bold text-on-surface">&#8358;2,800.00</td>
-                        <td class="px-5 py-3 text-right"><button class="text-secondary hover:text-primary"><span class="material-symbols-outlined text-[18px]">visibility</span></button></td>
-                    </tr>
-                    <tr class="hover:bg-surface-canvas/50 transition-colors cursor-pointer">
-                        <td class="px-5 py-3 font-technical-data text-technical-data text-primary">#ASSET-90122</td>
-                        <td class="px-5 py-3 text-body-default text-on-surface">Toyota Hilux 2022</td>
-                        <td class="px-5 py-3 text-body-default text-secondary">Vehicles</td>
-                        <td class="px-5 py-3"><span class="px-2 py-0.5 rounded-full bg-status-warning/10 text-status-warning text-badge-label font-badge-label">Red. Balance</span></td>
-                        <td class="px-5 py-3 font-technical-data text-on-surface">&#8358;45,000.00</td>
-                        <td class="px-5 py-3 font-technical-data text-error">&#8358;12,450.00</td>
-                        <td class="px-5 py-3 font-technical-data font-bold text-on-surface">&#8358;32,550.00</td>
-                        <td class="px-5 py-3 text-right"><button class="text-secondary hover:text-primary"><span class="material-symbols-outlined text-[18px]">visibility</span></button></td>
-                    </tr>
-                    <tr class="hover:bg-surface-canvas/50 transition-colors cursor-pointer">
-                        <td class="px-5 py-3 font-technical-data text-technical-data text-primary">#ASSET-66321</td>
-                        <td class="px-5 py-3 text-body-default text-on-surface">Steelcase Gesture Chair</td>
-                        <td class="px-5 py-3 text-body-default text-secondary">Furniture</td>
-                        <td class="px-5 py-3"><span class="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-badge-label font-badge-label">Straight-Line</span></td>
-                        <td class="px-5 py-3 font-technical-data text-on-surface">&#8358;1,250.00</td>
-                        <td class="px-5 py-3 font-technical-data text-error">&#8358;250.00</td>
-                        <td class="px-5 py-3 font-technical-data font-bold text-on-surface">&#8358;1,000.00</td>
-                        <td class="px-5 py-3 text-right"><button class="text-secondary hover:text-primary"><span class="material-symbols-outlined text-[18px]">visibility</span></button></td>
-                    </tr>
-                    <tr class="hover:bg-surface-canvas/50 transition-colors cursor-pointer">
-                        <td class="px-5 py-3 font-technical-data text-technical-data text-primary">#ASSET-11200</td>
-                        <td class="px-5 py-3 text-body-default text-on-surface">Dell Precision Tower</td>
-                        <td class="px-5 py-3 text-body-default text-secondary">IT Equipment</td>
-                        <td class="px-5 py-3"><span class="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-badge-label font-badge-label">Straight-Line</span></td>
-                        <td class="px-5 py-3 font-technical-data text-on-surface">&#8358;5,500.00</td>
-                        <td class="px-5 py-3 font-technical-data text-error">&#8358;5,500.00</td>
-                        <td class="px-5 py-3 font-technical-data text-status-warning">Scrap Value &#8358;500</td>
-                        <td class="px-5 py-3 text-right"><button class="text-secondary hover:text-primary"><span class="material-symbols-outlined text-[18px]">visibility</span></button></td>
-                    </tr>
-                    <tr class="hover:bg-surface-canvas/50 transition-colors cursor-pointer">
-                        <td class="px-5 py-3 font-technical-data text-technical-data text-primary">#ASSET-88219</td>
-                        <td class="px-5 py-3 text-body-default text-on-surface">Cisco Catalyst Switch</td>
-                        <td class="px-5 py-3 text-body-default text-secondary">IT Equipment</td>
-                        <td class="px-5 py-3"><span class="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-badge-label font-badge-label">Straight-Line</span></td>
-                        <td class="px-5 py-3 font-technical-data text-on-surface">&#8358;8,900.00</td>
-                        <td class="px-5 py-3 font-technical-data text-error">&#8358;1,780.00</td>
-                        <td class="px-5 py-3 font-technical-data font-bold text-on-surface">&#8358;7,120.00</td>
-                        <td class="px-5 py-3 text-right"><button class="text-secondary hover:text-primary"><span class="material-symbols-outlined text-[18px]">visibility</span></button></td>
-                    </tr>
-                    <tr class="hover:bg-surface-canvas/50 transition-colors cursor-pointer">
-                        <td class="px-5 py-3 font-technical-data text-technical-data text-primary">#ASSET-55401</td>
-                        <td class="px-5 py-3 text-body-default text-on-surface">Ford Transit Van</td>
-                        <td class="px-5 py-3 text-body-default text-secondary">Vehicles</td>
-                        <td class="px-5 py-3"><span class="px-2 py-0.5 rounded-full bg-status-warning/10 text-status-warning text-badge-label font-badge-label">Red. Balance</span></td>
-                        <td class="px-5 py-3 font-technical-data text-on-surface">&#8358;38,000.00</td>
-                        <td class="px-5 py-3 font-technical-data text-error">&#8358;9,500.00</td>
-                        <td class="px-5 py-3 font-technical-data font-bold text-on-surface">&#8358;28,500.00</td>
-                        <td class="px-5 py-3 text-right"><button class="text-secondary hover:text-primary"><span class="material-symbols-outlined text-[18px]">visibility</span></button></td>
-                    </tr>
+                    <tbody id="tableBody" class="divide-y divide-border-default">
+                    <!-- Dynamically populated -->
                     </tbody>
                 </table>
-            </div>
-            <!-- Pagination (matches dashboard) -->
-            <div class="px-5 py-3 border-t border-border-default flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <p class="text-label-small text-secondary">Showing <span class="font-bold text-on-surface">6</span> of <span class="font-bold text-on-surface">42</span> assets</p>
-                <div class="flex items-center gap-1">
-                    <button class="w-8 h-8 flex items-center justify-center border border-border-default rounded-lg hover:bg-surface-canvas transition-colors text-secondary disabled:opacity-50" disabled>
-                        <span class="material-symbols-outlined text-[18px]">chevron_left</span>
-                    </button>
-                    <button class="w-8 h-8 flex items-center justify-center bg-primary text-on-primary rounded-lg font-body-medium">1</button>
-                    <button class="w-8 h-8 flex items-center justify-center border border-border-default rounded-lg hover:bg-surface-canvas transition-colors font-body-medium text-on-surface">2</button>
-                    <button class="w-8 h-8 flex items-center justify-center border border-border-default rounded-lg hover:bg-surface-canvas transition-colors text-secondary">
-                        <span class="material-symbols-outlined text-[18px]">chevron_right</span>
-                    </button>
-                </div>
             </div>
         </div>
 
         <!-- Right: Charts & Analysis (4 columns) -->
         <div class="col-span-12 lg:col-span-4 space-y-6">
-            <!-- Trend Chart Card (simplified visual) -->
+            <!-- Depreciation Summary Card -->
             <div class="bg-surface-card rounded-xl card-shadow border border-border-default overflow-hidden">
                 <div class="p-5 border-b border-border-default flex justify-between items-center">
-                    <h3 class="font-card-header text-card-header text-on-surface">Value vs. Cost Over Time</h3>
-                    <span class="material-symbols-outlined text-secondary">monitoring</span>
+                    <h3 class="font-card-header text-card-header text-on-surface">Portfolio Summary</h3>
+                    <span class="material-symbols-outlined text-secondary">summarize</span>
                 </div>
-                <div class="p-5">
-                    <div class="flex items-end gap-1 h-32 mb-2">
-                        <div class="flex-1 flex flex-col items-center group">
-                            <div class="w-full bg-primary/20 rounded-t h-[85%] relative"><div class="absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] bg-on-surface text-on-primary px-1 rounded hidden group-hover:block whitespace-nowrap">&#8358;1.2M</div></div>
-                            <span class="text-[10px] text-secondary mt-1">'21</span>
-                        </div>
-                        <div class="flex-1 flex flex-col items-center group">
-                            <div class="w-full bg-primary/20 rounded-t h-[72%] relative"></div>
-                            <span class="text-[10px] text-secondary mt-1">'22</span>
-                        </div>
-                        <div class="flex-1 flex flex-col items-center group">
-                            <div class="w-full bg-primary/20 rounded-t h-[60%] relative"></div>
-                            <span class="text-[10px] text-secondary mt-1">'23</span>
-                        </div>
-                        <div class="flex-1 flex flex-col items-center group">
-                            <div class="w-full bg-primary rounded-t h-[52%] relative"><div class="absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] bg-on-surface text-on-primary px-1 rounded hidden group-hover:block">&#8358;650k</div></div>
-                            <span class="text-[10px] text-secondary mt-1">'24</span>
-                        </div>
-                        <div class="flex-1 flex flex-col items-center group">
-                            <div class="w-full bg-primary/20 rounded-t h-[45%] relative"></div>
-                            <span class="text-[10px] text-secondary mt-1">'25(P)</span>
-                        </div>
-                        <div class="flex-1 flex flex-col items-center group">
-                            <div class="w-full bg-primary/20 rounded-t h-[38%] relative"></div>
-                            <span class="text-[10px] text-secondary mt-1">'26(P)</span>
+
+                <!-- Loading -->
+                <div id="chartLoadingState" class="p-8 flex justify-center">
+                    <div class="flex flex-col items-center gap-3">
+                        <div class="animate-spin rounded-full h-8 w-8 border-4 border-primary border-t-transparent"></div>
+                        <p class="text-label-small text-secondary">Processing data...</p>
+                    </div>
+                </div>
+
+                <!-- Content -->
+                <div id="chartContent" class="hidden p-5 space-y-4">
+                    <div>
+                        <div class="flex justify-between mb-2">
+                            <span class="text-label-small text-secondary">Total Assets</span>
+                            <span id="chartTotalAssets" class="font-body-medium text-on-surface">0</span>
                         </div>
                     </div>
-                    <div class="flex justify-center gap-6 mt-4 pt-3 border-t border-border-default">
-                        <div class="flex items-center gap-2"><div class="w-3 h-3 bg-primary/20 rounded"></div><span class="text-label-small text-secondary">Original Cost</span></div>
-                        <div class="flex items-center gap-2"><div class="w-3 h-3 bg-primary rounded"></div><span class="text-label-small text-secondary">Book Value</span></div>
+                    <div class="border-t border-border-default pt-4">
+                        <div class="flex justify-between mb-2">
+                            <span class="text-label-small text-secondary">Fully Depreciated</span>
+                            <span id="chartFullyDepreciated" class="font-body-medium text-on-surface">0</span>
+                        </div>
+                        <div class="w-full bg-surface-canvas rounded h-2">
+                            <div id="chartDeprecationProgress" class="bg-primary rounded h-2 transition-all" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div class="border-t border-border-default pt-4">
+                        <div class="flex justify-between mb-2">
+                            <span class="text-label-small text-secondary">Depreciation Rate</span>
+                            <span id="chartDepRate" class="font-body-medium text-on-surface">0%</span>
+                        </div>
+                        <div class="w-full bg-surface-canvas rounded h-2">
+                            <div id="chartDepRateBar" class="bg-status-warning rounded h-2 transition-all" style="width: 0%"></div>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Depreciation by Method Card -->
+            <!-- Method Distribution Card -->
             <div class="bg-surface-card rounded-xl card-shadow border border-border-default overflow-hidden">
                 <div class="p-5 border-b border-border-default flex justify-between items-center">
-                    <h3 class="font-card-header text-card-header text-on-surface">Depreciation by Method</h3>
-                    <span class="text-label-small bg-surface-canvas px-2 py-0.5 rounded text-secondary">Portfolio Split</span>
+                    <h3 class="font-card-header text-card-header text-on-surface">Methods Used</h3>
+                    <span class="text-label-small bg-surface-canvas px-2 py-0.5 rounded text-secondary">Distribution</span>
                 </div>
-                <div class="p-5">
-                    <div class="flex items-center justify-around">
-                        <div class="relative w-32 h-32">
-                            <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-                                <circle cx="18" cy="18" fill="none" r="16" stroke="#C0182A" stroke-dasharray="74, 100" stroke-width="4"></circle>
-                                <circle cx="18" cy="18" fill="none" r="16" stroke="#E4E6EA" stroke-dasharray="26, 100" stroke-dashoffset="-74" stroke-width="4"></circle>
-                            </svg>
-                            <div class="absolute inset-0 flex flex-col items-center justify-center">
-                                <span class="font-page-title text-2xl font-bold text-on-surface">42</span>
-                                <span class="text-label-small text-secondary">Assets</span>
-                            </div>
-                        </div>
-                        <div class="space-y-3">
-                            <div><div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-primary"></div><span class="font-body-medium text-on-surface">Reducing Bal.</span></div><span class="text-label-small text-secondary ml-4">31 Assets (74%)</span></div>
-                            <div><div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-border-default"></div><span class="font-body-medium text-on-surface">Straight-Line</span></div><span class="text-label-small text-secondary ml-4">11 Assets (26%)</span></div>
-                        </div>
+
+                <!-- Loading -->
+                <div id="methodLoadingState" class="p-8 flex justify-center">
+                    <div class="flex flex-col items-center gap-3">
+                        <div class="animate-spin rounded-full h-8 w-8 border-4 border-primary border-t-transparent"></div>
                     </div>
-                    <div class="mt-6 pt-4 border-t border-border-default">
-                        <button class="w-full h-[38px] bg-surface-canvas text-on-surface rounded-lg font-body-medium hover:bg-surface-variant transition-all">View Tax Implications Report</button>
+                </div>
+
+                <!-- Content -->
+                <div id="methodContent" class="hidden p-5 space-y-4">
+                    <div id="methodsList" class="space-y-3">
+                        <!-- Populated dynamically -->
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
+    <style>
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .animate-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .animate-spin {
+            animation: spin 1s linear infinite;
+        }
+    </style>
+
     <script>
-        // Simple row click to show active accent (matches dashboard interaction)
-        const rows = document.querySelectorAll('tbody tr');
-        rows.forEach(row => {
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Load depreciation dashboard data
+            await loadDepreciationDashboard();
+        });
+
+        async function loadDepreciationDashboard() {
+            try {
+                // Fetch dashboard data
+                const response = await fetch('/api/depreciation/dashboard?limit=20');
+                const data = await response.json();
+
+                // Update last calculated time
+                if (data.lastCalculatedAt) {
+                    const timeAgo = getTimeAgoString(new Date(data.lastCalculatedAt));
+                    document.getElementById('lastCalcDisplay').innerHTML = `
+                        <span class="material-symbols-outlined text-[16px]">update</span>
+                        <span>Last calculated: ${timeAgo}</span>
+                    `;
+                }
+
+                // Load KPIs
+                await loadKPIs(data.summary);
+
+                // Load chart data
+                loadChartData(data);
+
+                // Load table data
+                if (data.latestPostings && data.latestPostings.length > 0) {
+                    loadTableData(data.latestPostings);
+                } else {
+                    showTableEmptyState();
+                }
+            } catch (error) {
+                console.error('Error loading depreciation dashboard:', error);
+                // Show empty states on error
+                document.getElementById('kpiLoadingState').classList.add('hidden');
+                document.getElementById('kpiContent').classList.remove('hidden');
+                showTableEmptyState();
+                showChartEmptyState();
+            }
+        }
+
+        async function loadKPIs(summary) {
+            // Hide loading, show content
+            document.getElementById('kpiLoadingState').classList.add('hidden');
+            document.getElementById('kpiContent').classList.remove('hidden');
+
+            if (!summary || summary.assetCount === 0) {
+                // Show default values for empty state
+                document.getElementById('kpiTotalCost').textContent = '₦0.00';
+                document.getElementById('kpiBookValue').textContent = '₦0.00';
+                document.getElementById('kpiAccumulatedDep').textContent = '₦0.00';
+                document.getElementById('kpiFullyDepreciated').textContent = '0';
+                document.getElementById('kpiRecoveryPotential').textContent = '0% recovery potential';
+                document.getElementById('kpiDepPercentage').innerHTML =
+                    '<span class="material-symbols-outlined text-[16px]">history</span><span>0% of total asset cost</span>';
+                document.getElementById('kpiAssetCount').textContent = 'of 0 assets';
+                return;
+            }
+
+            // Populate KPI cards with summary data
+            document.getElementById('kpiTotalCost').textContent = formatCurrency(summary.totalOriginalCost);
+            document.getElementById('kpiBookValue').textContent = formatCurrency(summary.totalBookValue);
+            document.getElementById('kpiAccumulatedDep').textContent = formatCurrency(summary.totalAccumulatedDepreciation);
+            document.getElementById('kpiFullyDepreciated').textContent = summary.fullyDepreciatedCount;
+
+            // Calculate and show percentages
+            const totalCost = parseFloat(summary.totalOriginalCost || 0);
+            const bookValue = parseFloat(summary.totalBookValue || 0);
+            const accumulated = parseFloat(summary.totalAccumulatedDepreciation || 0);
+
+            const recoveryPercent = totalCost > 0 ? (bookValue / totalCost * 100).toFixed(1) : 0;
+            const depPercent = totalCost > 0 ? (accumulated / totalCost * 100).toFixed(1) : 0;
+
+            document.getElementById('kpiRecoveryPotential').textContent = recoveryPercent + '% recovery potential';
+            document.getElementById('kpiDepPercentage').innerHTML =
+                '<span class="material-symbols-outlined text-[16px]">history</span><span>' + depPercent.toFixed(1) + '% of total asset cost</span>';
+            document.getElementById('kpiAssetCount').textContent = 'of ' + summary.assetCount + ' assets';
+        }
+
+        function loadChartData(data) {
+            const summary = data.summary;
+
+            if (!summary || summary.assetCount === 0) {
+                document.getElementById('chartLoadingState').classList.add('hidden');
+                document.getElementById('methodLoadingState').classList.add('hidden');
+                document.getElementById('chartContent').classList.add('hidden');
+                document.getElementById('methodContent').classList.add('hidden');
+                return;
+            }
+
+            // Hide loading
+            document.getElementById('chartLoadingState').classList.add('hidden');
+            document.getElementById('methodLoadingState').classList.add('hidden');
+            document.getElementById('chartContent').classList.remove('hidden');
+            document.getElementById('methodContent').classList.remove('hidden');
+
+            // Update summary card
+            document.getElementById('chartTotalAssets').textContent = summary.assetCount;
+            document.getElementById('chartFullyDepreciated').textContent = summary.fullyDepreciatedCount;
+
+            if (summary.assetCount > 0) {
+                const depPercentage = (summary.fullyDepreciatedCount / summary.assetCount) * 100;
+                document.getElementById('chartDeprecationProgress').style.width = depPercentage + '%';
+
+                const totalCost = parseFloat(summary.totalOriginalCost || 0);
+                const accumulated = parseFloat(summary.totalAccumulatedDepreciation || 0);
+                const depRate = totalCost > 0 ? (accumulated / totalCost) * 100 : 0;
+
+                document.getElementById('chartDepRate').textContent = Math.round(depRate) + '%';
+                document.getElementById('chartDepRateBar').style.width = depRate + '%';
+            }
+
+            // Display method distribution
+            displayMethodDistribution(data.latestPostings);
+        }
+
+        function displayMethodDistribution(postings) {
+            if (!postings || postings.length === 0) {
+                document.getElementById('methodsList').innerHTML = `
+                    <div class="text-center py-4">
+                        <p class="text-label-small text-secondary">No depreciation data available yet</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Count by method
+            const methodCounts = {};
+            postings.forEach(posting => {
+                const method = posting.depreciationMethod || 'Unknown';
+                methodCounts[method] = (methodCounts[method] || 0) + 1;
+            });
+
+            // Get method colors
+            const methodColors = {
+                'STRAIGHT_LINE': { color: '#98001a', label: 'Straight-Line' },
+                'REDUCING_BALANCE': { color: '#A05C00', label: 'Reducing Balance' },
+                'DOUBLE_DECLINING_BALANCE': { color: '#1558A8', label: 'Double Declining' }
+            };
+
+            // Build HTML
+            const methodsList = document.getElementById('methodsList');
+            let html = '';
+            Object.entries(methodCounts).forEach(([method, count]) => {
+                const config = methodColors[method] || { color: '#5d5e65', label: method };
+                const percentage = ((count / postings.length) * 100).toFixed(1);
+
+                html += `
+                    <div>
+                        <div class="flex items-center gap-2 mb-1">
+                            <div class="w-3 h-3 rounded-full" style="background-color: ${config.color}"></div>
+                            <span class="font-body-medium text-on-surface">${config.label}</span>
+                        </div>
+                        <div class="ml-5">
+                            <span class="text-label-small text-secondary">${count} Asset${count !== 1 ? 's' : ''} (${percentage}%)</span>
+                        </div>
+                    </div>
+                `;
+            });
+
+            methodsList.innerHTML = html;
+        }
+
+        function loadTableData(postings) {
+            if (!postings || postings.length === 0) {
+                showTableEmptyState();
+                return;
+            }
+
+            document.getElementById('tableLoadingState').classList.add('hidden');
+            document.getElementById('tableEmptyState').classList.add('hidden');
+            document.getElementById('tableContent').classList.remove('hidden');
+            document.getElementById('tableShowingText').textContent = `Showing ${postings.length} postings`;
+
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+
+            postings.forEach((posting, index) => {
+                const row = createTableRow(posting, index);
+                tbody.appendChild(row);
+            });
+        }
+
+        function createTableRow(posting, index) {
+            const row = document.createElement('tr');
+            row.className = 'hover:bg-surface-canvas/50 transition-colors cursor-pointer';
+            if (index === 0) row.classList.add('border-l-4', 'border-primary');
+
+            const methodBadge = getMethodBadge(posting.depreciationMethod);
+            const statusBadge = posting.fullyDepreciated
+                ? '<span class="px-2 py-0.5 rounded-full bg-status-warning/10 text-status-warning text-badge-label">Fully Depreciated</span>'
+                : '<span class="px-2 py-0.5 rounded-full bg-status-success/10 text-status-success text-badge-label">Active</span>';
+
+            row.innerHTML = `
+                <td class="px-5 py-3 font-technical-data text-technical-data text-primary">${posting.assetCode}</td>
+                <td class="px-5 py-3 text-body-default text-on-surface">${posting.assetName}</td>
+                <td class="px-5 py-3 text-body-default text-secondary">${posting.category}</td>
+                <td class="px-5 py-3">${methodBadge}</td>
+                <td class="px-5 py-3 font-technical-data text-on-surface">₦${formatNumberOnly(posting.assetCost)}</td>
+                <td class="px-5 py-3 font-technical-data text-error">₦${formatNumberOnly(posting.closingAccumulatedDepreciation)}</td>
+                <td class="px-5 py-3 font-technical-data font-bold text-on-surface">₦${formatNumberOnly(posting.bookValue)}</td>
+                <td class="px-5 py-3 text-right">${statusBadge}</td>
+            `;
+
             row.addEventListener('click', () => {
-                rows.forEach(r => r.classList.remove('border-l-4', 'border-primary'));
+                document.querySelectorAll('tbody tr').forEach(r => r.classList.remove('border-l-4', 'border-primary'));
                 row.classList.add('border-l-4', 'border-primary');
             });
-        });
+
+            return row;
+        }
+
+        function getMethodBadge(method) {
+            const methods = {
+                'STRAIGHT_LINE': { label: 'Straight-Line', color: 'bg-primary/10 text-primary' },
+                'REDUCING_BALANCE': { label: 'Red. Balance', color: 'bg-status-warning/10 text-status-warning' },
+                'DOUBLE_DECLINING_BALANCE': { label: 'DDB', color: 'bg-status-info/10 text-status-info' }
+            };
+            const config = methods[method] || { label: method, color: 'bg-surface-canvas text-on-surface' };
+            return `<span class="px-2 py-0.5 rounded-full ${config.color} text-badge-label font-badge-label">${config.label}</span>`;
+        }
+
+        function showTableEmptyState() {
+            document.getElementById('tableLoadingState').classList.add('hidden');
+            document.getElementById('tableEmptyState').classList.remove('hidden');
+            document.getElementById('tableContent').classList.add('hidden');
+        }
+
+        function showChartEmptyState() {
+            document.getElementById('chartLoadingState').classList.add('hidden');
+            document.getElementById('methodLoadingState').classList.add('hidden');
+            document.getElementById('chartContent').classList.add('hidden');
+            document.getElementById('methodContent').classList.add('hidden');
+        }
+
+        function formatCurrency(value) {
+            if (!value) return '₦0.00';
+            const num = parseFloat(value);
+            return '₦' + num.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        }
+
+        function formatNumberOnly(value) {
+            if (!value) return '0.00';
+            const num = parseFloat(value);
+            return num.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        }
+
+        function getTimeAgoString(date) {
+            const seconds = Math.floor((new Date() - date) / 1000);
+
+            if (seconds < 60) return 'just now';
+            const minutes = Math.floor(seconds / 60);
+            if (minutes < 60) return minutes + ' minute' + (minutes !== 1 ? 's' : '') + ' ago';
+
+            const hours = Math.floor(minutes / 60);
+            if (hours < 24) return hours + ' hour' + (hours !== 1 ? 's' : '') + ' ago';
+
+            const days = Math.floor(hours / 24);
+            if (days < 7) return days + ' day' + (days !== 1 ? 's' : '') + ' ago';
+
+            return date.toLocaleDateString();
+        }
     </script>
 </main>
 </body>

@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html class="light" lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layouts/app}">
+<head>
+    <title>Run Depreciation | JustJava FAMS</title>
+</head>
+<body>
+<main id="main-content" class="space-y-6" layout:fragment="content">
+    <!-- Page Title -->
+    <div class="flex justify-between items-end">
+        <div>
+            <h2 class="font-page-title text-page-title text-on-background">Close Depreciation Period</h2>
+            <p class="text-body-default text-secondary">Calculate and record depreciation for all configured assets.</p>
+        </div>
+        <a href="/assets/depreciation" class="h-[38px] px-4 bg-surface-card border border-border-default text-on-surface rounded-lg font-body-medium hover:bg-surface-canvas transition-all flex items-center gap-2">
+            <span class="material-symbols-outlined text-[18px]">arrow_back</span>
+            Back
+        </a>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Main Form Section -->
+        <div class="lg:col-span-2 space-y-6">
+            <!-- Period Selection Card -->
+            <div class="bg-surface-card border border-border-default rounded-xl card-shadow overflow-hidden">
+                <div class="p-5 border-b border-border-default bg-primary/5">
+                    <h3 class="font-section-header text-section-header text-on-surface flex items-center gap-2">
+                        <span class="material-symbols-outlined text-primary">calendar_month</span>
+                        Select Period
+                    </h3>
+                </div>
+                <div class="p-6 space-y-5">
+                    <!-- Period Type -->
+                    <div>
+                        <label class="block text-body-default text-on-surface font-medium mb-3">Period Type</label>
+                        <div class="flex gap-4">
+                            <label class="flex items-center cursor-pointer">
+                                <input type="radio" name="periodType" value="monthly" class="period-type" checked>
+                                <span class="ml-2 text-body-default text-on-surface">Monthly</span>
+                            </label>
+                            <label class="flex items-center cursor-pointer">
+                                <input type="radio" name="periodType" value="quarterly" class="period-type">
+                                <span class="ml-2 text-body-default text-on-surface">Quarterly</span>
+                            </label>
+                            <label class="flex items-center cursor-pointer">
+                                <input type="radio" name="periodType" value="annual" class="period-type">
+                                <span class="ml-2 text-body-default text-on-surface">Annual</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Year Selection -->
+                    <div class="form-group">
+                        <label class="block text-body-default text-on-surface font-medium mb-2">Year</label>
+                        <select id="yearSelect" class="w-full h-[38px] px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                            <option value="">-- Select year --</option>
+                        </select>
+                    </div>
+
+                    <!-- Month Selection (for monthly) -->
+                    <div id="monthSection" class="form-group">
+                        <label class="block text-body-default text-on-surface font-medium mb-2">Month</label>
+                        <select id="monthSelect" class="w-full h-[38px] px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                            <option value="01">January</option>
+                            <option value="02">February</option>
+                            <option value="03">March</option>
+                            <option value="04">April</option>
+                            <option value="05">May</option>
+                            <option value="06">June</option>
+                            <option value="07">July</option>
+                            <option value="08">August</option>
+                            <option value="09">September</option>
+                            <option value="10">October</option>
+                            <option value="11">November</option>
+                            <option value="12">December</option>
+                        </select>
+                    </div>
+
+                    <!-- Quarter Selection (for quarterly) -->
+                    <div id="quarterSection" class="form-group hidden">
+                        <label class="block text-body-default text-on-surface font-medium mb-2">Quarter</label>
+                        <select id="quarterSelect" class="w-full h-[38px] px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                            <option value="Q1">Q1 (Jan-Mar)</option>
+                            <option value="Q2">Q2 (Apr-Jun)</option>
+                            <option value="Q3">Q3 (Jul-Sep)</option>
+                            <option value="Q4">Q4 (Oct-Dec)</option>
+                        </select>
+                    </div>
+
+                    <!-- Period End Date -->
+                    <div class="form-group">
+                        <label class="block text-body-default text-on-surface font-medium mb-2">Period End Date</label>
+                        <input id="periodEndDateInput" type="date" class="w-full h-[38px] px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                    </div>
+
+                    <!-- Confirmation Checkbox -->
+                    <div class="border-t border-border-default pt-4">
+                        <label class="flex items-start gap-3 cursor-pointer">
+                            <input id="confirmCheckbox" type="checkbox" class="w-5 h-5 mt-0.5 accent-primary">
+                            <span class="text-body-default text-on-surface">
+                                I confirm that:
+                                <ul class="list-disc list-inside text-label-small text-secondary mt-1 space-y-1">
+                                    <li>All depreciation parameters are configured for assets</li>
+                                    <li>The period end date is correct</li>
+                                    <li>This is the first run for this period</li>
+                                </ul>
+                            </span>
+                        </label>
+                    </div>
+
+                    <!-- Run Button -->
+                    <div class="flex gap-3 pt-4">
+                        <button id="runBtn" class="flex-1 h-[38px] bg-primary text-on-primary rounded-lg font-body-medium hover:bg-brand-primary-dark transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                            <span class="material-symbols-outlined text-[18px]">play_circle</span>
+                            Run Depreciation
+                        </button>
+                        <button id="cancelBtn" class="flex-1 h-[38px] bg-surface-canvas border border-border-default text-on-surface rounded-lg font-body-medium hover:bg-surface-variant transition-all">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Preview Card -->
+            <div id="previewCard" class="hidden bg-surface-card border border-border-default rounded-xl card-shadow overflow-hidden">
+                <div class="p-5 border-b border-border-default bg-status-info/5">
+                    <h3 class="font-section-header text-section-header text-on-surface flex items-center gap-2">
+                        <span class="material-symbols-outlined text-status-info">info</span>
+                        Period Summary
+                    </h3>
+                </div>
+                <div class="p-5 space-y-3 text-body-default text-on-surface">
+                    <p><span class="text-secondary">Period Code:</span> <span id="previewPeriod" class="font-technical-data">--</span></p>
+                    <p><span class="text-secondary">End Date:</span> <span id="previewDate" class="font-technical-data">--</span></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Info Panel -->
+        <div class="space-y-4">
+            <!-- Process Info -->
+            <div class="bg-surface-card border border-border-default rounded-xl card-shadow overflow-hidden">
+                <div class="p-4 border-b border-border-default bg-status-info/5">
+                    <h4 class="font-card-header text-card-header text-on-surface flex items-center gap-2">
+                        <span class="material-symbols-outlined text-status-info">info</span>
+                        What Happens
+                    </h4>
+                </div>
+                <div class="p-4 space-y-2 text-label-small text-secondary">
+                    <p>✓ System calculates depreciation for all configured assets</p>
+                    <p>✓ Applies appropriate method based on asset configuration</p>
+                    <p>✓ Prevents depreciation below residual value</p>
+                    <p>✓ Records complete audit trail with dates</p>
+                    <p>✓ Creates ready-to-use financial reports</p>
+                </div>
+            </div>
+
+            <!-- Requirements -->
+            <div class="bg-surface-card border border-border-default rounded-xl card-shadow overflow-hidden">
+                <div class="p-4 border-b border-border-default bg-status-warning/5">
+                    <h4 class="font-card-header text-card-header text-on-surface flex items-center gap-2">
+                        <span class="material-symbols-outlined text-status-warning">warning</span>
+                        Requirements
+                    </h4>
+                </div>
+                <div class="p-4 space-y-2 text-label-small text-secondary">
+                    <p>• Assets must have depreciation parameters configured</p>
+                    <p>• Period end date cannot be in the future</p>
+                    <p>• Same period can only be run once</p>
+                    <p>• Original cost must be recorded</p>
+                </div>
+            </div>
+
+            <!-- Tips -->
+            <div class="bg-surface-card border border-border-default rounded-xl card-shadow overflow-hidden">
+                <div class="p-4 border-b border-border-default bg-primary/5">
+                    <h4 class="font-card-header text-card-header text-on-surface flex items-center gap-2">
+                        <span class="material-symbols-outlined text-primary">lightbulb</span>
+                        Tips
+                    </h4>
+                </div>
+                <div class="p-4 space-y-2 text-label-small text-secondary">
+                    <p>• Close periods at end of month/quarter/year</p>
+                    <p>• Review asset history after each run</p>
+                    <p>• Export reports for accounting records</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Processing Modal -->
+    <div id="processingModal" class="hidden fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div class="bg-surface-card rounded-xl shadow-lg max-w-md w-full">
+            <div class="p-6 space-y-4">
+                <div class="flex justify-center">
+                    <div class="animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent"></div>
+                </div>
+                <div class="text-center space-y-2">
+                    <p class="font-body-medium text-on-surface">Processing Depreciation Run</p>
+                    <p class="text-label-small text-secondary">Please do not leave this page...</p>
+                </div>
+                <div class="bg-surface-canvas rounded-lg p-3">
+                    <p id="processingStatus" class="text-label-small text-secondary text-center">Initializing...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Modal -->
+    <div id="resultsModal" class="hidden fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div class="bg-surface-card rounded-xl shadow-lg max-w-md w-full max-h-96 overflow-y-auto">
+            <div class="sticky top-0 p-5 border-b border-border-default bg-surface-card flex items-center gap-3">
+                <span id="resultIcon" class="material-symbols-outlined text-2xl text-status-success">check_circle</span>
+                <h3 class="font-section-header text-section-header text-on-surface">Depreciation Run Complete</h3>
+            </div>
+            <div class="p-5 space-y-3">
+                <div class="bg-status-success/10 rounded-lg p-3">
+                    <p class="text-label-small text-secondary">Processed</p>
+                    <p id="resultCount" class="font-technical-data text-on-surface">0 assets</p>
+                </div>
+                <div class="bg-surface-canvas rounded-lg p-3">
+                    <p class="text-label-small text-secondary">Success</p>
+                    <p id="resultSuccess" class="font-technical-data text-status-success">0 assets</p>
+                </div>
+                <div id="failureSection" class="hidden bg-error/10 rounded-lg p-3">
+                    <p class="text-label-small text-secondary">Failed</p>
+                    <p id="resultFailure" class="font-technical-data text-error">0 assets</p>
+                </div>
+                <div id="errorSection" class="hidden bg-error/10 rounded-lg p-3">
+                    <p class="text-label-small text-error">Error</p>
+                    <p id="errorMessage" class="text-label-small text-on-surface">--</p>
+                </div>
+                <div class="border-t border-border-default pt-3 flex gap-2">
+                    <button class="flex-1 h-[36px] bg-primary text-on-primary rounded-lg font-body-medium hover:bg-brand-primary-dark" onclick="window.location.href='/assets/depreciation/run'">Close</button>
+                    <button class="flex-1 h-[36px] bg-surface-canvas border border-border-default text-on-surface rounded-lg font-body-medium hover:bg-surface-variant" onclick="window.location.href='/assets/depreciation'">View Report</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert Container -->
+    <div id="alertContainer" class="fixed top-24 right-4 z-40 space-y-2 max-w-sm"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const periodTypeRadios = document.querySelectorAll('.period-type');
+            const yearSelect = document.getElementById('yearSelect');
+            const monthSection = document.getElementById('monthSection');
+            const quarterSection = document.getElementById('quarterSection');
+            const runBtn = document.getElementById('runBtn');
+            const cancelBtn = document.getElementById('cancelBtn');
+            const confirmCheckbox = document.getElementById('confirmCheckbox');
+            const processingModal = document.getElementById('processingModal');
+            const resultsModal = document.getElementById('resultsModal');
+
+            // Initialize year dropdown (current year and 2 previous years)
+            const currentYear = new Date().getFullYear();
+            for (let i = currentYear; i >= currentYear - 2; i--) {
+                const option = document.createElement('option');
+                option.value = i;
+                option.textContent = i;
+                if (i === currentYear) option.selected = true;
+                yearSelect.appendChild(option);
+            }
+
+            // Period type toggle
+            periodTypeRadios.forEach(radio => {
+                radio.addEventListener('change', (e) => {
+                    if (e.target.value === 'monthly') {
+                        monthSection.classList.remove('hidden');
+                        quarterSection.classList.add('hidden');
+                        updatePeriodEndDate();
+                    } else if (e.target.value === 'quarterly') {
+                        monthSection.classList.add('hidden');
+                        quarterSection.classList.remove('hidden');
+                        updatePeriodEndDate();
+                    } else {
+                        monthSection.classList.add('hidden');
+                        quarterSection.classList.add('hidden');
+                        updatePeriodEndDate();
+                    }
+                });
+            });
+
+            document.getElementById('monthSelect').addEventListener('change', updatePeriodEndDate);
+            document.getElementById('quarterSelect').addEventListener('change', updatePeriodEndDate);
+            yearSelect.addEventListener('change', updatePeriodEndDate);
+
+            confirmCheckbox.addEventListener('change', () => {
+                runBtn.disabled = !confirmCheckbox.checked;
+            });
+            runBtn.disabled = true;
+
+            cancelBtn.addEventListener('click', () => {
+                window.location.href = '/assets/depreciation';
+            });
+
+            runBtn.addEventListener('click', runDepreciation);
+
+            function updatePeriodEndDate() {
+                const year = yearSelect.value;
+                const periodType = document.querySelector('.period-type:checked').value;
+                let dateStr = '';
+                let periodCode = '';
+
+                if (periodType === 'monthly') {
+                    const month = document.getElementById('monthSelect').value;
+                    const lastDay = new Date(year, parseInt(month), 0).getDate();
+                    dateStr = `${year}-${month}-${lastDay.toString().padStart(2, '0')}`;
+                    periodCode = `${year}-${month}`;
+                } else if (periodType === 'quarterly') {
+                    const quarter = document.getElementById('quarterSelect').value;
+                    if (quarter === 'Q1') {
+                        dateStr = `${year}-03-31`;
+                        periodCode = `${year}-Q1`;
+                    } else if (quarter === 'Q2') {
+                        dateStr = `${year}-06-30`;
+                        periodCode = `${year}-Q2`;
+                    } else if (quarter === 'Q3') {
+                        dateStr = `${year}-09-30`;
+                        periodCode = `${year}-Q3`;
+                    } else {
+                        dateStr = `${year}-12-31`;
+                        periodCode = `${year}-Q4`;
+                    }
+                } else {
+                    dateStr = `${year}-12-31`;
+                    periodCode = `${year}-12`;
+                }
+
+                document.getElementById('periodEndDateInput').value = dateStr;
+                document.getElementById('previewPeriod').textContent = periodCode;
+                document.getElementById('previewDate').textContent = new Date(dateStr).toLocaleDateString();
+                document.getElementById('previewCard').classList.remove('hidden');
+            }
+
+            updatePeriodEndDate();
+
+            function runDepreciation() {
+                const periodType = document.querySelector('.period-type:checked').value;
+                const year = yearSelect.value;
+                let periodCode = '';
+
+                if (periodType === 'monthly') {
+                    const month = document.getElementById('monthSelect').value;
+                    periodCode = `${year}-${month}`;
+                } else if (periodType === 'quarterly') {
+                    const quarter = document.getElementById('quarterSelect').value;
+                    periodCode = `${year}-${quarter}`;
+                } else {
+                    periodCode = `${year}-12`;
+                }
+
+                const periodEndDate = document.getElementById('periodEndDateInput').value;
+
+                processingModal.classList.remove('hidden');
+                document.getElementById('processingStatus').textContent = `Processing depreciation for ${periodCode}...`;
+
+                fetch(`/api/depreciation/run-depreciation?depreciationPeriod=${periodCode}&periodEndDate=${periodEndDate}`, {
+                    method: 'POST'
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                        processingModal.classList.add('hidden');
+                        showResults(data, periodCode);
+                    })
+                    .catch(err => {
+                        processingModal.classList.add('hidden');
+                        showAlert('Error running depreciation: ' + err.message, 'error');
+                        console.error(err);
+                    });
+            }
+
+            function showResults(data, periodCode) {
+                const resultIcon = document.getElementById('resultIcon');
+                const resultCount = document.getElementById('resultCount');
+                const resultSuccess = document.getElementById('resultSuccess');
+                const failureSection = document.getElementById('failureSection');
+                const errorSection = document.getElementById('errorSection');
+
+                if (data.success) {
+                    resultIcon.textContent = 'check_circle';
+                    resultIcon.className = 'material-symbols-outlined text-2xl text-status-success';
+                } else {
+                    resultIcon.textContent = 'error';
+                    resultIcon.className = 'material-symbols-outlined text-2xl text-error';
+                }
+
+                resultCount.textContent = `${data.processedCount} assets processed`;
+                resultSuccess.textContent = `${data.successCount} assets successful`;
+
+                if (data.failureCount > 0) {
+                    document.getElementById('resultFailure').textContent = `${data.failureCount} assets failed`;
+                    failureSection.classList.remove('hidden');
+                }
+
+                if (!data.success && data.error) {
+                    document.getElementById('errorMessage').textContent = data.error;
+                    errorSection.classList.remove('hidden');
+                }
+
+                resultsModal.classList.remove('hidden');
+            }
+
+            function showAlert(message, type = 'info') {
+                const container = document.getElementById('alertContainer');
+                const alert = document.createElement('div');
+                const bgColor = type === 'success' ? 'bg-status-success' : type === 'error' ? 'bg-error' : 'bg-status-info';
+
+                alert.className = `${bgColor} text-white px-4 py-3 rounded-lg shadow-md text-sm font-medium animate-fade-in`;
+                alert.textContent = message;
+
+                container.appendChild(alert);
+                setTimeout(() => alert.remove(), 4000);
+            }
+        });
+    </script>
+
+    <style>
+        @keyframes fade-in {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .animate-fade-in {
+            animation: fade-in 0.3s ease-out;
+        }
+    </style>
+</main>
+</body>
+</html>
+

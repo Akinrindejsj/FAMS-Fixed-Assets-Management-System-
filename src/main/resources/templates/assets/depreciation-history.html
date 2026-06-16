@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html class="light" lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layouts/app}">
+<head>
+    <title>Depreciation History | JustJava FAMS</title>
+</head>
+<body>
+<main id="main-content" class="space-y-6" layout:fragment="content">
+    <!-- Page Title -->
+    <div class="flex justify-between items-end">
+        <div>
+            <h2 class="font-page-title text-page-title text-on-background">Asset Financial History</h2>
+            <p class="text-body-default text-secondary">View complete depreciation history with traceability audit trail.</p>
+        </div>
+        <a href="/assets/depreciation" class="h-[38px] px-4 bg-surface-card border border-border-default text-on-surface rounded-lg font-body-medium hover:bg-surface-canvas transition-all flex items-center gap-2">
+            <span class="material-symbols-outlined text-[18px]">arrow_back</span>
+            Back
+        </a>
+    </div>
+
+    <!-- Asset Selection -->
+    <div class="bg-surface-card border border-border-default rounded-xl card-shadow p-4">
+        <div class="flex flex-col md:flex-row gap-3 items-end">
+            <div class="flex-1">
+                <label class="block text-body-default text-on-surface font-medium mb-2">Select Asset</label>
+                <select id="assetSelect" class="w-full h-[38px] px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                    <option value="">-- Choose an asset --</option>
+                </select>
+            </div>
+            <button id="searchBtn" class="h-[38px] px-6 bg-primary text-on-primary rounded-lg font-body-medium hover:bg-brand-primary-dark transition-all flex items-center gap-2">
+                <span class="material-symbols-outlined text-[18px]">search</span>
+                Load History
+            </button>
+        </div>
+    </div>
+
+    <!-- Asset Summary Card -->
+    <div id="assetSummaryContainer" class="hidden">
+        <div class="bg-surface-card border border-border-default rounded-xl card-shadow p-5">
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                <div>
+                    <p class="text-label-small text-secondary uppercase tracking-wider mb-1">Asset Code</p>
+                    <p id="assetCodeDisplay" class="font-technical-data text-technical-data text-primary">--</p>
+                </div>
+                <div>
+                    <p class="text-label-small text-secondary uppercase tracking-wider mb-1">Asset Name</p>
+                    <p id="assetNameDisplay" class="font-body-default text-on-surface">--</p>
+                </div>
+                <div>
+                    <p class="text-label-small text-secondary uppercase tracking-wider mb-1">Original Cost</p>
+                    <p id="assetCostDisplay" class="font-technical-data text-technical-data text-on-surface">₦0.00</p>
+                </div>
+                <div>
+                    <p class="text-label-small text-secondary uppercase tracking-wider mb-1">Current Book Value</p>
+                    <p id="bookValueDisplay" class="font-technical-data text-technical-data text-primary font-bold">₦0.00</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading State -->
+    <div id="loadingContainer" class="hidden bg-surface-card border border-border-default rounded-xl card-shadow p-8 flex flex-col items-center gap-4">
+        <div class="animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent"></div>
+        <p class="text-body-default text-on-surface">Loading depreciation history...</p>
+    </div>
+
+    <!-- Empty State -->
+    <div id="emptyContainer" class="hidden bg-surface-card border border-border-default rounded-xl card-shadow p-12 flex flex-col items-center gap-4 text-center">
+        <span class="material-symbols-outlined text-[48px] text-secondary opacity-50">description</span>
+        <p class="text-body-default text-secondary">No depreciation history found for this asset.</p>
+        <p class="text-label-small text-secondary">Asset may not have depreciation configured or no periods have been processed yet.</p>
+    </div>
+
+    <!-- History Table -->
+    <div id="historyContainer" class="hidden bg-surface-card border border-border-default rounded-xl card-shadow overflow-hidden">
+        <div class="p-5 border-b border-border-default flex justify-between items-center">
+            <h3 class="font-section-header text-section-header text-on-surface">Depreciation Postings (Chronological)</h3>
+            <button id="exportBtn" class="h-[32px] px-3 bg-surface-canvas border border-border-default text-on-surface rounded-lg text-label-small font-body-medium hover:bg-surface-variant transition-all flex items-center gap-1">
+                <span class="material-symbols-outlined text-[16px]">download</span>
+                Export
+            </button>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                <tr class="bg-surface-canvas border-b border-border-default">
+                    <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Period</th>
+                    <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Method</th>
+                    <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Opening Accum. Dep.</th>
+                    <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Depreciation Charge</th>
+                    <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Closing Accum. Dep.</th>
+                    <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Book Value</th>
+                    <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Status</th>
+                </tr>
+                </thead>
+                <tbody id="historyTableBody" class="divide-y divide-border-default">
+                <!-- Populated by JavaScript -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Detail Modal -->
+    <div id="detailModal" class="hidden fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div class="bg-surface-card rounded-xl shadow-lg max-w-md w-full max-h-96 overflow-y-auto">
+            <div class="sticky top-0 p-5 border-b border-border-default bg-surface-card flex justify-between items-center">
+                <h3 class="font-section-header text-section-header text-on-surface">Depreciation Details</h3>
+                <button class="closeModalBtn text-secondary hover:text-on-surface">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div id="detailContent" class="p-5 space-y-4 text-label-small">
+                <!-- Populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert Container -->
+    <div id="alertContainer" class="fixed top-24 right-4 z-40 space-y-2 max-w-sm"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const assetSelect = document.getElementById('assetSelect');
+            const searchBtn = document.getElementById('searchBtn');
+            const loadingContainer = document.getElementById('loadingContainer');
+            const emptyContainer = document.getElementById('emptyContainer');
+            const historyContainer = document.getElementById('historyContainer');
+            const assetSummaryContainer = document.getElementById('assetSummaryContainer');
+            const historyTableBody = document.getElementById('historyTableBody');
+            const detailModal = document.getElementById('detailModal');
+            const exportBtn = document.getElementById('exportBtn');
+
+            // Load assets
+            loadAssets();
+
+            searchBtn.addEventListener('click', loadHistory);
+            exportBtn.addEventListener('click', exportHistory);
+            document.querySelectorAll('.closeModalBtn').forEach(btn => {
+                btn.addEventListener('click', () => detailModal.classList.add('hidden'));
+            });
+
+            function loadAssets() {
+                fetch('/api/assets')
+                    .then(res => res.json())
+                    .then(assets => {
+                        assetSelect.innerHTML = '<option value="">-- Choose an asset --</option>';
+                        assets.forEach(asset => {
+                            const option = document.createElement('option');
+                            option.value = asset.id;
+                            option.textContent = `${asset.assetCode} - ${asset.name}`;
+                            option.dataset.cost = asset.purchaseCost || 0;
+                            assetSelect.appendChild(option);
+                        });
+                    })
+                    .catch(err => {
+                        showAlert('Error loading assets', 'error');
+                        console.error(err);
+                    });
+            }
+
+            function loadHistory() {
+                const assetId = assetSelect.value;
+                if (!assetId) {
+                    showAlert('Please select an asset', 'error');
+                    return;
+                }
+
+                loadingContainer.classList.remove('hidden');
+                emptyContainer.classList.add('hidden');
+                historyContainer.classList.add('hidden');
+                assetSummaryContainer.classList.add('hidden');
+
+                fetch(`/api/depreciation/history/asset/${assetId}`)
+                    .then(res => res.json())
+                    .then(postings => {
+                        loadingContainer.classList.add('hidden');
+
+                        if (!postings || postings.length === 0) {
+                            emptyContainer.classList.remove('hidden');
+                            return;
+                        }
+
+                        // Display summary
+                        const latest = postings[0];
+                        document.getElementById('assetCodeDisplay').textContent = latest.assetCode;
+                        document.getElementById('assetNameDisplay').textContent = latest.assetName;
+                        document.getElementById('assetCostDisplay').textContent = '₦' + formatCurrency(latest.assetCost);
+                        document.getElementById('bookValueDisplay').textContent = '₦' + formatCurrency(latest.bookValue);
+                        assetSummaryContainer.classList.remove('hidden');
+
+                        // Populate table (reverse chronological)
+                        historyTableBody.innerHTML = '';
+                        postings.reverse().forEach((posting, index) => {
+                            const row = createHistoryRow(posting);
+                            row.addEventListener('click', () => showDetailModal(posting));
+                            historyTableBody.appendChild(row);
+                        });
+
+                        historyContainer.classList.remove('hidden');
+                    })
+                    .catch(err => {
+                        loadingContainer.classList.add('hidden');
+                        showAlert('Error loading depreciation history: ' + err.message, 'error');
+                        console.error(err);
+                    });
+            }
+
+            function createHistoryRow(posting) {
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-surface-canvas/50 transition-colors cursor-pointer';
+
+                const statusBadge = posting.fullyDepreciated
+                    ? '<span class="px-2 py-0.5 rounded-full bg-status-warning/10 text-status-warning text-badge-label">Fully Depreciated</span>'
+                    : '<span class="px-2 py-0.5 rounded-full bg-status-success/10 text-status-success text-badge-label">Active</span>';
+
+                row.innerHTML = `
+                    <td class="px-5 py-3 font-technical-data text-technical-data text-on-surface">${posting.depreciationPeriod}</td>
+                    <td class="px-5 py-3 text-body-default text-on-surface"><span class="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-badge-label">${getMethodAbbr(posting.depreciationMethod)}</span></td>
+                    <td class="px-5 py-3 font-technical-data text-on-surface">₦${formatCurrency(posting.openingAccumulatedDepreciation)}</td>
+                    <td class="px-5 py-3 font-technical-data text-error">₦${formatCurrency(posting.depreciationCharge)}</td>
+                    <td class="px-5 py-3 font-technical-data font-bold text-on-surface">₦${formatCurrency(posting.closingAccumulatedDepreciation)}</td>
+                    <td class="px-5 py-3 font-technical-data text-primary font-bold">₦${formatCurrency(posting.bookValue)}</td>
+                    <td class="px-5 py-3">${statusBadge}</td>
+                `;
+
+                return row;
+            }
+
+            function showDetailModal(posting) {
+                const content = document.getElementById('detailContent');
+                content.innerHTML = `
+                    <div>
+                        <p class="text-label-small text-secondary">Period</p>
+                        <p class="text-body-default text-on-surface font-medium">${posting.depreciationPeriod} (FY ${posting.fiscalYear})</p>
+                    </div>
+                    <div>
+                        <p class="text-label-small text-secondary">Method</p>
+                        <p class="text-body-default text-on-surface font-medium">${posting.depreciationMethod}</p>
+                    </div>
+                    <div class="border-t border-border-default pt-3">
+                        <p class="text-label-small text-secondary">Asset Cost</p>
+                        <p class="font-technical-data text-on-surface">₦${formatCurrency(posting.assetCost)}</p>
+                    </div>
+                    <div>
+                        <p class="text-label-small text-secondary">Useful Life</p>
+                        <p class="font-technical-data text-on-surface">${posting.usefulLifeYears} years</p>
+                    </div>
+                    <div>
+                        <p class="text-label-small text-secondary">Residual Value</p>
+                        <p class="font-technical-data text-on-surface">₦${formatCurrency(posting.residualValue)}</p>
+                    </div>
+                    <div class="border-t border-border-default pt-3">
+                        <p class="text-label-small text-secondary">Opening Accumulated Depreciation</p>
+                        <p class="font-technical-data text-on-surface">₦${formatCurrency(posting.openingAccumulatedDepreciation)}</p>
+                    </div>
+                    <div>
+                        <p class="text-label-small text-secondary">Depreciation Charge (This Period)</p>
+                        <p class="font-technical-data text-error font-bold">₦${formatCurrency(posting.depreciationCharge)}</p>
+                    </div>
+                    <div>
+                        <p class="text-label-small text-secondary">Closing Accumulated Depreciation</p>
+                        <p class="font-technical-data text-on-surface font-bold">₦${formatCurrency(posting.closingAccumulatedDepreciation)}</p>
+                    </div>
+                    <div>
+                        <p class="text-label-small text-secondary">Book Value (End of Period)</p>
+                        <p class="font-technical-data text-primary font-bold">₦${formatCurrency(posting.bookValue)}</p>
+                    </div>
+                    <div class="border-t border-border-default pt-3">
+                        <p class="text-label-small text-secondary">Status</p>
+                        <p class="font-technical-data text-on-surface">${posting.fullyDepreciated ? 'Fully Depreciated' : 'Active'}</p>
+                    </div>
+                    <div>
+                        <p class="text-label-small text-secondary">Posted</p>
+                        <p class="font-technical-data text-secondary">${new Date(posting.createdAt).toLocaleString()}</p>
+                    </div>
+                `;
+                detailModal.classList.remove('hidden');
+            }
+
+            function exportHistory() {
+                const assetId = assetSelect.value;
+                if (!assetId) {
+                    showAlert('Please select an asset first', 'error');
+                    return;
+                }
+
+                // Create CSV content (simplified)
+                fetch(`/api/depreciation/history/asset/${assetId}`)
+                    .then(res => res.json())
+                    .then(postings => {
+                        let csv = 'Period,Method,Opening Accumulated Depreciation,Depreciation Charge,Closing Accumulated Depreciation,Book Value,Status\n';
+                        postings.forEach(p => {
+                            csv += `${p.depreciationPeriod},${p.depreciationMethod},${p.openingAccumulatedDepreciation},${p.depreciationCharge},${p.closingAccumulatedDepreciation},${p.bookValue},"${p.fullyDepreciated ? 'Fully Depreciated' : 'Active'}"\n`;
+                        });
+
+                        const blob = new Blob([csv], {type: 'text/csv'});
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `depreciation_history_${assetId}_${new Date().getTime()}.csv`;
+                        document.body.appendChild(a);
+                        a.click();
+                        window.URL.revokeObjectURL(url);
+                        document.body.removeChild(a);
+
+                        showAlert('Depreciation history exported successfully', 'success');
+                    })
+                    .catch(err => showAlert('Error exporting history', 'error'));
+            }
+
+            function formatCurrency(value) {
+                return parseFloat(value || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            }
+
+            function getMethodAbbr(method) {
+                const map = {
+                    'STRAIGHT_LINE': 'SL',
+                    'REDUCING_BALANCE': 'RB',
+                    'DOUBLE_DECLINING_BALANCE': 'DDB'
+                };
+                return map[method] || method;
+            }
+
+            function showAlert(message, type = 'info') {
+                const container = document.getElementById('alertContainer');
+                const alert = document.createElement('div');
+                const bgColor = type === 'success' ? 'bg-status-success' : type === 'error' ? 'bg-error' : 'bg-status-info';
+
+                alert.className = `${bgColor} text-white px-4 py-3 rounded-lg shadow-md text-sm font-medium animate-fade-in`;
+                alert.textContent = message;
+
+                container.appendChild(alert);
+
+                setTimeout(() => alert.remove(), 4000);
+            }
+        });
+    </script>
+
+    <style>
+        @keyframes fade-in {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .animate-fade-in {
+            animation: fade-in 0.3s ease-out;
+        }
+    </style>
+</main>
+</body>
+</html>
+

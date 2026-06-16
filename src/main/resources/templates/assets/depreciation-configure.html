@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html class="light" lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layouts/app}">
+<head>
+    <title>Configure Depreciation | JustJava FAMS</title>
+</head>
+<body>
+<main id="main-content" class="space-y-6" layout:fragment="content">
+    <!-- Page Title -->
+    <div class="flex justify-between items-end">
+        <div>
+            <h2 class="font-page-title text-page-title text-on-background">Configure Depreciation Parameters</h2>
+            <p class="text-body-default text-secondary">Set up depreciation rules for assets or asset categories.</p>
+        </div>
+        <a href="/assets/depreciation" class="h-[38px] px-4 bg-surface-card border border-border-default text-on-surface rounded-lg font-body-medium hover:bg-surface-canvas transition-all flex items-center gap-2">
+            <span class="material-symbols-outlined text-[18px]">arrow_back</span>
+            Back
+        </a>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Form Section -->
+        <div class="lg:col-span-2 bg-surface-card border border-border-default rounded-xl card-shadow overflow-hidden">
+            <div class="p-5 border-b border-border-default">
+                <h3 class="font-section-header text-section-header text-on-surface">Set Depreciation Rules</h3>
+            </div>
+            <div class="p-6 space-y-5">
+                <!-- Configuration Type Toggle -->
+                <div class="flex gap-3 mb-6">
+                    <label class="flex items-center cursor-pointer">
+                        <input type="radio" name="configType" value="asset" class="config-type" checked>
+                        <span class="ml-2 text-body-default text-on-surface font-medium">Asset-Specific</span>
+                    </label>
+                    <label class="flex items-center cursor-pointer">
+                        <input type="radio" name="configType" value="category" class="config-type">
+                        <span class="ml-2 text-body-default text-on-surface font-medium">Category-Wide</span>
+                    </label>
+                </div>
+
+                <!-- Asset Selection (for asset-specific) -->
+                <div id="assetSection" class="form-group">
+                    <label class="block text-body-default text-on-surface font-medium mb-2">Select Asset</label>
+                    <div class="relative">
+                        <select id="assetSelect" class="w-full h-[38px] px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                            <option value="">-- Choose an asset --</option>
+                        </select>
+                        <div class="hidden absolute top-1/2 left-3 -translate-y-1/2">
+                            <div class="animate-spin rounded-full h-4 w-4 border-2 border-primary border-t-transparent"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Category Selection (for category-wide) -->
+                <div id="categorySection" class="form-group hidden">
+                    <label class="block text-body-default text-on-surface font-medium mb-2">Select Category</label>
+                    <select id="categorySelect" class="w-full h-[38px] px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                        <option value="">-- Choose a category --</option>
+                        <option value="IT Equipment">IT Equipment</option>
+                        <option value="Vehicles">Vehicles</option>
+                        <option value="Furniture">Furniture</option>
+                        <option value="Machinery">Machinery</option>
+                        <option value="Buildings">Buildings</option>
+                    </select>
+                </div>
+
+                <!-- Depreciation Method -->
+                <div class="form-group">
+                    <label class="block text-body-default text-on-surface font-medium mb-2">Depreciation Method</label>
+                    <select id="methodSelect" class="w-full h-[38px] px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                        <option value="">-- Choose method --</option>
+                        <option value="STRAIGHT_LINE">Straight-Line (SL)</option>
+                        <option value="REDUCING_BALANCE">Reducing Balance (RB)</option>
+                        <option value="DOUBLE_DECLINING_BALANCE">Double Declining Balance (DDB)</option>
+                    </select>
+                </div>
+
+                <!-- Useful Life Years -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="form-group">
+                        <label class="block text-body-default text-on-surface font-medium mb-2">Useful Life (Years)</label>
+                        <input id="usefulLifeInput" type="number" min="1" max="100" class="w-full h-[38px] px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none" placeholder="e.g., 5">
+                    </div>
+
+                    <!-- Residual Value -->
+                    <div class="form-group">
+                        <label class="block text-body-default text-on-surface font-medium mb-2">Residual Value (₦)</label>
+                        <input id="residualValueInput" type="number" min="0" step="0.01" class="w-full h-[38px] px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none" placeholder="0.00">
+                    </div>
+                </div>
+
+                <!-- Effective From Date -->
+                <div class="form-group">
+                    <label class="block text-body-default text-on-surface font-medium mb-2">Effective From Date</label>
+                    <input id="effectiveFromInput" type="date" class="w-full h-[38px] px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                    <p class="text-label-small text-secondary mt-1">Leave empty for today's date</p>
+                </div>
+
+                <!-- Description -->
+                <div class="form-group">
+                    <label class="block text-body-default text-on-surface font-medium mb-2">Notes</label>
+                    <textarea id="notesInput" class="w-full h-24 px-3 py-2 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none" placeholder="Add any relevant depreciation notes or reasons for this configuration..."></textarea>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex gap-3 pt-4 border-t border-border-default">
+                    <button id="saveBtn" class="flex-1 h-[38px] bg-primary text-on-primary rounded-lg font-body-medium hover:bg-brand-primary-dark transition-all flex items-center justify-center gap-2 disabled:opacity-50">
+                        <span class="material-symbols-outlined text-[18px]">check</span>
+                        Save Configuration
+                    </button>
+                    <button id="cancelBtn" class="flex-1 h-[38px] bg-surface-canvas border border-border-default text-on-surface rounded-lg font-body-medium hover:bg-surface-variant transition-all">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Information Panel -->
+        <div class="space-y-4">
+            <!-- Methods Info Card -->
+            <div class="bg-surface-card border border-border-default rounded-xl card-shadow overflow-hidden">
+                <div class="p-4 border-b border-border-default bg-primary/5">
+                    <h4 class="font-card-header text-card-header text-on-surface flex items-center gap-2">
+                        <span class="material-symbols-outlined text-primary">info</span>
+                        Depreciation Methods
+                    </h4>
+                </div>
+                <div class="p-4 space-y-3">
+                    <div>
+                        <p class="font-body-medium text-on-surface">Straight-Line (SL)</p>
+                        <p class="text-label-small text-secondary mt-1">Equal depreciation each year. Most common.</p>
+                    </div>
+                    <div class="pt-2 border-t border-border-default">
+                        <p class="font-body-medium text-on-surface">Reducing Balance (RB)</p>
+                        <p class="text-label-small text-secondary mt-1">Higher depreciation early, reducing over time.</p>
+                    </div>
+                    <div class="pt-2 border-t border-border-default">
+                        <p class="font-body-medium text-on-surface">Double Declining (DDB)</p>
+                        <p class="text-label-small text-secondary mt-1">Accelerated method, double the SL rate.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Guidelines Card -->
+            <div class="bg-surface-card border border-border-default rounded-xl card-shadow overflow-hidden">
+                <div class="p-4 border-b border-border-default bg-status-info/5">
+                    <h4 class="font-card-header text-card-header text-on-surface flex items-center gap-2">
+                        <span class="material-symbols-outlined text-status-info">help</span>
+                        Guidelines
+                    </h4>
+                </div>
+                <div class="p-4 space-y-2 text-label-small text-secondary">
+                    <p>• Useful life should match your industry standards</p>
+                    <p>• Set residual value only if asset has salvage value</p>
+                    <p>• Future-dated changes take effect on specified date</p>
+                    <p>• Previous configurations remain in history</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div id="loadingOverlay" class="hidden fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50">
+        <div class="bg-surface-card rounded-xl p-8 flex flex-col items-center gap-4 shadow-lg">
+            <div class="animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent"></div>
+            <p class="text-body-default text-on-surface">Processing your configuration...</p>
+        </div>
+    </div>
+
+    <!-- Alert Notifications -->
+    <div id="alertContainer" class="fixed top-24 right-4 z-40 space-y-2 max-w-sm"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const configTypeRadios = document.querySelectorAll('.config-type');
+            const assetSection = document.getElementById('assetSection');
+            const categorySection = document.getElementById('categorySection');
+            const saveBtn = document.getElementById('saveBtn');
+            const cancelBtn = document.getElementById('cancelBtn');
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            const assetSelect = document.getElementById('assetSelect');
+
+            // Toggle sections based on configuration type
+            configTypeRadios.forEach(radio => {
+                radio.addEventListener('change', (e) => {
+                    if (e.target.value === 'asset') {
+                        assetSection.classList.remove('hidden');
+                        categorySection.classList.add('hidden');
+                        loadAssets();
+                    } else {
+                        assetSection.classList.add('hidden');
+                        categorySection.classList.remove('hidden');
+                    }
+                });
+            });
+
+            // Load assets on page load
+            loadAssets();
+
+            // Cancel button
+            cancelBtn.addEventListener('click', () => {
+                window.location.href = '/assets/depreciation';
+            });
+
+            // Save configuration
+            saveBtn.addEventListener('click', saveConfiguration);
+
+            function loadAssets() {
+                fetch('/api/assets')
+                    .then(res => res.json())
+                    .then(assets => {
+                        assetSelect.innerHTML = '<option value="">-- Choose an asset --</option>';
+                        assets.forEach(asset => {
+                            const option = document.createElement('option');
+                            option.value = asset.id;
+                            option.textContent = `${asset.assetCode} - ${asset.name}`;
+                            assetSelect.appendChild(option);
+                        });
+                    })
+                    .catch(err => {
+                        showAlert('Error loading assets', 'error');
+                        console.error('Error:', err);
+                    });
+            }
+
+            function saveConfiguration() {
+                const configType = document.querySelector('.config-type:checked').value;
+                const method = document.getElementById('methodSelect').value;
+                const usefulLife = document.getElementById('usefulLifeInput').value;
+                const residualValue = document.getElementById('residualValueInput').value;
+                const effectiveFrom = document.getElementById('effectiveFromInput').value;
+
+                // Validation
+                if (!method) {
+                    showAlert('Please select a depreciation method', 'error');
+                    return;
+                }
+                if (!usefulLife || usefulLife <= 0) {
+                    showAlert('Please enter a valid useful life in years', 'error');
+                    return;
+                }
+
+                loadingOverlay.classList.remove('hidden');
+
+                const parameters = {
+                    method: method,
+                    usefulLifeYears: parseInt(usefulLife),
+                    residualValue: residualValue ? parseFloat(residualValue) : 0,
+                    effectiveFromDate: effectiveFrom || new Date().toISOString().split('T')[0]
+                };
+
+                let url, body;
+                if (configType === 'asset') {
+                    const assetId = document.getElementById('assetSelect').value;
+                    if (!assetId) {
+                        showAlert('Please select an asset', 'error');
+                        loadingOverlay.classList.add('hidden');
+                        return;
+                    }
+                    url = `/api/depreciation/configure/asset/${assetId}`;
+                    body = parameters;
+                } else {
+                    const category = document.getElementById('categorySelect').value;
+                    if (!category) {
+                        showAlert('Please select a category', 'error');
+                        loadingOverlay.classList.add('hidden');
+                        return;
+                    }
+                    url = `/api/depreciation/configure/category`;
+                    parameters.category = category;
+                    body = parameters;
+                }
+
+                fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(body)
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                        loadingOverlay.classList.add('hidden');
+                        if (data.success) {
+                            showAlert('Configuration saved successfully!', 'success');
+                            setTimeout(() => {
+                                window.location.href = '/assets/depreciation';
+                            }, 1500);
+                        } else {
+                            showAlert(data.message || 'Error saving configuration', 'error');
+                        }
+                    })
+                    .catch(err => {
+                        loadingOverlay.classList.add('hidden');
+                        showAlert('Error saving configuration: ' + err.message, 'error');
+                        console.error('Error:', err);
+                    });
+            }
+
+            function showAlert(message, type = 'info') {
+                const container = document.getElementById('alertContainer');
+                const alert = document.createElement('div');
+                const bgColor = type === 'success' ? 'bg-status-success' : type === 'error' ? 'bg-error' : 'bg-status-info';
+                const textColor = 'text-white';
+
+                alert.className = `${bgColor} ${textColor} px-4 py-3 rounded-lg shadow-md text-sm font-medium animate-fade-in`;
+                alert.textContent = message;
+
+                container.appendChild(alert);
+
+                setTimeout(() => {
+                    alert.remove();
+                }, 4000);
+            }
+        });
+    </script>
+
+    <style>
+        @keyframes fade-in {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .animate-fade-in {
+            animation: fade-in 0.3s ease-out;
+        }
+    </style>
+</main>
+</body>
+</html>
+

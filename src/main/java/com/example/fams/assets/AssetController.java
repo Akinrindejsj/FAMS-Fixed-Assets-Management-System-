@@ -2,10 +2,7 @@ package com.example.fams.assets;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -56,5 +53,12 @@ public class AssetController {
         Asset savedAsset = assetService.create(asset, image);
         redirectAttributes.addFlashAttribute("successMessage", savedAsset.getAssetCode() + " was registered successfully.");
         return "redirect:/assets";
+    }
+
+    // REST API endpoint for getting all assets as JSON
+    @GetMapping("/api/assets")
+    @ResponseBody
+    public List<Asset> getAssetsJson() {
+        return assetService.findAll();
     }
 }

@@ -46,6 +46,21 @@ public class PageController {
         return "assets/depreciation-management";
     }
 
+    @GetMapping("/assets/depreciation/configure")
+    public String depreciationConfigure() {
+        return "assets/depreciation-configure";
+    }
+
+    @GetMapping("/assets/depreciation/history")
+    public String depreciationHistory() {
+        return "assets/depreciation-history";
+    }
+
+    @GetMapping("/assets/depreciation/run")
+    public String depreciationRun() {
+        return "assets/depreciation-run";
+    }
+
     @GetMapping("/audit")
     public String auditManagement() {
         return "audit/audit-management";
