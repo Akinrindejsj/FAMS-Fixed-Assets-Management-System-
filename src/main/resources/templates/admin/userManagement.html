@@ -2,7 +2,6 @@
 <html class="light" lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layouts/admin-layout}">
 <head>
     <title>User Management | JustJava FAMS</title>
-    <!-- Keep the same scripts and styles, but adapt to dashboard -->
     <style>
         /* Additional overrides and animations – keep but blend with dashboard */
         .form-field {
@@ -61,6 +60,70 @@
         @keyframes toastIn { from { opacity:0; transform:translateY(12px) scale(0.95); } to { opacity:1; transform:translateY(0) scale(1); } }
         @keyframes toastOut { from { opacity:1; transform:translateY(0); } to { opacity:0; transform:translateY(-8px); } }
         @keyframes shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-6px)} 40%{transform:translateX(6px)} 60%{transform:translateX(-4px)} 80%{transform:translateX(4px)} }
+
+        /* ── Improved search bar styles ── */
+        .search-pill {
+            background: #f2f4f6;
+            border: 1.5px solid #e2e4e8;
+            border-radius: 9999px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.25rem 0.5rem 0.25rem 1rem;
+            width: 100%;
+            max-width: 280px;
+        }
+        .search-pill:focus-within {
+            border-color: #98001a;
+            background: #ffffff;
+            box-shadow: 0 0 0 3px rgba(152,0,26,0.15);
+        }
+        .search-pill input {
+            background: transparent;
+            border: none;
+            outline: none;
+            flex: 1;
+            font-size: 0.875rem;
+            padding: 0.4rem 0;
+            color: #151b29;
+            min-width: 100px;
+        }
+        .search-pill input::placeholder { color: #8a8fa6; }
+        .search-pill .clear-btn {
+            display: none;
+            background: none;
+            border: none;
+            color: #8a8fa6;
+            cursor: pointer;
+            padding: 0.2rem 0.4rem;
+            border-radius: 50%;
+            transition: all 0.2s;
+            font-size: 1rem;
+            line-height: 1;
+        }
+        .search-pill .clear-btn:hover {
+            background: #e2e4e8;
+            color: #151b29;
+        }
+        .search-pill .clear-btn.visible { display: block; }
+        .search-pill .search-icon {
+            color: #8a8fa6;
+            font-size: 1.2rem;
+        }
+        .search-pill:focus-within .search-icon { color: #98001a; }
+        .result-count-badge {
+            font-size: 0.65rem;
+            background: #e2e4e8;
+            color: #5d5e65;
+            padding: 0.15rem 0.6rem;
+            border-radius: 9999px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        @media (max-width: 640px) {
+            .search-pill { max-width: 100%; }
+        }
     </style>
 </head>
 <body>
@@ -150,7 +213,16 @@
                     <a th:href="@{/admin/users}" class="hover:text-error ml-0.5"><span class="material-symbols-outlined text-[13px]">close</span></a>
                 </span>
             </div>
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-3">
+                <!-- Improved search bar -->
+                <div class="search-pill">
+                    <span class="material-symbols-outlined search-icon">search</span>
+                    <input type="text" id="tableSearch" placeholder="Filter users…" aria-label="Filter users">
+                    <button id="clearSearchBtn" class="clear-btn" aria-label="Clear search">
+                        <span class="material-symbols-outlined" style="font-size:1rem;">close</span>
+                    </button>
+                    <span id="resultCountBadge" class="result-count-badge" style="display:none;">0</span>
+                </div>
                 <form th:action="@{/admin/users}" method="get" class="md:hidden flex items-center gap-2">
                     <input type="hidden" name="page" value="0"/>
                     <input type="text" name="search" th:value="${search}" placeholder="Search…" class="form-field text-xs py-1.5 px-3 rounded-full w-36">
@@ -162,7 +234,7 @@
             </div>
         </div>
         <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse min-w-[760px]">
+            <table class="w-full text-left border-collapse min-w-[760px]" id="userTable">
                 <thead>
                 <tr class="bg-surface-canvas border-b border-border-default">
                     <th class="px-6 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">User</th>
@@ -172,7 +244,7 @@
                     <th class="px-6 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider text-right">Actions</th>
                 </tr>
                 </thead>
-                <tbody class="divide-y divide-border-default">
+                <tbody class="divide-y divide-border-default" id="userTableBody">
                 <tr th:each="user : ${users}" class="hover:bg-surface-canvas/50 group cursor-default">
                     <td class="px-6 py-4">
                         <div class="flex items-center gap-3">
@@ -181,14 +253,14 @@
                                       th:text="${(user.firstName != null and !#strings.isEmpty(user.firstName) ? #strings.toUpperCase(#strings.substring(user.firstName,0,1)) : #strings.toUpperCase(#strings.substring(user.username,0,1))) + (user.lastName != null and !#strings.isEmpty(user.lastName) ? #strings.toUpperCase(#strings.substring(user.lastName,0,1)) : '')}">??</span>
                             </div>
                             <div>
-                                <p class="font-body-medium text-sm text-on-surface" th:text="${(user.firstName != null ? user.firstName : '') + ' ' + (user.lastName != null ? user.lastName : '')}">Full Name</p>
+                                <p class="font-body-medium text-sm text-on-surface user-fullname" th:text="${(user.firstName != null ? user.firstName : '') + ' ' + (user.lastName != null ? user.lastName : '')}">Full Name</p>
                                 <p class="text-[10px] text-secondary/60 font-mono" th:text="${'ID: ' + #strings.substring(user.id,0,8) + '…'}">ID: …</p>
                             </div>
                         </div>
                     </td>
-                    <td class="px-6 py-4 text-body-default text-secondary" th:text="${user.email != null ? user.email : '—'}">—</td>
+                    <td class="px-6 py-4 text-body-default text-secondary user-email" th:text="${user.email != null ? user.email : '—'}">—</td>
                     <td class="px-6 py-4">
-                        <span class="text-xs font-mono bg-surface-canvas px-2 py-1 rounded-lg text-secondary" th:text="${user.username}">username</span>
+                        <span class="text-xs font-mono bg-surface-canvas px-2 py-1 rounded-lg text-secondary user-username" th:text="${user.username}">username</span>
                     </td>
                     <td class="px-6 py-4">
                         <div th:if="${user.enabled == true}" class="flex items-center gap-2">
@@ -539,7 +611,7 @@
         </div>
     </div>
 
-    <!-- ════════════════ SCRIPTS (kept exactly as original) ════════════════ -->
+    <!-- ════════════════ SCRIPTS ════════════════ -->
     <script>
         // ── Toast ──
         function showToast(msg,type='success'){
@@ -685,6 +757,68 @@
             if(!document.getElementById('createUserModal').classList.contains('hidden'))closeCreateModal();
             else if(!document.getElementById('manageModal').classList.contains('hidden'))closeManageModal();
             else if(!document.getElementById('groupsModal').classList.contains('hidden'))closeGroupsModal();
+        });
+
+        // ── LIVE TABLE SEARCH WITH ENHANCED STYLING ──
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('tableSearch');
+            const clearBtn = document.getElementById('clearSearchBtn');
+            const resultBadge = document.getElementById('resultCountBadge');
+            const tableBody = document.getElementById('userTableBody');
+            const rows = tableBody ? tableBody.querySelectorAll('tr') : [];
+
+            function updateFilter() {
+                const query = searchInput.value.toLowerCase().trim();
+                let visibleCount = 0;
+
+                rows.forEach(row => {
+                    if (row.querySelector('td[colspan]')) return;
+
+                    const fullName = row.querySelector('.user-fullname')?.textContent?.toLowerCase() || '';
+                    const email = row.querySelector('.user-email')?.textContent?.toLowerCase() || '';
+                    const username = row.querySelector('.user-username')?.textContent?.toLowerCase() || '';
+
+                    const match = !query || fullName.includes(query) || email.includes(query) || username.includes(query);
+                    row.style.display = match ? '' : 'none';
+                    if (match) visibleCount++;
+                });
+
+                // Show/hide clear button
+                clearBtn.classList.toggle('visible', query.length > 0);
+
+                // Show/hide result count badge
+                if (query && rows.length > 0) {
+                    resultBadge.style.display = 'inline';
+                    resultBadge.textContent = visibleCount;
+                } else {
+                    resultBadge.style.display = 'none';
+                }
+
+                // Handle the "no results" row (server-side placeholder)
+                const noRowsMsg = tableBody?.querySelector('tr td[colspan]')?.closest('tr');
+                if (noRowsMsg) {
+                    // Only show the "no results" row if there are actual rows and none are visible, or if there are no rows at all
+                    const actualRows = rows.length > 1; // more than just the no-results row
+                    if (actualRows) {
+                        noRowsMsg.style.display = visibleCount === 0 ? '' : 'none';
+                    } else {
+                        noRowsMsg.style.display = '';
+                    }
+                }
+            }
+
+            // Clear button
+            clearBtn.addEventListener('click', function() {
+                searchInput.value = '';
+                searchInput.focus();
+                updateFilter();
+            });
+
+            // Input event
+            searchInput.addEventListener('input', updateFilter);
+
+            // Initial run
+            updateFilter();
         });
     </script>
 
