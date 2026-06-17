@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html class="light" lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layouts/admin-layout}">
+<head>
+    <title>System Settings | JustJava FAMS</title>
+    <style>
+        .settings-grid {
+            grid-template-columns: minmax(0, 1.4fr) minmax(360px, 0.8fr);
+        }
+
+        @media (max-width: 1180px) {
+            .settings-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+<main id="main-content" class="space-y-6" layout:fragment="content">
+
+    <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
+        <div>
+            <h2 class="font-page-title text-page-title text-on-background">System Settings</h2>
+            <p class="text-body-default text-secondary mt-1">Configure organization-wide asset categories, defaults, and operating rules.</p>
+        </div>
+        <span class="inline-flex items-center gap-2 h-10 px-4 bg-surface-card border border-border-default rounded-xl text-body-medium text-on-surface card-shadow">
+            <span class="material-symbols-outlined text-primary text-[20px]">admin_panel_settings</span>
+            Administrator controls
+        </span>
+    </div>
+
+    <div th:if="${successMessage}" class="bg-status-success/10 text-status-success border border-status-success/20 rounded-xl px-4 py-3 flex items-start gap-3">
+        <span class="material-symbols-outlined text-[20px] mt-0.5">check_circle</span>
+        <p class="text-body-default" th:text="${successMessage}">Settings saved.</p>
+    </div>
+    <div th:if="${errorMessage}" class="bg-error-container text-on-error-container border border-error/20 rounded-xl px-4 py-3 flex items-start gap-3">
+        <span class="material-symbols-outlined text-[20px] mt-0.5">error</span>
+        <p class="text-body-default" th:text="${errorMessage}">Unable to save settings.</p>
+    </div>
+
+    <div class="grid settings-grid gap-6">
+        <section class="bg-surface-card rounded-2xl card-shadow border border-border-default overflow-hidden">
+            <div class="p-5 border-b border-border-default flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                    <h3 class="font-section-header text-section-header text-on-surface">Asset Categories</h3>
+                    <p class="text-label-small text-secondary mt-1">Category defaults guide registration, depreciation setup, and asset behavior.</p>
+                </div>
+                <span class="px-2.5 py-1 bg-surface-canvas border border-border-default rounded-full text-badge-label font-badge-label text-secondary"
+                      th:text="${#lists.size(categories)} + ' configured'">0 configured</span>
+            </div>
+
+            <div th:if="${#lists.isEmpty(categories)}" class="p-10 text-center">
+                <div class="w-14 h-14 mx-auto rounded-2xl bg-brand-primary-light text-primary flex items-center justify-center">
+                    <span class="material-symbols-outlined text-[30px]">category</span>
+                </div>
+                <h4 class="font-card-header text-card-header text-on-surface mt-4">No categories configured</h4>
+                <p class="text-body-default text-secondary mt-1 max-w-md mx-auto">Create the first category to make asset registration consistent across departments.</p>
+            </div>
+
+            <div th:if="${!#lists.isEmpty(categories)}" class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                    <tr class="bg-surface-canvas border-b border-border-default">
+                        <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase">Category</th>
+                        <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase">Defaults</th>
+                        <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase">Status</th>
+                        <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase text-right">Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody class="divide-y divide-border-default">
+                    <tr th:each="category : ${categories}" class="hover:bg-surface-canvas/50 transition-colors">
+                        <td class="px-5 py-4 align-top">
+                            <div class="flex items-start gap-3">
+                                <div class="w-10 h-10 rounded-xl bg-brand-primary-light text-primary flex items-center justify-center shrink-0">
+                                    <span class="material-symbols-outlined">inventory_2</span>
+                                </div>
+                                <div>
+                                    <p class="font-body-medium text-on-surface" th:text="${category.name}">IT Equipment</p>
+                                    <p class="text-label-small text-secondary mt-0.5">
+                                        <span class="font-technical-data" th:text="${category.code}">IT</span>
+                                        <span th:if="${category.description != null && !category.description.isBlank()}" th:text="' / ' + ${category.description}"> / Description</span>
+                                    </p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-5 py-4 align-top">
+                            <p class="text-body-default text-on-surface">
+                                <span th:text="${category.defaultUsefulLifeYears}">4</span> years
+                                <span class="text-secondary">/</span>
+                                <span th:text="${category.defaultDepreciationMethod}">SL</span>
+                            </p>
+                            <p class="text-label-small text-secondary">
+                                Residual <span th:text="${category.defaultResidualRate}">0</span>%,
+                                status <span th:text="${category.defaultStatus}">In Stock</span>
+                            </p>
+                        </td>
+                        <td class="px-5 py-4 align-top">
+                            <span th:if="${category.active}" class="px-2 py-0.5 bg-status-success/10 text-status-success rounded-full text-badge-label font-badge-label">ACTIVE</span>
+                            <span th:unless="${category.active}" class="px-2 py-0.5 bg-surface-canvas text-secondary rounded-full text-badge-label font-badge-label">INACTIVE</span>
+                        </td>
+                        <td class="px-5 py-4 align-top">
+                            <div class="flex items-center justify-end gap-2">
+                                <button type="button"
+                                        class="edit-category h-9 w-9 rounded-lg border border-border-default hover:bg-surface-canvas text-secondary hover:text-primary flex items-center justify-center"
+                                        th:data-id="${category.id}"
+                                        th:data-name="${category.name}"
+                                        th:data-code="${category.code}"
+                                        th:data-description="${category.description}"
+                                        th:data-life="${category.defaultUsefulLifeYears}"
+                                        th:data-residual="${category.defaultResidualRate}"
+                                        th:data-method="${category.defaultDepreciationMethod}"
+                                        th:data-status="${category.defaultStatus}"
+                                        th:data-active="${category.active}"
+                                        title="Edit category">
+                                    <span class="material-symbols-outlined text-[19px]">edit</span>
+                                </button>
+                                <form th:action="@{'/admin/settings/categories/' + ${category.id} + '/delete'}" method="post" class="settings-submit inline"
+                                      onsubmit="return confirm('Delete this category? This will be blocked if assets use it.');">
+                                    <button type="submit" class="h-9 w-9 rounded-lg border border-border-default hover:bg-error-container text-secondary hover:text-error flex items-center justify-center" title="Delete category">
+                                        <span class="material-symbols-outlined text-[19px]">delete</span>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <aside class="space-y-6">
+            <section class="bg-surface-card rounded-2xl card-shadow border border-border-default overflow-hidden">
+                <div class="p-5 border-b border-border-default flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary text-[22px]">add_circle</span>
+                    <h3 id="categoryFormTitle" class="font-card-header text-card-header text-on-surface">Create Category</h3>
+                </div>
+                <form id="categoryForm" th:action="@{/admin/settings/categories}" method="post" class="settings-submit p-5 space-y-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="space-y-1.5">
+                            <label for="categoryName" class="font-label-small text-label-small text-secondary">Name</label>
+                            <input id="categoryName" name="name" required maxlength="120" placeholder="IT Equipment"
+                                   class="w-full h-11 px-4 bg-surface-canvas border border-border-default rounded-xl text-body-default focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                        </div>
+                        <div class="space-y-1.5">
+                            <label for="categoryCode" class="font-label-small text-label-small text-secondary">Code</label>
+                            <input id="categoryCode" name="code" required maxlength="24" placeholder="IT"
+                                   class="w-full h-11 px-4 bg-surface-canvas border border-border-default rounded-xl font-technical-data uppercase focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                        </div>
+                    </div>
+                    <div class="space-y-1.5">
+                        <label for="categoryDescription" class="font-label-small text-label-small text-secondary">Description</label>
+                        <textarea id="categoryDescription" name="description" rows="3" maxlength="500" placeholder="What belongs in this category..."
+                                  class="w-full px-4 py-3 bg-surface-canvas border border-border-default rounded-xl text-body-default focus:ring-2 focus:ring-primary focus:border-primary outline-none resize-y"></textarea>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="space-y-1.5">
+                            <label for="usefulLife" class="font-label-small text-label-small text-secondary">Useful life (years)</label>
+                            <input id="usefulLife" name="defaultUsefulLifeYears" type="number" min="1" max="100" value="4" required
+                                   class="w-full h-11 px-4 bg-surface-canvas border border-border-default rounded-xl font-technical-data focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                        </div>
+                        <div class="space-y-1.5">
+                            <label for="residualRate" class="font-label-small text-label-small text-secondary">Residual rate (%)</label>
+                            <input id="residualRate" name="defaultResidualRate" type="number" min="0" max="100" step="0.01" value="0" required
+                                   class="w-full h-11 px-4 bg-surface-canvas border border-border-default rounded-xl font-technical-data focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="space-y-1.5">
+                            <label for="depreciationMethod" class="font-label-small text-label-small text-secondary">Depreciation method</label>
+                            <select id="depreciationMethod" name="defaultDepreciationMethod" required
+                                    class="w-full h-11 px-4 bg-surface-canvas border border-border-default rounded-xl focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                                <option value="SL">Straight-Line</option>
+                                <option value="RB">Reducing Balance</option>
+                                <option value="DDB">Double Declining</option>
+                            </select>
+                        </div>
+                        <div class="space-y-1.5">
+                            <label for="defaultStatus" class="font-label-small text-label-small text-secondary">Default status</label>
+                            <select id="defaultStatus" name="defaultStatus" required
+                                    class="w-full h-11 px-4 bg-surface-canvas border border-border-default rounded-xl focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                                <option value="In Stock">In Stock</option>
+                                <option value="Assigned">Assigned</option>
+                                <option value="Maintenance">Maintenance</option>
+                            </select>
+                        </div>
+                    </div>
+                    <label class="flex items-center gap-3 p-3 bg-surface-canvas rounded-xl border border-border-default cursor-pointer">
+                        <input id="categoryActive" type="checkbox" name="active" value="true" checked class="text-primary focus:ring-primary rounded">
+                        <span class="text-body-default text-on-surface">Available during asset registration</span>
+                    </label>
+                    <div class="flex gap-3 pt-2">
+                        <button id="cancelEdit" type="button" class="hidden h-11 px-4 border border-border-default text-on-surface rounded-xl hover:bg-surface-canvas transition-colors">Cancel</button>
+                        <button type="submit" class="flex-1 h-11 bg-primary text-on-primary rounded-xl hover:bg-brand-primary-dark transition-colors font-body-medium flex items-center justify-center gap-2">
+                            <span class="material-symbols-outlined text-[19px]">save</span>
+                            <span id="categorySubmitLabel">Save Category</span>
+                        </button>
+                    </div>
+                </form>
+            </section>
+
+            <section class="bg-surface-card rounded-2xl card-shadow border border-border-default overflow-hidden">
+                <div class="p-5 border-b border-border-default flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary text-[22px]">tune</span>
+                    <h3 class="font-card-header text-card-header text-on-surface">Global Parameters</h3>
+                </div>
+                <form th:action="@{/admin/settings/parameters}" method="post" class="settings-submit p-5 space-y-4">
+                    <div th:each="parameter : ${systemParameters}" class="space-y-1.5">
+                        <label th:for="${parameter.keyName}" class="font-label-small text-label-small text-secondary" th:text="${parameter.label}">Parameter</label>
+
+                        <input th:if="${parameter.keyName == 'asset.code.prefix'}" th:id="${parameter.keyName}" th:name="${parameter.keyName}" th:value="${parameter.value}" maxlength="12" required
+                               class="w-full h-11 px-4 bg-surface-canvas border border-border-default rounded-xl font-technical-data uppercase focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+
+                        <select th:if="${parameter.keyName == 'asset.default.status'}" th:id="${parameter.keyName}" th:name="${parameter.keyName}"
+                                class="w-full h-11 px-4 bg-surface-canvas border border-border-default rounded-xl focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                            <option value="In Stock" th:selected="${parameter.value == 'In Stock'}">In Stock</option>
+                            <option value="Assigned" th:selected="${parameter.value == 'Assigned'}">Assigned</option>
+                            <option value="Maintenance" th:selected="${parameter.value == 'Maintenance'}">Maintenance</option>
+                        </select>
+
+                        <select th:if="${parameter.keyName == 'asset.tag.type'}" th:id="${parameter.keyName}" th:name="${parameter.keyName}"
+                                class="w-full h-11 px-4 bg-surface-canvas border border-border-default rounded-xl focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                            <option value="QR_AND_BARCODE" th:selected="${parameter.value == 'QR_AND_BARCODE'}">QR and barcode</option>
+                            <option value="QR_ONLY" th:selected="${parameter.value == 'QR_ONLY'}">QR only</option>
+                            <option value="BARCODE_ONLY" th:selected="${parameter.value == 'BARCODE_ONLY'}">Barcode only</option>
+                        </select>
+
+                        <select th:if="${parameter.keyName == 'asset.require.image' || parameter.keyName == 'asset.disposal.requires.approval'}"
+                                th:id="${parameter.keyName}" th:name="${parameter.keyName}"
+                                class="w-full h-11 px-4 bg-surface-canvas border border-border-default rounded-xl focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                            <option value="true" th:selected="${parameter.value == 'true'}">Enabled</option>
+                            <option value="false" th:selected="${parameter.value == 'false'}">Disabled</option>
+                        </select>
+
+                        <p class="text-label-small text-secondary" th:text="${parameter.description}">Description</p>
+                    </div>
+                    <button type="submit" class="w-full h-11 bg-primary text-on-primary rounded-xl hover:bg-brand-primary-dark transition-colors font-body-medium flex items-center justify-center gap-2">
+                        <span class="material-symbols-outlined text-[19px]">published_with_changes</span>
+                        Update Parameters
+                    </button>
+                </form>
+            </section>
+        </aside>
+    </div>
+
+    <div id="settings-loader" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center z-[100]">
+        <div class="bg-surface-card border border-border-default rounded-2xl card-shadow px-8 py-6 flex items-center gap-5 max-w-xs w-full">
+            <span class="w-9 h-9 rounded-full border-4 border-primary/20 border-t-primary animate-spin"></span>
+            <div>
+                <p class="font-body-medium text-on-surface">Saving settings...</p>
+                <p class="text-label-small text-secondary">Please wait</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('categoryForm');
+        const title = document.getElementById('categoryFormTitle');
+        const submitLabel = document.getElementById('categorySubmitLabel');
+        const cancelEdit = document.getElementById('cancelEdit');
+        const defaultAction = form.action;
+
+        document.querySelectorAll('.edit-category').forEach((button) => {
+            button.addEventListener('click', () => {
+                form.action = `/admin/settings/categories/${button.dataset.id}`;
+                title.textContent = 'Edit Category';
+                submitLabel.textContent = 'Update Category';
+                cancelEdit.classList.remove('hidden');
+                document.getElementById('categoryName').value = button.dataset.name || '';
+                document.getElementById('categoryCode').value = button.dataset.code || '';
+                document.getElementById('categoryDescription').value = button.dataset.description || '';
+                document.getElementById('usefulLife').value = button.dataset.life || '4';
+                document.getElementById('residualRate').value = button.dataset.residual || '0';
+                document.getElementById('depreciationMethod').value = button.dataset.method || 'SL';
+                document.getElementById('defaultStatus').value = button.dataset.status || 'In Stock';
+                document.getElementById('categoryActive').checked = button.dataset.active === 'true';
+                form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            });
+        });
+
+        cancelEdit.addEventListener('click', () => {
+            form.action = defaultAction;
+            form.reset();
+            title.textContent = 'Create Category';
+            submitLabel.textContent = 'Save Category';
+            cancelEdit.classList.add('hidden');
+        });
+
+        document.querySelectorAll('.settings-submit').forEach((settingsForm) => {
+            settingsForm.addEventListener('submit', () => {
+                const loader = document.getElementById('settings-loader');
+                loader.classList.remove('hidden');
+                loader.classList.add('flex');
+            });
+        });
+    </script>
+</main>
+</body>
+</html>

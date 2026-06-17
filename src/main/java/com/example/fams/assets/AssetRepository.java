@@ -7,4 +7,6 @@ import java.util.List;
 public interface AssetRepository extends JpaRepository<Asset, Long> {
 
     List<Asset> findAllByOrderByCreatedAtDesc();
+
+    long countByCategoryIgnoreCase(String category);
 }

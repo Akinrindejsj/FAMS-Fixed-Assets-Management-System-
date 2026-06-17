@@ -1,6 +1,9 @@
 package com.example.fams.admin;
 
 import com.example.fams.aau.keycloak.KeycloakAdminService;
+import com.example.fams.core.config.AuthenticationManager;
+import com.example.fams.settings.AdminSettingsService;
+import com.example.fams.settings.AssetCategory;
 import jakarta.servlet.http.HttpServletRequest;
 import org.keycloak.representations.idm.GroupRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
@@ -24,6 +27,12 @@ public class AdminController {
     @Autowired
     KeycloakAdminService keycloakAdminService;
 
+    @Autowired
+    AdminSettingsService adminSettingsService;
+
+    @Autowired
+    AuthenticationManager authenticationManager;
+
     /** Primary realm this admin panel operates on. */
     @Value("fams")
     private String realmName;
@@ -34,6 +43,79 @@ public class AdminController {
     @GetMapping("/dashboard")
     public String adminDashboard() {
         return "admin/dashboard";
+    }
+
+    @GetMapping("/settings")
+    public String settings(Model model, RedirectAttributes ra) {
+        if (!isAdmin()) {
+            ra.addFlashAttribute("errorMessage", "Only administrators can manage system settings.");
+            return "redirect:/dashboard";
+        }
+        adminSettingsService.ensureDefaults();
+        model.addAttribute("categories", adminSettingsService.findAllCategories());
+        model.addAttribute("systemParameters", adminSettingsService.findSystemParameters());
+        model.addAttribute("newCategory", new AssetCategory());
+        return "admin/settings";
+    }
+
+    @PostMapping("/settings/categories")
+    public String createCategory(@ModelAttribute AssetCategory category, RedirectAttributes ra) {
+        if (!isAdmin()) {
+            ra.addFlashAttribute("errorMessage", "Only administrators can manage system settings.");
+            return "redirect:/dashboard";
+        }
+        try {
+            adminSettingsService.createCategory(category);
+            ra.addFlashAttribute("successMessage", "Asset category \"" + category.getName() + "\" was created.");
+        } catch (Exception ex) {
+            ra.addFlashAttribute("errorMessage", sanitize(ex.getMessage()));
+        }
+        return "redirect:/admin/settings";
+    }
+
+    @PostMapping("/settings/categories/{id}")
+    public String updateCategory(@PathVariable Long id, @ModelAttribute AssetCategory category, RedirectAttributes ra) {
+        if (!isAdmin()) {
+            ra.addFlashAttribute("errorMessage", "Only administrators can manage system settings.");
+            return "redirect:/dashboard";
+        }
+        try {
+            adminSettingsService.updateCategory(id, category);
+            ra.addFlashAttribute("successMessage", "Asset category \"" + category.getName() + "\" was updated.");
+        } catch (Exception ex) {
+            ra.addFlashAttribute("errorMessage", sanitize(ex.getMessage()));
+        }
+        return "redirect:/admin/settings";
+    }
+
+    @PostMapping("/settings/categories/{id}/delete")
+    public String deleteCategory(@PathVariable Long id, RedirectAttributes ra) {
+        if (!isAdmin()) {
+            ra.addFlashAttribute("errorMessage", "Only administrators can manage system settings.");
+            return "redirect:/dashboard";
+        }
+        try {
+            adminSettingsService.deleteCategory(id);
+            ra.addFlashAttribute("successMessage", "Asset category was deleted.");
+        } catch (Exception ex) {
+            ra.addFlashAttribute("errorMessage", sanitize(ex.getMessage()));
+        }
+        return "redirect:/admin/settings";
+    }
+
+    @PostMapping("/settings/parameters")
+    public String updateSystemParameters(@RequestParam Map<String, String> parameters, RedirectAttributes ra) {
+        if (!isAdmin()) {
+            ra.addFlashAttribute("errorMessage", "Only administrators can manage system settings.");
+            return "redirect:/dashboard";
+        }
+        try {
+            adminSettingsService.updateParameters(parameters);
+            ra.addFlashAttribute("successMessage", "System settings were updated.");
+        } catch (Exception ex) {
+            ra.addFlashAttribute("errorMessage", sanitize(ex.getMessage()));
+        }
+        return "redirect:/admin/settings";
     }
 
     /* ══════════════════════════════════════════════════════════
@@ -291,5 +373,9 @@ public class AdminController {
         if (msg == null) return "An unexpected error occurred.";
         String clean = msg.replaceAll("<[^>]+>", "");
         return clean.length() > 250 ? clean.substring(0, 247) + "…" : clean;
+    }
+
+    private boolean isAdmin() {
+        return authenticationManager.isAdmin();
     }
 }

@@ -7,6 +7,8 @@ import com.example.fams.organization.Company;
 import com.example.fams.organization.CompanyRepository;
 import com.example.fams.organization.Department;
 import com.example.fams.organization.DepartmentRepository;
+import com.example.fams.settings.AdminSettingsService;
+import com.example.fams.settings.AssetCategory;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
@@ -27,6 +29,7 @@ public class AssetController {
     private final BranchRepository branchRepository;
     private final CompanyRepository companyRepository;
     private final KeycloakAdminService keycloakAdminService;
+    private final AdminSettingsService adminSettingsService;
 
     @Value("${keycloak.realm:fams}")
     private String realmName;
@@ -35,12 +38,14 @@ public class AssetController {
                            DepartmentRepository departmentRepository,
                            BranchRepository branchRepository,
                            CompanyRepository companyRepository,
-                           KeycloakAdminService keycloakAdminService) {
+                           KeycloakAdminService keycloakAdminService,
+                           AdminSettingsService adminSettingsService) {
         this.assetService = assetService;
         this.departmentRepository = departmentRepository;
         this.branchRepository = branchRepository;
         this.companyRepository = companyRepository;
         this.keycloakAdminService = keycloakAdminService;
+        this.adminSettingsService = adminSettingsService;
     }
 
     /**
@@ -98,6 +103,12 @@ public class AssetController {
         }
     }
 
+    @ModelAttribute("assetCategories")
+    public List<AssetCategory> assetCategories() {
+        adminSettingsService.ensureDefaults();
+        return adminSettingsService.findActiveCategories();
+    }
+
     @GetMapping("/assets")
     public String assetsList(Model model) {
         model.addAttribute("assets", assetService.findAll());
@@ -116,9 +127,15 @@ public class AssetController {
     public String createAsset(@ModelAttribute Asset asset,
                               @RequestParam(value = "image", required = false) MultipartFile image,
                               RedirectAttributes redirectAttributes) {
-        Asset savedAsset = assetService.create(asset, image);
-        redirectAttributes.addFlashAttribute("successMessage", savedAsset.getAssetCode() + " was registered successfully.");
-        return "redirect:/assets";
+        try {
+            Asset savedAsset = assetService.create(asset, image);
+            redirectAttributes.addFlashAttribute("successMessage", savedAsset.getAssetCode() + " was registered successfully.");
+            return "redirect:/assets";
+        } catch (IllegalArgumentException ex) {
+            redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
+            redirectAttributes.addFlashAttribute("asset", asset);
+            return "redirect:/assets/register";
+        }
     }
 
     // REST API endpoint for getting all assets as JSON

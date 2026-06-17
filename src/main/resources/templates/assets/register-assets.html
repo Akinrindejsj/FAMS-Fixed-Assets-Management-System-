@@ -48,6 +48,11 @@
         </a>
     </div>
 
+    <div th:if="${errorMessage}" class="bg-error-container text-on-error-container border border-error/20 rounded-xl px-4 py-3 flex items-start gap-3">
+        <span class="material-symbols-outlined text-[20px] mt-0.5">error</span>
+        <p class="text-body-default" th:text="${errorMessage}">Unable to register asset.</p>
+    </div>
+
     <form id="asset-form" th:action="@{/assets}" th:object="${asset}" method="post" enctype="multipart/form-data" class="grid grid-cols-1 xl:grid-cols-12 gap-6">
 
         <!-- Main Form -->
@@ -71,12 +76,13 @@
                             <select id="category" th:field="*{category}" required
                                     class="w-full h-11 px-4 bg-surface-canvas border border-border-default rounded-xl text-body-default focus:ring-2 focus:ring-primary focus:border-primary outline-none">
                                 <option value="">Select category</option>
-                                <option value="IT Equipment">IT Equipment</option>
-                                <option value="Furniture">Furniture</option>
-                                <option value="Office Equipment">Office Equipment</option>
-                                <option value="Vehicle">Vehicle</option>
-                                <option value="Machinery">Machinery</option>
+                                <option th:each="category : ${assetCategories}"
+                                        th:value="${category.name}"
+                                        th:text="${category.name}">IT Equipment</option>
                             </select>
+                            <p th:if="${#lists.isEmpty(assetCategories)}" class="text-label-small text-error mt-1">
+                                No active asset categories are configured. Ask an administrator to add one in Settings.
+                            </p>
                         </div>
                     </div>
 
