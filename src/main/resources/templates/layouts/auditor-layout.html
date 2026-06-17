@@ -1053,6 +1053,8 @@
         let isManualOverride = false;
         let isCollapsed = false;
         let resizeTimer = null;
+        // backdrop for small-screen sidebar (click outside to close)
+        let backdropEl = null;
 
         // ── Create tooltip element ──
         function createTooltip() {
@@ -1065,15 +1067,34 @@
         }
         tooltipEl = createTooltip();
 
+        function createBackdrop() {
+            const b = document.createElement('div');
+            b.id = 'sidebar-backdrop';
+            b.style.position = 'fixed';
+            b.style.left = '0';
+            b.style.top = '0';
+            b.style.right = '0';
+            b.style.bottom = '0';
+            b.style.background = 'rgba(0,0,0,0.32)';
+            b.style.zIndex = '45';
+            b.style.display = 'none';
+            b.style.backdropFilter = 'blur(2px)';
+            document.body.appendChild(b);
+            return b;
+        }
+        backdropEl = createBackdrop();
+
         // ── Apply collapse state ──
         function applyCollapse(collapse) {
             isCollapsed = collapse;
             if (collapse) {
                 body.classList.add('sidebar-collapsed');
                 sidebar.classList.add('collapsed');
+                if (backdropEl) backdropEl.style.display = 'none';
             } else {
                 body.classList.remove('sidebar-collapsed');
                 sidebar.classList.remove('collapsed');
+                if (backdropEl && window.innerWidth < 1024) backdropEl.style.display = 'block';
             }
             if (tooltipEl) {
                 tooltipEl.classList.remove('visible');
@@ -1186,6 +1207,24 @@
             body.classList.add('manual-override');
             const currentlyCollapsed = body.classList.contains('sidebar-collapsed');
             applyCollapse(!currentlyCollapsed);
+        });
+
+        if (backdropEl) {
+            backdropEl.addEventListener('click', function() {
+                isManualOverride = true;
+                body.classList.add('manual-override');
+                applyCollapse(true);
+            });
+        }
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' || e.key === 'Esc') {
+                if (!body.classList.contains('sidebar-collapsed') && window.innerWidth < 1024) {
+                    isManualOverride = true;
+                    body.classList.add('manual-override');
+                    applyCollapse(true);
+                }
+            }
         });
 
         // ── Window resize ──
