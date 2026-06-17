@@ -172,40 +172,31 @@
                 </div>
                 <div class="form-section grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div class="space-y-1.5">
-                        <label for="department" class="font-label-small text-label-small text-secondary">Department <span class="text-error">*</span></label>
-                        <select id="department" th:field="*{department}" required
-                                class="w-full h-11 px-4 bg-surface-canvas border border-border-default rounded-xl focus:ring-2 focus:ring-primary focus:border-primary outline-none">
-                            <option value="">Select department</option>
-                            <option value="Finance">Finance</option>
-                            <option value="Operations">Operations</option>
-                            <option value="Information Technology">Information Technology</option>
-                            <option value="Human Resources">Human Resources</option>
-                            <option value="Procurement">Procurement</option>
-                        </select>
-                    </div>
+                         <label for="department" class="font-label-small text-label-small text-secondary">Department <span class="text-error">*</span></label>
+                         <select id="department" th:field="*{department}" required
+                                 class="w-full h-11 px-4 bg-surface-canvas border border-border-default rounded-xl focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                             <option value="">Select department</option>
+                             <option th:each="dept : ${departments}" th:value="${dept.name}" th:text="${dept.name}"></option>
+                         </select>
+                     </div>
                     <div class="space-y-1.5">
-                        <label for="branch" class="font-label-small text-label-small text-secondary">Branch <span class="text-error">*</span></label>
-                        <select id="branch" th:field="*{branch}" required
-                                class="w-full h-11 px-4 bg-surface-canvas border border-border-default rounded-xl focus:ring-2 focus:ring-primary focus:border-primary outline-none">
-                            <option value="">Select branch</option>
-                            <option value="Lagos HQ">Lagos HQ</option>
-                            <option value="Abuja Branch">Abuja Branch</option>
-                            <option value="Port Harcourt Branch">Port Harcourt Branch</option>
-                            <option value="Ibadan Branch">Ibadan Branch</option>
-                        </select>
-                    </div>
+                         <label for="branch" class="font-label-small text-label-small text-secondary">Branch <span class="text-error">*</span></label>
+                         <select id="branch" th:field="*{branch}" required
+                                 class="w-full h-11 px-4 bg-surface-canvas border border-border-default rounded-xl focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                             <option value="">Select branch</option>
+                             <option th:each="br : ${branches}" th:value="${br.name}" th:text="${br.name}"></option>
+                         </select>
+                     </div>
                     <div class="space-y-1.5">
-                        <label for="custodian" class="font-label-small text-label-small text-secondary">Custodian <span class="text-error">*</span></label>
-                        <select id="custodian" th:field="*{custodian}" required
-                                class="w-full h-11 px-4 bg-surface-canvas border border-border-default rounded-xl focus:ring-2 focus:ring-primary focus:border-primary outline-none">
-                            <option value="">Select custodian</option>
-                            <option value="Amina Bello">Amina Bello</option>
-                            <option value="Chinedu Okafor">Chinedu Okafor</option>
-                            <option value="Tola Adeyemi">Tola Adeyemi</option>
-                            <option value="Ifeanyi Nwosu">Ifeanyi Nwosu</option>
-                            <option value="Warehouse Custody">Warehouse Custody</option>
-                        </select>
-                    </div>
+                         <label for="custodian" class="font-label-small text-label-small text-secondary">Custodian <span class="text-error">*</span><br>
+                             <span class="text-[11px] text-secondary font-normal">(Users with employee group)</span>
+                         </label>
+                         <select id="custodian" th:field="*{custodian}" required
+                                 class="w-full h-11 px-4 bg-surface-canvas border border-border-default rounded-xl focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                             <option value="">Select custodian</option>
+                             <option th:each="custodian : ${custodians}" th:value="${custodian.username}" th:text="${custodian.name}"></option>
+                         </select>
+                     </div>
                     <div class="space-y-1.5">
                         <label for="status" class="font-label-small text-label-small text-secondary">Initial Status</label>
                         <select id="status" th:field="*{status}" required

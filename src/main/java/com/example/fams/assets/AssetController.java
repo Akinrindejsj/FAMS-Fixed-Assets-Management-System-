@@ -1,35 +1,101 @@
 package com.example.fams.assets;
 
+import com.example.fams.aau.keycloak.KeycloakAdminService;
+import com.example.fams.organization.Branch;
+import com.example.fams.organization.BranchRepository;
+import com.example.fams.organization.Company;
+import com.example.fams.organization.CompanyRepository;
+import com.example.fams.organization.Department;
+import com.example.fams.organization.DepartmentRepository;
+import org.keycloak.representations.idm.UserRepresentation;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Controller
 public class AssetController {
 
     private final AssetService assetService;
+    private final DepartmentRepository departmentRepository;
+    private final BranchRepository branchRepository;
+    private final CompanyRepository companyRepository;
+    private final KeycloakAdminService keycloakAdminService;
 
-    public AssetController(AssetService assetService) {
+    @Value("${keycloak.realm:fams}")
+    private String realmName;
+
+    public AssetController(AssetService assetService,
+                           DepartmentRepository departmentRepository,
+                           BranchRepository branchRepository,
+                           CompanyRepository companyRepository,
+                           KeycloakAdminService keycloakAdminService) {
         this.assetService = assetService;
+        this.departmentRepository = departmentRepository;
+        this.branchRepository = branchRepository;
+        this.companyRepository = companyRepository;
+        this.keycloakAdminService = keycloakAdminService;
+    }
+
+    /**
+     * Get the current active company or default to the first active company
+     */
+    private Company getCurrentCompany() {
+        List<Company> activeCompanies = companyRepository.findByIsActiveTrueOrderByCreatedAtDesc();
+        return activeCompanies.isEmpty() ? null : activeCompanies.get(0);
     }
 
     @ModelAttribute("departments")
-    public List<String> departments() {
-        return List.of("Finance", "Operations", "Information Technology", "Human Resources", "Procurement");
+    public List<Department> departments() {
+        Company company = getCurrentCompany();
+        if (company == null) {
+            return new ArrayList<>();
+        }
+        return departmentRepository.findByCompanyIdAndIsActiveTrueOrderByCreatedAtDesc(company.getId());
     }
 
     @ModelAttribute("branches")
-    public List<String> branches() {
-        return List.of("Lagos HQ", "Abuja Branch", "Port Harcourt Branch", "Ibadan Branch");
+    public List<Branch> branches() {
+        Company company = getCurrentCompany();
+        if (company == null) {
+            return new ArrayList<>();
+        }
+        return branchRepository.findByCompanyIdAndIsActiveTrueOrderByCreatedAtDesc(company.getId());
     }
 
     @ModelAttribute("custodians")
-    public List<String> custodians() {
-        return List.of("Amina Bello", "Chinedu Okafor", "Tola Adeyemi", "Ifeanyi Nwosu", "Warehouse Custody");
+    public List<CustodianDTO> custodians() {
+        try {
+            // Get all users and find those in the 'employees' group
+            List<UserRepresentation> allUsers = keycloakAdminService.listAllUsers(realmName);
+
+            return allUsers.stream()
+                    .filter(user -> {
+                        try {
+                            List<String> userGroups = keycloakAdminService.getUserGroups(realmName, user.getId());
+                            return userGroups.stream()
+                                    .anyMatch(group -> group.equalsIgnoreCase("employees"));
+                        } catch (Exception e) {
+                            return false;
+                        }
+                    })
+                    .map(user -> new CustodianDTO(
+                            user.getId(),
+                            (user.getFirstName() != null ? user.getFirstName() : "") +
+                            (user.getLastName() != null ? " " + user.getLastName() : ""),
+                            user.getUsername()
+                    ))
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            // If Keycloak is unavailable, return empty list
+            return new ArrayList<>();
+        }
     }
 
     @GetMapping("/assets")
