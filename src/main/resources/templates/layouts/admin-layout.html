@@ -853,6 +853,14 @@
                     </a>
                 </div>
 
+                <!-- User Management -->
+                <div class="nav-link-wrap" data-label="User Management">
+                    <a class="nav-link" th:classappend="${currentPath == '/admin/users'} ? ' sidebar-active' : ''" th:href="@{/admin/users}">
+                        <span class="nav-icon material-symbols-outlined">people</span>
+                        <span class="nav-label">User Management</span>
+                    </a>
+                </div>
+
                 <!-- Asset Management -->
                 <div class="nav-link-wrap" data-label="Asset Management">
                     <a class="nav-link" th:classappend="${#strings.startsWith(currentPath, '/admin/assets')} ? ' sidebar-active' : ''" th:href="@{/admin/assets}">

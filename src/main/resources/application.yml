@@ -55,8 +55,12 @@ server:
 
 keycloak:
   base-url: ${KEYCLOAK_BASE_URI:https://ngcloak-production.up.railway.app}
+  base-realm: fams
   client-id: ${KEYCLOAK_CLIENT_ID:fams}
   client-secret: ${KEYCLOAK_CLIENT_SECRET:NmHb7M05gGElewCdNgEYCsqggwP4URjS}
+  realm: fams
+  admin-client-id: admin-cli-client
+  admin-client-secret: XCuQLauxTDGhjXxRjwu06HZy31m3A4NI
 
 cloudinary:
   cloud-name: ${CLOUDINARY_CLOUD_NAME:}

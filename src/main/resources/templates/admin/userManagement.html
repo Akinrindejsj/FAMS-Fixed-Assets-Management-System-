@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html class="light" lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layouts/admin-layout}">
+<head>
+    <title>User Management | JustJava FAMS</title>
+    <!-- Keep the same scripts and styles, but adapt to dashboard -->
+    <style>
+        /* Additional overrides and animations – keep but blend with dashboard */
+        .form-field {
+            background: #F4F5F7;
+            border: 1.5px solid #E4E6EA;
+            border-radius: 0.75rem;
+            width: 100%;
+            padding: 0.625rem 0.875rem;
+            font-size: 0.875rem;
+            color: #151b29;
+            outline: none;
+            transition: all 0.2s;
+        }
+        .form-field::placeholder { color: #8a8fa6; }
+        .form-field:focus {
+            background: #ffffff;
+            border-color: #98001a;
+            box-shadow: 0 0 0 3px rgba(152,0,26,0.15);
+        }
+        .form-field:hover:not(:focus) {
+            border-color: #CBD0D8;
+            background: #F4F5F7;
+        }
+        .form-field-icon { padding-left: 2.5rem; }
+        .form-field-error {
+            border-color: #ba1a1a !important;
+            box-shadow: 0 0 0 3px rgba(186,26,26,0.12) !important;
+        }
+        .attr-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            background: rgba(152,0,26,0.08);
+            color: #98001a;
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 0.2rem 0.6rem;
+            border-radius: 99px;
+            border: 1px solid rgba(152,0,26,0.15);
+        }
+        .modal-overlay { animation: overlayIn .25s ease-out forwards; }
+        .modal-panel { animation: modalIn .35s cubic-bezier(.34,1.56,.64,1) forwards; }
+        .slide-panel { animation: slideIn .35s cubic-bezier(.34,1.56,.64,1) forwards; }
+        @keyframes overlayIn { from { opacity:0; } to { opacity:1; } }
+        @keyframes modalIn { from { opacity:0; transform:translateY(20px) scale(0.97); } to { opacity:1; transform:translateY(0) scale(1); } }
+        @keyframes slideIn { from { opacity:0; transform:translateX(100%); } to { opacity:1; transform:translateX(0); } }
+        .step-dot { width:6px; height:6px; border-radius:99px; background:#E4E6EA; }
+        .step-dot.active { background:#98001a; transform:scale(1.4); }
+        .form-section { display:none; }
+        .form-section.active { display:block; }
+        .tab-btn { font-size:.75rem; font-weight:600; padding:.375rem .75rem; border-radius:.5rem; color:#5d5e65; border:none; background:transparent; cursor:pointer; }
+        .tab-btn.active { background:#98001a; color:#fff; }
+        .strength-bar { height:3px; border-radius:99px; }
+        .toast-entering { animation: toastIn .4s cubic-bezier(.34,1.56,.64,1) forwards; }
+        .toast-leaving { animation: toastOut .3s ease-in forwards; }
+        @keyframes toastIn { from { opacity:0; transform:translateY(12px) scale(0.95); } to { opacity:1; transform:translateY(0) scale(1); } }
+        @keyframes toastOut { from { opacity:1; transform:translateY(0); } to { opacity:0; transform:translateY(-8px); } }
+        @keyframes shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-6px)} 40%{transform:translateX(6px)} 60%{transform:translateX(-4px)} 80%{transform:translateX(4px)} }
+    </style>
+</head>
+<body>
+<main id="main-content" class="space-y-6" layout:fragment="content">
+
+    <!-- Page Title Row (matches Dashboard) -->
+    <div class="flex justify-between items-end">
+        <div>
+            <h2 class="font-page-title text-page-title text-on-background">User Management</h2>
+            <p class="text-body-default text-secondary">Manage users and group permissions
+                <span class="ml-2 text-xs font-mono bg-primary/10 text-primary px-2 py-0.5 rounded-full" th:text="${realmName}">realm</span>
+            </p>
+        </div>
+        <div class="flex gap-3">
+            <button onclick="openGroupsModal()"
+                    class="h-[38px] px-4 rounded-lg text-sm font-semibold text-primary border border-border-strong bg-surface-card hover:bg-surface-canvas shadow-sm flex items-center gap-1.5 transition-all">
+                <span class="material-symbols-outlined text-[18px]">folder_shared</span> Manage Groups
+            </button>
+            <button onclick="openCreateModal()"
+                    class="h-[38px] px-5 rounded-lg text-sm font-semibold text-on-primary bg-primary hover:bg-brand-primary-dark shadow-md transition-all flex items-center gap-2">
+                <span class="material-symbols-outlined text-[18px]">add_circle</span> Create User
+            </button>
+        </div>
+    </div>
+
+    <!-- Stats (KPI Strip) -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-surface-card p-5 rounded-xl card-shadow">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                    <span class="material-symbols-outlined text-2xl">group</span>
+                </div>
+                <div>
+                    <p class="text-label-small text-secondary uppercase tracking-wider font-medium">Total Users</p>
+                    <p class="text-[28px] font-bold font-headline text-on-surface" th:text="${totalUsers}">0</p>
+                    <p class="text-[11px] text-secondary/70 mt-0.5">All provisioned accounts</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-surface-card p-5 rounded-xl card-shadow">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl bg-status-success/10 flex items-center justify-center text-status-success">
+                    <span class="material-symbols-outlined text-2xl">person_check</span>
+                </div>
+                <div>
+                    <p class="text-label-small text-secondary uppercase tracking-wider font-medium">Active Users</p>
+                    <p class="text-[28px] font-bold font-headline text-on-surface" th:text="${totalActive}">0</p>
+                    <p class="text-[11px] text-secondary/70 mt-0.5" th:text="${totalUsers > 0 ? #numbers.formatDecimal(totalActive * 100.0 / totalUsers, 0, 0) + '% active rate' : '—'}">—</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-surface-card p-5 rounded-xl card-shadow">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl bg-secondary/10 flex items-center justify-center text-secondary">
+                    <span class="material-symbols-outlined text-2xl">person_off</span>
+                </div>
+                <div>
+                    <p class="text-label-small text-secondary uppercase tracking-wider font-medium">Inactive Users</p>
+                    <p class="text-[28px] font-bold font-headline text-on-surface" th:text="${totalUsers - totalActive}">0</p>
+                    <p class="text-[11px] text-secondary/70 mt-0.5">Disabled accounts</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-surface-card p-5 rounded-xl card-shadow">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl bg-error/10 flex items-center justify-center text-error">
+                    <span class="material-symbols-outlined text-2xl">folder_shared</span>
+                </div>
+                <div>
+                    <p class="text-label-small text-secondary uppercase tracking-wider font-medium">Realm Groups</p>
+                    <p class="text-[28px] font-bold font-headline text-on-surface" th:text="${groups.size()}">0</p>
+                    <p class="text-[11px] text-secondary/70 mt-0.5" th:text="${realmName}">realm</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Table Card -->
+    <div class="bg-surface-card rounded-xl card-shadow overflow-hidden">
+        <div class="px-6 py-5 border-b border-border-default flex flex-wrap justify-between items-center gap-4">
+            <div class="flex items-center gap-2 flex-wrap">
+                <h3 class="font-section-header text-section-header text-on-surface">Directory</h3>
+                <span class="bg-primary/10 text-primary text-xs font-semibold px-2.5 py-0.5 rounded-full" th:text="${totalUsers} + ' users'">0 users</span>
+                <span th:if="${search != null and !search.isBlank()}" class="bg-status-info/10 text-status-info text-xs font-semibold px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                    <span class="material-symbols-outlined text-[13px]">search</span>
+                    <span th:text="'&quot;' + search + '&quot;'"></span>
+                    <a th:href="@{/admin/users}" class="hover:text-error ml-0.5"><span class="material-symbols-outlined text-[13px]">close</span></a>
+                </span>
+            </div>
+            <div class="flex items-center gap-2">
+                <form th:action="@{/admin/users}" method="get" class="md:hidden flex items-center gap-2">
+                    <input type="hidden" name="page" value="0"/>
+                    <input type="text" name="search" th:value="${search}" placeholder="Search…" class="form-field text-xs py-1.5 px-3 rounded-full w-36">
+                    <button type="submit" class="p-1.5 text-primary bg-primary/10 hover:bg-primary/20 rounded-lg"><span class="material-symbols-outlined text-sm">search</span></button>
+                </form>
+                <a th:href="@{/admin/users(search=${search})}" class="p-2 text-secondary hover:text-primary hover:bg-surface-canvas rounded-xl transition-colors" title="Refresh">
+                    <span class="material-symbols-outlined">refresh</span>
+                </a>
+            </div>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse min-w-[760px]">
+                <thead>
+                <tr class="bg-surface-canvas border-b border-border-default">
+                    <th class="px-6 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">User</th>
+                    <th class="px-6 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Email</th>
+                    <th class="px-6 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Username</th>
+                    <th class="px-6 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Status</th>
+                    <th class="px-6 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider text-right">Actions</th>
+                </tr>
+                </thead>
+                <tbody class="divide-y divide-border-default">
+                <tr th:each="user : ${users}" class="hover:bg-surface-canvas/50 group cursor-default">
+                    <td class="px-6 py-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-full bg-gradient-to-br from-primary/30 to-primary-container/50 flex items-center justify-center shrink-0 ring-2 ring-white shadow-sm">
+                                <span class="text-xs font-bold text-primary"
+                                      th:text="${(user.firstName != null and !#strings.isEmpty(user.firstName) ? #strings.toUpperCase(#strings.substring(user.firstName,0,1)) : #strings.toUpperCase(#strings.substring(user.username,0,1))) + (user.lastName != null and !#strings.isEmpty(user.lastName) ? #strings.toUpperCase(#strings.substring(user.lastName,0,1)) : '')}">??</span>
+                            </div>
+                            <div>
+                                <p class="font-body-medium text-sm text-on-surface" th:text="${(user.firstName != null ? user.firstName : '') + ' ' + (user.lastName != null ? user.lastName : '')}">Full Name</p>
+                                <p class="text-[10px] text-secondary/60 font-mono" th:text="${'ID: ' + #strings.substring(user.id,0,8) + '…'}">ID: …</p>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 text-body-default text-secondary" th:text="${user.email != null ? user.email : '—'}">—</td>
+                    <td class="px-6 py-4">
+                        <span class="text-xs font-mono bg-surface-canvas px-2 py-1 rounded-lg text-secondary" th:text="${user.username}">username</span>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div th:if="${user.enabled == true}" class="flex items-center gap-2">
+                            <span class="relative flex h-2 w-2"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-status-success opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-status-success"></span></span>
+                            <span class="text-label-small font-semibold text-status-success">Active</span>
+                        </div>
+                        <div th:unless="${user.enabled == true}" class="flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-outline/60"></span>
+                            <span class="text-label-small font-semibold text-secondary/60">Inactive</span>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 text-right">
+                        <button type="button"
+                                th:attr="data-user-id=${user.id},data-username=${user.username},data-email=${user.email != null ? user.email : ''},data-firstname=${user.firstName != null ? user.firstName : ''},data-lastname=${user.lastName != null ? user.lastName : ''},data-enabled=${user.enabled == true}"
+                                onclick="openManageModal(this)"
+                                class="text-primary font-body-medium text-sm hover:underline underline-offset-4 flex items-center gap-1 justify-end w-full group-hover:gap-1.5 transition-all">
+                            Manage <span class="material-symbols-outlined text-sm">chevron_right</span>
+                        </button>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(users)}">
+                    <td colspan="5" class="px-6 py-16 text-center">
+                        <div class="flex flex-col items-center gap-3">
+                            <div class="w-16 h-16 rounded-2xl bg-surface-canvas flex items-center justify-center text-secondary/40"><span class="material-symbols-outlined text-4xl">manage_search</span></div>
+                            <p class="font-semibold text-on-surface/60" th:text="${search != null and !search.isBlank() ? 'No users found for &quot;' + search + '&quot;' : 'No users provisioned yet'}">No users</p>
+                            <p class="text-label-small text-secondary/50" th:text="${search != null and !search.isBlank() ? 'Try a different search term.' : 'Click &quot;Create User&quot; to get started.'}">—</p>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <!-- Pagination (matches dashboard) -->
+        <div class="px-6 py-4 bg-surface-canvas/30 border-t border-border-default flex flex-wrap justify-between items-center gap-3">
+            <p class="text-label-small text-secondary font-medium" th:text="'Showing ' + fromIndex + '–' + toIndex + ' of ' + totalUsers + ' users'">Showing …</p>
+            <div class="flex items-center gap-2">
+                <a th:if="${currentPage > 0}" th:href="@{/admin/users(page=${currentPage - 1}, search=${search}, size=${pageSize})}" class="px-4 py-1.5 text-label-small font-semibold rounded-lg border border-border-default bg-surface-card hover:bg-surface-canvas shadow-sm flex items-center gap-1">
+                    <span class="material-symbols-outlined text-sm">chevron_left</span> Prev
+                </a>
+                <span th:unless="${currentPage > 0}" class="px-4 py-1.5 text-label-small font-semibold rounded-lg border border-border-default bg-surface-canvas text-secondary/30 cursor-not-allowed flex items-center gap-1">
+                    <span class="material-symbols-outlined text-sm">chevron_left</span> Prev
+                </span>
+                <span class="text-label-small font-semibold text-secondary px-2" th:text="(currentPage + 1) + ' / ' + totalPages">1 / 1</span>
+                <a th:if="${currentPage + 1 < totalPages}" th:href="@{/admin/users(page=${currentPage + 1}, search=${search}, size=${pageSize})}" class="px-4 py-1.5 text-label-small font-semibold rounded-lg border border-border-default bg-surface-card hover:bg-surface-canvas shadow-sm flex items-center gap-1">
+                    Next <span class="material-symbols-outlined text-sm">chevron_right</span>
+                </a>
+                <span th:unless="${currentPage + 1 < totalPages}" class="px-4 py-1.5 text-label-small font-semibold rounded-lg border border-border-default bg-surface-canvas text-secondary/30 cursor-not-allowed flex items-center gap-1">
+                    Next <span class="material-symbols-outlined text-sm">chevron_right</span>
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Area -->
+    <div id="toastArea" class="fixed top-20 right-4 z-[200] flex flex-col gap-2 pointer-events-none"></div>
+    <div th:if="${successMessage}" id="successFlash" th:attr="data-msg=${successMessage}" hidden></div>
+    <div th:if="${errorMessage}"   id="errorFlash"   th:attr="data-msg=${errorMessage}"   hidden></div>
+
+    <!-- ════════════════ CREATE USER MODAL ════════════════ -->
+    <div id="createUserModal" class="fixed inset-0 z-[100] items-end sm:items-center justify-center p-0 sm:p-4 hidden" role="dialog" aria-modal="true">
+        <div class="modal-overlay absolute inset-0 bg-on-surface/40 backdrop-blur-sm" onclick="closeCreateModal()"></div>
+        <div class="modal-panel relative w-full sm:max-w-2xl bg-surface-card rounded-t-3xl sm:rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh] sm:max-h-[86vh] border border-border-default">
+            <div class="flex items-start justify-between px-6 pt-6 pb-5 border-b border-border-default shrink-0">
+                <div class="flex items-center gap-4">
+                    <div class="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0"><span class="material-symbols-outlined text-2xl">person_add</span></div>
+                    <div><h3 class="font-headline text-xl font-bold text-on-surface">Create New User</h3><p class="text-label-small text-secondary mt-0.5">Provision a new Keycloak account</p></div>
+                </div>
+                <button onclick="closeCreateModal()" class="p-1.5 rounded-xl text-secondary hover:bg-surface-canvas shrink-0 ml-4"><span class="material-symbols-outlined">close</span></button>
+            </div>
+            <div class="px-6 pt-4 pb-2 shrink-0 flex items-center gap-3">
+                <div class="flex gap-1.5">
+                    <div id="cu-dot-1" class="step-dot active"></div><div id="cu-dot-2" class="step-dot"></div><div id="cu-dot-3" class="step-dot"></div>
+                </div>
+                <p id="cu-step-label" class="text-label-small font-semibold text-secondary/70 uppercase tracking-wider">Step 1 of 3 — Identity</p>
+            </div>
+            <form id="createUserForm" th:action="@{/admin/create-user}" method="post" class="overflow-y-auto flex-1 px-6 pb-2 pt-3">
+                <input type="hidden" name="realm" th:value="${realmName}"/>
+                <!-- Step 1 -->
+                <div id="cu-step-1" class="form-section active space-y-5">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="space-y-1.5">
+                            <label for="cu-firstName" class="text-label-small font-semibold text-secondary uppercase tracking-wider">First Name <span class="text-error">*</span></label>
+                            <div class="relative">
+                                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-secondary/50 text-[18px] pointer-events-none">badge</span>
+                                <input type="text" id="cu-firstName" name="firstName" required placeholder="e.g. Marcus" class="form-field form-field-icon">
+                            </div>
+                        </div>
+                        <div class="space-y-1.5">
+                            <label for="cu-lastName" class="text-label-small font-semibold text-secondary uppercase tracking-wider">Last Name <span class="text-error">*</span></label>
+                            <div class="relative">
+                                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-secondary/50 text-[18px] pointer-events-none">badge</span>
+                                <input type="text" id="cu-lastName" name="lastName" required placeholder="e.g. Chen" class="form-field form-field-icon">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="space-y-1.5">
+                        <label for="cu-username" class="text-label-small font-semibold text-secondary uppercase tracking-wider">Username <span class="text-error">*</span></label>
+                        <div class="relative">
+                            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-secondary/50 text-[18px] pointer-events-none">alternate_email</span>
+                            <input type="text" id="cu-username" name="username" required placeholder="e.g. marcus.chen" autocomplete="off" class="form-field form-field-icon">
+                        </div>
+                        <p class="text-label-small text-secondary/60 pl-1">Lowercase, numbers, dots and underscores only.</p>
+                    </div>
+                    <div class="space-y-1.5">
+                        <label for="cu-email" class="text-label-small font-semibold text-secondary uppercase tracking-wider">Email Address <span class="text-error">*</span></label>
+                        <div class="relative">
+                            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-secondary/50 text-[18px] pointer-events-none">mail</span>
+                            <input type="email" id="cu-email" name="email" required placeholder="e.g. marcus@company.com" autocomplete="off" class="form-field form-field-icon">
+                        </div>
+                    </div>
+                </div>
+                <!-- Step 2 -->
+                <div id="cu-step-2" class="form-section space-y-5">
+                    <div class="space-y-1.5">
+                        <label for="cu-password" class="text-label-small font-semibold text-secondary uppercase tracking-wider">Password <span class="text-error">*</span></label>
+                        <div class="relative">
+                            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-secondary/50 text-[18px] pointer-events-none">lock</span>
+                            <input type="password" id="cu-password" name="password" required placeholder="Min. 8 characters" class="form-field form-field-icon pr-12" oninput="cuEvalStrength(this.value)">
+                            <button type="button" onclick="cuTogglePwd('cu-password','cu-pwd-icon')" class="absolute right-3 top-1/2 -translate-y-1/2 text-secondary/50 hover:text-secondary">
+                                <span id="cu-pwd-icon" class="material-symbols-outlined text-[18px]">visibility</span>
+                            </button>
+                        </div>
+                        <div class="mt-2 space-y-1.5">
+                            <div class="flex gap-1">
+                                <div id="cu-bar1" class="strength-bar flex-1 bg-outline-variant/30"></div>
+                                <div id="cu-bar2" class="strength-bar flex-1 bg-outline-variant/30"></div>
+                                <div id="cu-bar3" class="strength-bar flex-1 bg-outline-variant/30"></div>
+                                <div id="cu-bar4" class="strength-bar flex-1 bg-outline-variant/30"></div>
+                            </div>
+                            <p id="cu-strength-label" class="text-label-small text-secondary/60">Enter a password to check its strength</p>
+                        </div>
+                    </div>
+                    <div class="space-y-1.5">
+                        <label for="cu-confirm" class="text-label-small font-semibold text-secondary uppercase tracking-wider">Confirm Password <span class="text-error">*</span></label>
+                        <div class="relative">
+                            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-secondary/50 text-[18px] pointer-events-none">lock_reset</span>
+                            <input type="password" id="cu-confirm" placeholder="Repeat password" class="form-field form-field-icon pr-12" oninput="cuCheckMatch()">
+                            <button type="button" onclick="cuTogglePwd('cu-confirm','cu-cpwd-icon')" class="absolute right-3 top-1/2 -translate-y-1/2 text-secondary/50 hover:text-secondary">
+                                <span id="cu-cpwd-icon" class="material-symbols-outlined text-[18px]">visibility</span>
+                            </button>
+                        </div>
+                        <p id="cu-match-msg" class="text-label-small pl-0.5 hidden"></p>
+                    </div>
+                    <div class="rounded-xl bg-primary/5 border border-primary/10 p-4 flex gap-3">
+                        <span class="material-symbols-outlined text-primary text-lg shrink-0 mt-0.5">info</span>
+                        <p class="text-label-small text-secondary leading-relaxed">Min. <strong>8 characters</strong>, one uppercase, one number, one special character.</p>
+                    </div>
+                </div>
+                <!-- Step 3 -->
+                <div id="cu-step-3" class="form-section space-y-5">
+                    <div class="rounded-xl bg-surface-canvas border border-border-default p-4">
+                        <p class="text-label-small text-secondary leading-relaxed"><span class="font-semibold text-on-surface">Optional:</span> Add key-value attributes that map to Keycloak user attributes.</p>
+                    </div>
+                    <div class="space-y-1.5">
+                        <label class="text-label-small font-semibold text-secondary uppercase tracking-wider">Add Attribute</label>
+                        <div class="flex gap-2">
+                            <div class="relative flex-1">
+                                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-secondary/50 text-[18px] pointer-events-none">key</span>
+                                <input type="text" id="cu-attrKey" placeholder="Key (e.g. department)" class="form-field form-field-icon">
+                            </div>
+                            <div class="relative flex-1">
+                                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-secondary/50 text-[18px] pointer-events-none">data_object</span>
+                                <input type="text" id="cu-attrVal" placeholder="Value" class="form-field form-field-icon" onkeydown="if(event.key==='Enter'){event.preventDefault();cuAddAttr();}">
+                            </div>
+                            <button type="button" onclick="cuAddAttr()" class="shrink-0 px-4 rounded-xl bg-primary/10 hover:bg-primary/20 text-primary font-semibold flex items-center gap-1">
+                                <span class="material-symbols-outlined text-[18px]">add</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="cu-attrHidden"></div>
+                    <div id="cu-attrChips" class="flex flex-wrap gap-2 min-h-[2.75rem] rounded-xl border border-border-default bg-surface-canvas/50 p-3">
+                        <span class="text-label-small text-secondary/40 self-center">No attributes added yet</span>
+                    </div>
+                </div>
+            </form>
+            <div class="shrink-0 px-6 py-4 bg-surface-canvas/30 border-t border-border-default flex items-center justify-between gap-3">
+                <button id="cu-back" onclick="cuGoBack()" class="px-5 py-2.5 rounded-xl text-sm font-semibold text-secondary border border-border-default bg-surface-card hover:bg-surface-canvas hidden items-center gap-1.5">
+                    <span class="material-symbols-outlined text-lg">arrow_back</span> Back
+                </button>
+                <button id="cu-cancel" onclick="closeCreateModal()" class="px-5 py-2.5 rounded-xl text-sm font-semibold text-secondary border border-border-default bg-surface-card hover:bg-surface-canvas flex items-center gap-1.5">Cancel</button>
+                <button id="cu-next" onclick="cuGoNext()" class="ml-auto px-6 py-2.5 rounded-xl text-sm font-semibold text-on-primary bg-primary hover:bg-brand-primary-dark shadow-md hover:shadow-lg transition-all flex items-center gap-2">
+                    Next <span class="material-symbols-outlined text-lg">arrow_forward</span>
+                </button>
+                <button id="cu-submit" type="submit" form="createUserForm" class="ml-auto px-6 py-2.5 rounded-xl text-sm font-semibold text-on-primary bg-status-success hover:bg-green-700 shadow-md hover:shadow-lg hidden items-center gap-2 transition-all">
+                    <span class="material-symbols-outlined text-lg">check_circle</span> Create User
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ════════════════ MANAGE GROUPS MODAL ════════════════ -->
+    <div id="groupsModal" class="fixed inset-0 z-[100] items-center justify-center p-4 hidden" role="dialog" aria-modal="true">
+        <div class="modal-overlay absolute inset-0 bg-on-surface/40 backdrop-blur-sm" onclick="closeGroupsModal()"></div>
+        <div class="modal-panel relative w-full sm:max-w-lg bg-surface-card rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] border border-border-default">
+            <div class="flex items-start justify-between px-6 pt-6 pb-5 border-b border-border-default shrink-0">
+                <div class="flex items-center gap-4">
+                    <div class="w-11 h-11 rounded-xl bg-secondary/10 flex items-center justify-center text-secondary shrink-0"><span class="material-symbols-outlined text-2xl">folder_shared</span></div>
+                    <div><h3 class="font-headline text-xl font-bold text-on-surface">Manage Groups</h3><p class="text-label-small text-secondary mt-0.5">Create and view realm groups</p></div>
+                </div>
+                <button onclick="closeGroupsModal()" class="p-1.5 rounded-xl text-secondary hover:bg-surface-canvas shrink-0 ml-4"><span class="material-symbols-outlined">close</span></button>
+            </div>
+            <div class="overflow-y-auto flex-1 px-6 py-5 space-y-5">
+                <div class="space-y-3">
+                    <p class="text-label-small font-bold uppercase tracking-wider text-secondary/60">Create New Group</p>
+                    <form th:action="@{/admin/create-group}" method="post" class="space-y-3">
+                        <div class="flex gap-2">
+                            <div class="relative flex-1">
+                                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-secondary/50 text-[18px] pointer-events-none">create_new_folder</span>
+                                <input type="text" name="groupName" required placeholder="Group name…" class="form-field form-field-icon">
+                            </div>
+                            <button type="submit" class="shrink-0 px-5 rounded-xl text-sm font-semibold text-on-primary bg-primary hover:bg-brand-primary-dark shadow-sm hover:shadow-md flex items-center gap-1.5">
+                                <span class="material-symbols-outlined text-[18px]">add</span> Create
+                            </button>
+                        </div>
+                        <div class="space-y-1.5">
+                            <label class="text-label-small font-semibold text-secondary uppercase tracking-wider">Parent Group <span class="text-secondary/40 font-normal normal-case">(optional)</span></label>
+                            <div class="relative">
+                                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-secondary/50 text-[18px] pointer-events-none">account_tree</span>
+                                <select name="parentGroupId" class="form-field form-field-icon appearance-none pr-8">
+                                    <option value="">— No parent (top-level) —</option>
+                                    <option th:each="g : ${groups}" th:value="${g.id}" th:text="${g.name}">Group</option>
+                                </select>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="space-y-2">
+                    <p class="text-label-small font-bold uppercase tracking-wider text-secondary/60">Existing Groups
+                        <span class="font-normal normal-case text-secondary/50" th:text="'(' + ${groups.size()} + ')'"></span>
+                    </p>
+                    <div th:if="${#lists.isEmpty(groups)}" class="rounded-xl bg-surface-canvas border border-border-default p-4 text-label-small text-secondary/50 text-center">No groups in this realm yet.</div>
+                    <div th:unless="${#lists.isEmpty(groups)}" class="flex flex-wrap gap-2">
+                        <div th:each="g : ${groups}" class="attr-chip">
+                            <span class="material-symbols-outlined text-[13px]">folder_shared</span>
+                            <span th:text="${g.name}">Group</span>
+                            <span class="opacity-30 text-[10px] font-mono ml-0.5" th:text="${'#' + #strings.substring(g.id,0,6)}"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="shrink-0 px-6 py-4 bg-surface-canvas/30 border-t border-border-default flex justify-end">
+                <button onclick="closeGroupsModal()" class="px-5 py-2.5 rounded-xl text-sm font-semibold text-secondary border border-border-default bg-surface-card hover:bg-surface-canvas">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ════════════════ MANAGE USER SLIDE-OVER ════════════════ -->
+    <div id="manageModal" class="fixed inset-0 z-[100] items-start justify-end hidden" role="dialog" aria-modal="true">
+        <div class="absolute inset-0 bg-on-surface/30 backdrop-blur-sm" onclick="closeManageModal()"></div>
+        <div class="slide-panel relative w-full sm:max-w-md bg-surface-card h-full shadow-2xl flex flex-col overflow-hidden border-l border-border-default">
+            <div class="px-6 pt-6 pb-5 border-b border-border-default shrink-0">
+                <div class="flex items-start justify-between gap-4 mb-4">
+                    <div class="flex items-center gap-4">
+                        <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/30 to-primary-container/50 flex items-center justify-center shrink-0">
+                            <span id="mg-initials" class="text-lg font-bold text-primary">??</span>
+                        </div>
+                        <div>
+                            <h3 id="mg-title" class="font-headline font-bold text-lg text-on-surface">User Name</h3>
+                            <p id="mg-username" class="text-label-small font-mono text-secondary/70">@username</p>
+                            <p id="mg-email" class="text-label-small text-secondary/60 mt-0.5">email</p>
+                        </div>
+                    </div>
+                    <button onclick="closeManageModal()" class="p-1.5 rounded-xl text-secondary hover:bg-surface-canvas shrink-0"><span class="material-symbols-outlined">close</span></button>
+                </div>
+                <div id="mg-status-active" class="hidden items-center gap-2 text-label-small font-semibold text-status-success bg-status-success/10 border border-status-success/20 rounded-full px-3 py-1 w-fit">
+                    <span class="relative flex h-2 w-2"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-status-success opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-status-success"></span></span>
+                    Account Active
+                </div>
+                <div id="mg-status-inactive" class="hidden items-center gap-2 text-label-small font-semibold text-secondary/60 bg-surface-canvas border border-border-default rounded-full px-3 py-1 w-fit">
+                    <span class="w-2 h-2 rounded-full bg-outline/60"></span> Account Inactive
+                </div>
+                <div class="flex gap-1 mt-4 bg-surface-canvas p-1 rounded-xl">
+                    <button class="tab-btn active flex-1" onclick="mgTab('overview',this)">Overview</button>
+                    <button class="tab-btn flex-1"        onclick="mgTab('access',  this)">Access</button>
+                    <button class="tab-btn flex-1"        onclick="mgTab('danger',  this)">Danger</button>
+                </div>
+            </div>
+            <div class="overflow-y-auto flex-1 px-6 py-5 space-y-5">
+                <div id="mg-tab-overview" class="manage-tab active space-y-4">
+                    <div class="rounded-xl bg-surface-canvas p-4 flex items-center gap-3">
+                        <span class="material-symbols-outlined text-secondary/50 text-lg">fingerprint</span>
+                        <div><p class="text-[10px] font-bold uppercase tracking-wider text-secondary/60">User ID</p><p id="mg-id-display" class="text-label-small font-mono text-on-surface/70 break-all">—</p></div>
+                    </div>
+                    <div class="rounded-xl border border-border-default p-4 space-y-3">
+                        <p class="text-label-small font-bold uppercase tracking-wider text-secondary/60">Account Control</p>
+                        <div class="flex gap-2">
+                            <form th:action="@{/admin/enable-user}" method="post" class="flex-1">
+                                <input type="hidden" name="userId" id="mg-userId-enable"/>
+                                <button type="submit" class="w-full py-2 rounded-xl text-label-small font-semibold text-status-success bg-status-success/10 hover:bg-status-success/20 border border-status-success/20 flex items-center justify-center gap-1.5">
+                                    <span class="material-symbols-outlined text-sm">check_circle</span> Enable
+                                </button>
+                            </form>
+                            <form th:action="@{/admin/disable-user}" method="post" class="flex-1">
+                                <input type="hidden" name="userId" id="mg-userId-disable"/>
+                                <button type="submit" class="w-full py-2 rounded-xl text-label-small font-semibold text-secondary bg-surface-canvas hover:bg-surface-canvas/70 border border-border-default flex items-center justify-center gap-1.5">
+                                    <span class="material-symbols-outlined text-sm">block</span> Disable
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    <div class="rounded-xl border border-border-default p-4 space-y-3">
+                        <p class="text-label-small font-bold uppercase tracking-wider text-secondary/60">Password</p>
+                        <form th:action="@{/admin/reset-password-email}" method="post">
+                            <input type="hidden" name="userId" id="mg-userId-reset"/>
+                            <button type="submit" class="w-full py-2.5 rounded-xl text-label-small font-semibold text-primary bg-primary/10 hover:bg-primary/20 border border-primary/20 flex items-center justify-center gap-2">
+                                <span class="material-symbols-outlined text-sm">mark_email_read</span> Send Password Reset Email
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                <div id="mg-tab-access" class="manage-tab space-y-5">
+                    <div class="rounded-xl border border-border-default p-4 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <p class="text-label-small font-bold uppercase tracking-wider text-secondary/60">Groups</p>
+                            <span id="mg-groups-loader" class="text-[10px] text-secondary/50 hidden">Loading…</span>
+                        </div>
+                        <div id="mg-groups-list" class="flex flex-wrap gap-2 min-h-[2rem]">
+                            <span class="text-label-small text-secondary/50">Open this tab to load groups.</span>
+                        </div>
+                        <form th:action="@{/admin/add/group}" method="post" class="flex gap-2 mt-2">
+                            <input type="hidden" name="userId" id="mg-userId-addGroup"/>
+                            <div class="relative flex-1">
+                                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-secondary/50 text-[16px] pointer-events-none">folder_shared</span>
+                                <select name="groupName" required class="form-field form-field-icon text-label-small py-2 appearance-none pr-6">
+                                    <option value="">Select a group…</option>
+                                    <option th:each="g : ${groups}" th:value="${g.name}" th:text="${g.name}">Group</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="px-4 rounded-xl text-label-small font-semibold text-primary bg-primary/10 hover:bg-primary/20 border border-primary/20 whitespace-nowrap flex items-center gap-1">
+                                <span class="material-symbols-outlined text-sm">add</span> Add
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                <div id="mg-tab-danger" class="manage-tab space-y-4">
+                    <div class="rounded-xl border border-error/20 bg-error/5 p-4 space-y-3">
+                        <div class="flex items-center gap-2 text-error"><span class="material-symbols-outlined text-xl">warning</span><p class="text-sm font-bold">Danger Zone</p></div>
+                        <p class="text-label-small text-secondary leading-relaxed">Deleting this user is <strong>permanent and irreversible</strong>. All sessions, credentials, and group memberships will be removed from Keycloak immediately.</p>
+                        <form th:action="@{/admin/delete-user}" method="post" onsubmit="return confirmDelete(event)">
+                            <input type="hidden" name="userId" id="mg-userId-delete"/>
+                            <button type="submit" class="w-full py-2.5 mt-1 rounded-xl text-sm font-semibold text-on-primary bg-error hover:bg-red-700 flex items-center justify-center gap-2 shadow-md">
+                                <span class="material-symbols-outlined text-sm">delete_forever</span> Delete User Account
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ════════════════ SCRIPTS (kept exactly as original) ════════════════ -->
+    <script>
+        // ── Toast ──
+        function showToast(msg,type='success'){
+            const area=document.getElementById('toastArea'),toast=document.createElement('div'),isOk=type==='success';
+            toast.className=`pointer-events-auto flex items-start gap-3 px-4 py-3 rounded-xl shadow-lg border max-w-sm toast-entering bg-white ${isOk?'border-status-success/20':'border-error/20'} text-on-surface`;
+            toast.innerHTML=`<span class="material-symbols-outlined text-lg mt-0.5 shrink-0 ${isOk?'text-status-success':'text-error'}">${isOk?'check_circle':'error'}</span><p class="text-sm font-medium flex-1">${esc(msg)}</p><button onclick="this.closest('div').remove()" class="text-secondary/40 hover:text-secondary shrink-0 mt-0.5"><span class="material-symbols-outlined text-sm">close</span></button>`;
+            area.appendChild(toast);
+            setTimeout(()=>{toast.classList.remove('toast-entering');toast.classList.add('toast-leaving');setTimeout(()=>toast.remove(),350);},5000);
+        }
+        window.addEventListener('DOMContentLoaded',()=>{
+            const ok=document.getElementById('successFlash'),err=document.getElementById('errorFlash');
+            if(ok)showToast(ok.dataset.msg,'success');
+            if(err)showToast(err.dataset.msg,'error');
+        });
+
+        function v(id){return document.getElementById(id)?.value?.trim()||'';}
+        function esc(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+        function toggle(id,show){const el=document.getElementById(id);if(!el)return;el.classList.toggle('hidden',!show);el.classList.toggle('flex',show);document.body.style.overflow=show?'hidden':'';}
+
+        // ── CREATE USER ──
+        let cuStep=1;const cuTotal=3;
+        const cuLabels=['Step 1 of 3 — Identity','Step 2 of 3 — Security','Step 3 of 3 — Attributes'];
+        const cuAttrs={};
+
+        function openCreateModal(){cuStep=1;cuRenderStep();toggle('createUserModal',true);setTimeout(()=>document.getElementById('cu-firstName')?.focus(),350);}
+        function closeCreateModal(){toggle('createUserModal',false);document.getElementById('createUserForm')?.reset();for(const k in cuAttrs)delete cuAttrs[k];cuRenderAttrs();}
+
+        function cuRenderStep(){
+            for(let i=1;i<=cuTotal;i++){document.getElementById(`cu-step-${i}`).classList.toggle('active',i===cuStep);document.getElementById(`cu-dot-${i}`).classList.toggle('active',i===cuStep);}
+            document.getElementById('cu-step-label').textContent=cuLabels[cuStep-1];
+            const back=document.getElementById('cu-back'),cancel=document.getElementById('cu-cancel'),next=document.getElementById('cu-next'),submit=document.getElementById('cu-submit');
+            back.classList.toggle('hidden',cuStep===1);back.classList.toggle('flex',cuStep>1);
+            cancel.classList.toggle('hidden',cuStep>1);
+            next.classList.toggle('hidden',cuStep===cuTotal);next.classList.toggle('flex',cuStep<cuTotal);
+            submit.classList.toggle('hidden',cuStep!==cuTotal);submit.classList.toggle('flex',cuStep===cuTotal);
+        }
+        function cuGoNext(){if(cuValidate(cuStep)){cuStep=Math.min(cuStep+1,cuTotal);cuRenderStep();}}
+        function cuGoBack(){cuStep=Math.max(1,cuStep-1);cuRenderStep();}
+
+        function cuValidate(step){
+            if(step===1){
+                const fn=v('cu-firstName'),ln=v('cu-lastName'),un=v('cu-username'),em=v('cu-email');
+                if(!fn||!ln||!un||!em){cuShake();return false;}
+                if(!/^[a-z0-9._]+$/.test(un)){cuHighlight('cu-username');return false;}
+                if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)){cuHighlight('cu-email');return false;}
+            }
+            if(step===2){const pwd=v('cu-password'),cpwd=v('cu-confirm');if(pwd.length<8){cuHighlight('cu-password');return false;}if(pwd!==cpwd){cuHighlight('cu-confirm');return false;}}
+            return true;
+        }
+        function cuHighlight(id){const el=document.getElementById(id);el.classList.add('form-field-error');el.focus();setTimeout(()=>el.classList.remove('form-field-error'),2500);}
+        function cuShake(){const p=document.querySelector('#createUserModal .modal-panel');p.style.animation='none';p.offsetHeight;p.style.animation='shake .4s ease';setTimeout(()=>p.style.animation='',400);}
+
+        ['cu-firstName','cu-lastName'].forEach(id=>document.getElementById(id)?.addEventListener('blur',()=>{
+            const un=document.getElementById('cu-username');if(un.value)return;
+            const fn=v('cu-firstName').toLowerCase().replace(/\s+/g,'.'),ln=v('cu-lastName').toLowerCase().replace(/\s+/g,'.');
+            if(fn&&ln)un.value=`${fn}.${ln}`;
+        }));
+
+        function cuTogglePwd(inputId,iconId){const i=document.getElementById(inputId),ic=document.getElementById(iconId);const show=i.type==='password';i.type=show?'text':'password';ic.textContent=show?'visibility_off':'visibility';}
+        function cuEvalStrength(val){
+            let s=0;if(val.length>=8)s++;if(/[A-Z]/.test(val))s++;if(/[0-9]/.test(val))s++;if(/[^A-Za-z0-9]/.test(val))s++;
+            const colors=['','#ba1a1a','#f59e0b','#0284c7','#006242'],labels=['Enter a password to check its strength','Weak','Fair','Good','Strong'];
+            [1,2,3,4].forEach(i=>{document.getElementById(`cu-bar${i}`).style.backgroundColor=i<=s?colors[s]:'#c3c6d7';});
+            const lbl=document.getElementById('cu-strength-label');lbl.textContent=val?labels[s]:labels[0];lbl.style.color=s>0?colors[s]:'';
+        }
+        function cuCheckMatch(){
+            const pwd=v('cu-password'),cpwd=v('cu-confirm'),msg=document.getElementById('cu-match-msg');
+            if(!cpwd){msg.classList.add('hidden');return;}msg.classList.remove('hidden');
+            if(pwd===cpwd){msg.textContent='✓ Passwords match';msg.className='text-[11px] pl-0.5 text-status-success font-semibold';}
+            else{msg.textContent='✗ Passwords do not match';msg.className='text-[11px] pl-0.5 text-error font-semibold';}
+        }
+        function cuAddAttr(){
+            const k=document.getElementById('cu-attrKey').value.trim(),vl=document.getElementById('cu-attrVal').value.trim();
+            if(!k||!vl)return;if(!cuAttrs[k])cuAttrs[k]=[];cuAttrs[k].push(vl);
+            document.getElementById('cu-attrKey').value='';document.getElementById('cu-attrVal').value='';document.getElementById('cu-attrKey').focus();cuRenderAttrs();
+        }
+        function cuRemoveAttr(k,idx){cuAttrs[k].splice(idx,1);if(!cuAttrs[k].length)delete cuAttrs[k];cuRenderAttrs();}
+        function cuRenderAttrs(){
+            const chips=document.getElementById('cu-attrChips'),hidden=document.getElementById('cu-attrHidden');
+            chips.innerHTML='';hidden.innerHTML='';
+            const entries=Object.entries(cuAttrs);
+            if(!entries.length){chips.innerHTML='<span class="text-xs text-secondary/40 self-center">No attributes added yet</span>';return;}
+            entries.forEach(([k,vals])=>vals.forEach((vl,idx)=>{
+                const chip=document.createElement('div');chip.className='attr-chip';
+                chip.innerHTML=`<span class="material-symbols-outlined text-[13px]">key</span>${esc(k)}<span class="opacity-40 mx-0.5">→</span>${esc(vl)}<button type="button" onclick="cuRemoveAttr('${esc(k)}',${idx})" class="ml-1 opacity-60 hover:opacity-100"><span class="material-symbols-outlined text-[12px]">close</span></button>`;
+                chips.appendChild(chip);
+                const inp=document.createElement('input');inp.type='hidden';inp.name=`attribute[${k}][${idx}]`;inp.value=vl;hidden.appendChild(inp);
+            }));
+        }
+
+        // ── GROUPS MODAL ──
+        function openGroupsModal(){toggle('groupsModal',true);}
+        function closeGroupsModal(){toggle('groupsModal',false);}
+
+        // ── MANAGE USER PANEL ──
+        let mgCurrentUserId=null,mgAccessLoaded=false;
+
+        function openManageModal(btn){
+            const d=btn.dataset;mgCurrentUserId=d.userId;mgAccessLoaded=false;
+            const fn=d.firstname||'',ln=d.lastname||'',un=d.username||'';
+            const initials=(fn?fn[0].toUpperCase():un[0]?.toUpperCase()||'?')+(ln?ln[0].toUpperCase():'');
+            document.getElementById('mg-initials').textContent=initials;
+            document.getElementById('mg-title').textContent=(fn+' '+ln).trim()||un;
+            document.getElementById('mg-username').textContent='@'+un;
+            document.getElementById('mg-email').textContent=d.email||'—';
+            document.getElementById('mg-id-display').textContent=d.userId;
+            const active=d.enabled==='true';
+            document.getElementById('mg-status-active').classList.toggle('flex',active);document.getElementById('mg-status-active').classList.toggle('hidden',!active);
+            document.getElementById('mg-status-inactive').classList.toggle('flex',!active);document.getElementById('mg-status-inactive').classList.toggle('hidden',active);
+            ['enable','disable','reset','addGroup','delete'].forEach(s=>{const el=document.getElementById(`mg-userId-${s}`);if(el)el.value=d.userId;});
+            mgTab('overview',document.querySelector('.tab-btn'));
+            toggle('manageModal',true);
+        }
+        function closeManageModal(){toggle('manageModal',false);mgCurrentUserId=null;}
+
+        function mgTab(name,btn){
+            ['overview','access','danger'].forEach(t=>document.getElementById(`mg-tab-${t}`)?.classList.toggle('active',t===name));
+            document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+            if(btn)btn.classList.add('active');
+            if(name==='access'&&mgCurrentUserId&&!mgAccessLoaded){mgLoadAccess(mgCurrentUserId);mgAccessLoaded=true;}
+        }
+        async function mgLoadAccess(userId){
+            document.getElementById('mg-groups-loader').classList.remove('hidden');
+            try{const res=await fetch(`/admin/user/${userId}/groups`);const groups=await res.json();mgRenderGroupChips(groups,userId);}
+            catch{document.getElementById('mg-groups-list').innerHTML='<span class="text-xs text-error/70">Failed to load groups.</span>';}
+            finally{document.getElementById('mg-groups-loader').classList.add('hidden');}
+        }
+        function mgRenderGroupChips(items,userId){
+            const el=document.getElementById('mg-groups-list');
+            if(!items.length){el.innerHTML='<span class="text-xs text-secondary/50">No groups assigned.</span>';return;}
+            el.innerHTML='';
+            items.forEach(item=>{
+                const div=document.createElement('div');div.className='attr-chip';
+                div.innerHTML=`<span class="material-symbols-outlined text-[13px]">folder_shared</span>${esc(item)}<form action="/admin/remove/group" method="post" class="inline" onsubmit="return confirm('Remove from group &quot;${esc(item)}&quot;?')"><input type="hidden" name="userId" value="${esc(userId)}"><input type="hidden" name="groupName" value="${esc(item)}"><button type="submit" class="ml-1 opacity-60 hover:opacity-100 hover:text-error"><span class="material-symbols-outlined text-[12px]">close</span></button></form>`;
+                el.appendChild(div);
+            });
+        }
+        function confirmDelete(e){const name=document.getElementById('mg-title').textContent;if(!confirm(`Permanently delete "${name}"?\n\nThis action cannot be undone.`)){e.preventDefault();return false;}return true;}
+
+        // ── ESC key to close modals ──
+        document.addEventListener('keydown',e=>{
+            if(e.key!=='Escape')return;
+            if(!document.getElementById('createUserModal').classList.contains('hidden'))closeCreateModal();
+            else if(!document.getElementById('manageModal').classList.contains('hidden'))closeManageModal();
+            else if(!document.getElementById('groupsModal').classList.contains('hidden'))closeGroupsModal();
+        });
+    </script>
+
+</main>
+</body>
+</html>
