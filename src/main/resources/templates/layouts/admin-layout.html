@@ -860,44 +860,27 @@
                         <span class="nav-label">User Management</span>
                     </a>
                 </div>
-
-                <!-- Asset Management -->
-                <div class="nav-link-wrap" data-label="Asset Management">
-                    <a class="nav-link" th:classappend="${#strings.startsWith(currentPath, '/admin/assets')} ? ' sidebar-active' : ''" th:href="@{/admin/assets}">
-                        <span class="nav-icon material-symbols-outlined">inventory_2</span>
-                        <span class="nav-label">Asset Management</span>
+                <!-- Company Structure (Super Admin) -->
+                <div class="nav-link-wrap" data-label="Company Structure">
+                    <a class="nav-link" th:classappend="${currentPath == '/superadmin/company-structure'} ? ' sidebar-active' : ''" th:href="@{/superadmin/company-structure}">
+                        <span class="nav-icon material-symbols-outlined">business</span>
+                        <span class="nav-label">Company Structure</span>
                     </a>
                 </div>
 
-                <!-- Operations -->
-                <div class="nav-link-wrap" data-label="Operations">
-                    <a class="nav-link" th:classappend="${#strings.startsWith(currentPath, '/admin/operations')} ? ' sidebar-active' : ''" th:href="@{/admin/operations}">
-                        <span class="nav-icon material-symbols-outlined">settings_applications</span>
-                        <span class="nav-label">Operations</span>
+                <!-- Departments (Super Admin) -->
+                <div class="nav-link-wrap" data-label="Departments">
+                    <a class="nav-link" th:classappend="${currentPath == '/superadmin/departments'} ? ' sidebar-active' : ''" th:href="@{/superadmin/departments}">
+                        <span class="nav-icon material-symbols-outlined">folder</span>
+                        <span class="nav-label">Departments</span>
                     </a>
                 </div>
 
-                <!-- Finance -->
-                <div class="nav-link-wrap" data-label="Finance">
-                    <a class="nav-link" th:classappend="${#strings.startsWith(currentPath, '/admin/finance')} ? ' sidebar-active' : ''" th:href="@{/admin/finance}">
-                        <span class="nav-icon material-symbols-outlined">payments</span>
-                        <span class="nav-label">Finance</span>
-                    </a>
-                </div>
-
-                <!-- Compliance -->
-                <div class="nav-link-wrap" data-label="Compliance">
-                    <a class="nav-link" th:classappend="${#strings.startsWith(currentPath, '/admin/compliance')} ? ' sidebar-active' : ''" th:href="@{/admin/compliance}">
-                        <span class="nav-icon material-symbols-outlined">verified_user</span>
-                        <span class="nav-label">Compliance</span>
-                    </a>
-                </div>
-
-                <!-- Administration -->
-                <div class="nav-link-wrap" data-label="Administration">
-                    <a class="nav-link" th:classappend="${#strings.startsWith(currentPath, '/admin/administration')} ? ' sidebar-active' : ''" th:href="@{/admin/administration}">
-                        <span class="nav-icon material-symbols-outlined">admin_panel_settings</span>
-                        <span class="nav-label">Administration</span>
+                <!-- Department Heads (Super Admin) -->
+                <div class="nav-link-wrap" data-label="Department Heads">
+                    <a class="nav-link" th:classappend="${currentPath == '/superadmin/department-heads'} ? ' sidebar-active' : ''" th:href="@{/superadmin/department-heads}">
+                        <span class="nav-icon material-symbols-outlined">supervised_user_circle</span>
+                        <span class="nav-label">Department Heads</span>
                     </a>
                 </div>
 

@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html class="light" lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/admin-layout}">
+<head>
+    <title>Company Structure | JustJava FAMS</title>
+    <style>
+        /* ── Tabs ── */
+        .tab-btn {
+            padding: 0.75rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            color: #5d5e65;
+            font-weight: 500;
+            font-size: 0.875rem;
+            transition: color 0.2s, border-color 0.2s;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -1px;
+            background: transparent;
+            border-top: none;
+            border-left: none;
+            border-right: none;
+            border-radius: 0;
+        }
+        .tab-btn:hover { color: #98001a; }
+        .tab-btn.active {
+            color: #98001a;
+            border-bottom-color: #98001a;
+        }
+
+        /* ── Tab Content ── */
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.25s ease;
+        }
+        .tab-content.active { display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ── Cards ── */
+        .card-shadow {
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04);
+        }
+        .table-row-hover:hover { background-color: rgba(0,0,0,0.02); }
+
+        /* ── Modal overlay ── */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.45);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
+            backdrop-filter: blur(2px);
+            padding: 1rem;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal-box {
+            background: #fff;
+            border-radius: 1.25rem;
+            max-width: 480px;
+            width: 100%;
+            padding: 1.75rem 2rem 2rem;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+            animation: modalIn 0.2s ease;
+        }
+        @keyframes modalIn {
+            from { opacity: 0; transform: scale(0.96) translateY(12px); }
+            to   { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .material-symbols-outlined {
+            font-size: 1.25rem;
+            vertical-align: middle;
+        }
+
+        /* Utility used by JS to hide forms inside modal */
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+<main id="main-content" class="space-y-6" layout:fragment="content">
+
+    <!-- ─── Page Title ─── -->
+    <div class="flex flex-wrap justify-between items-end gap-4">
+        <div>
+            <h2 class="font-page-title text-page-title text-on-background">Company Structure</h2>
+            <p class="text-body-default text-secondary">Manage organization hierarchy: companies, locations, and branches</p>
+        </div>
+        <div>
+            <span class="px-2.5 py-0.5 bg-surface-container-high text-on-secondary-fixed-variant rounded-full text-badge-label font-badge-label">Super Admin</span>
+        </div>
+    </div>
+
+    <!-- ─── Alert Messages ─── -->
+    <div th:if="${successMessage}" class="p-4 bg-status-success/10 border border-status-success text-status-success rounded-xl">
+        <div class="flex gap-3">
+            <span class="material-symbols-outlined flex-shrink-0">check_circle</span>
+            <div><p class="font-body-medium" th:text="${successMessage}"></p></div>
+        </div>
+    </div>
+    <div th:if="${errorMessage}" class="p-4 bg-error/10 border border-error text-error rounded-xl">
+        <div class="flex gap-3">
+            <span class="material-symbols-outlined flex-shrink-0">error</span>
+            <div><p class="font-body-medium" th:text="${errorMessage}"></p></div>
+        </div>
+    </div>
+
+    <!-- ─── Tabs Navigation ─── -->
+    <div style="overflow-y: hidden" class="flex gap-1 border-b border-border-default overflow-x-auto">
+        <button type="button" class="tab-btn active" data-tab="companies-tab">
+            <span class="material-symbols-outlined">business</span>
+            Companies
+        </button>
+        <button type="button" class="tab-btn" data-tab="locations-tab">
+            <span class="material-symbols-outlined">location_on</span>
+            Locations
+        </button>
+        <button type="button" class="tab-btn" data-tab="branches-tab">
+            <span class="material-symbols-outlined">domain</span>
+            Branches
+        </button>
+    </div>
+
+    <!-- ════════════════════════════════════════════ -->
+    <!-- ─── COMPANIES TAB ─── -->
+    <!-- ════════════════════════════════════════════ -->
+    <div id="companies-tab" class="tab-content" style="display: block;">
+        <div class="flex justify-end mb-4">
+            <button type="button" class="h-button-height px-5 bg-primary text-on-primary hover:bg-brand-primary-dark rounded-lg font-body-medium text-sm transition-colors flex items-center gap-2 create-company-btn">
+                <span class="material-symbols-outlined">add</span>
+                Create Company
+            </button>
+        </div>
+        <div class="bg-surface-card rounded-xl card-shadow p-6">
+            <h3 class="font-card-header text-card-header text-on-surface mb-4">All Companies</h3>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                    <tr class="bg-surface-canvas border-b border-border-default">
+                        <th class="px-4 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Name</th>
+                        <th class="px-4 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Industry</th>
+                        <th class="px-4 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Status</th>
+                        <th class="px-4 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody class="divide-y divide-border-default">
+                    <tr th:each="company : ${companies}" class="table-row-hover transition-colors">
+                        <td class="px-4 py-3 font-body-medium text-on-surface" th:text="${company.name}"></td>
+                        <td class="px-4 py-3 text-secondary" th:text="${company.industry ?: 'N/A'}"></td>
+                        <td class="px-4 py-3">
+                                <span th:if="${company.status == 'ACTIVE'}"
+                                      class="px-2 py-0.5 bg-status-success/10 text-status-success rounded-full text-badge-label font-badge-label">ACTIVE</span>
+                            <span th:if="${company.status == 'INACTIVE'}"
+                                  class="px-2 py-0.5 bg-status-warning/10 text-status-warning rounded-full text-badge-label font-badge-label">INACTIVE</span>
+                        </td>
+                        <td class="px-4 py-3">
+                            <button type="button"
+                                    class="text-primary hover:text-brand-primary-dark transition-colors edit-company-btn"
+                                    th:data-id="${company.id}"
+                                    th:data-name="${company.name}"
+                                    th:data-industry="${company.industry}"
+                                    th:data-registration="${company.registrationNumber}"
+                                    th:data-tax="${company.taxId}"
+                                    th:data-description="${company.description}">
+                                <span class="material-symbols-outlined">edit</span>
+                            </button>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(companies)}">
+                        <td colspan="4" class="px-4 py-8 text-center text-secondary">No companies found. Create one to get started.</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div><!-- /#companies-tab -->
+
+    <!-- ════════════════════════════════════════════ -->
+    <!-- ─── LOCATIONS TAB ─── -->
+    <!-- ════════════════════════════════════════════ -->
+    <div id="locations-tab" class="tab-content" style="display: none;">
+        <div class="flex justify-end mb-4">
+            <button type="button" class="h-button-height px-5 bg-primary text-on-primary hover:bg-brand-primary-dark rounded-lg font-body-medium text-sm transition-colors flex items-center gap-2 create-location-btn">
+                <span class="material-symbols-outlined">add</span>
+                Create Location
+            </button>
+        </div>
+        <div class="bg-surface-card rounded-xl card-shadow p-6">
+            <h3 class="font-card-header text-card-header text-on-surface mb-4">All Locations</h3>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                    <tr class="bg-surface-canvas border-b border-border-default">
+                        <th class="px-4 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Location</th>
+                        <th class="px-4 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Company</th>
+                        <th class="px-4 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">City</th>
+                        <th class="px-4 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Status</th>
+                        <th class="px-4 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody class="divide-y divide-border-default">
+                    <tr th:each="location : ${locations}" class="table-row-hover transition-colors">
+                        <td class="px-4 py-3 font-body-medium text-on-surface" th:text="${location.name}"></td>
+                        <td class="px-4 py-3 text-secondary" th:text="${location.companyName}"></td>
+                        <td class="px-4 py-3 text-secondary" th:text="${location.city ?: 'N/A'}"></td>
+                        <td class="px-4 py-3">
+                                <span th:if="${location.status == 'ACTIVE'}"
+                                      class="px-2 py-0.5 bg-status-success/10 text-status-success rounded-full text-badge-label font-badge-label">ACTIVE</span>
+                            <span th:if="${location.status != 'ACTIVE'}"
+                                  class="px-2 py-0.5 bg-status-warning/10 text-status-warning rounded-full text-badge-label font-badge-label"
+                                  th:text="${location.status}"></span>
+                        </td>
+                        <td class="px-4 py-3">
+                            <form method="POST" th:action="@{'/superadmin/location/delete/' + ${location.id}}"
+                                  style="display:inline;"
+                                  onsubmit="return confirm('Delete this location? This cannot be undone.');">
+                                <th:block th:if="${_csrf != null}">
+                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                                </th:block>
+                                <button type="submit" class="text-error hover:text-red-700 transition-colors">
+                                    <span class="material-symbols-outlined">delete</span>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(locations)}">
+                        <td colspan="5" class="px-4 py-8 text-center text-secondary">No locations found.</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div><!-- /#locations-tab -->
+
+    <!-- ════════════════════════════════════════════ -->
+    <!-- ─── BRANCHES TAB ─── -->
+    <!-- ════════════════════════════════════════════ -->
+    <div id="branches-tab" class="tab-content" style="display: none;">
+        <div class="flex justify-end mb-4">
+            <button type="button" class="h-button-height px-5 bg-primary text-on-primary hover:bg-brand-primary-dark rounded-lg font-body-medium text-sm transition-colors flex items-center gap-2 create-branch-btn">
+                <span class="material-symbols-outlined">add</span>
+                Create Branch
+            </button>
+        </div>
+        <div class="bg-surface-card rounded-xl card-shadow p-6">
+            <h3 class="font-card-header text-card-header text-on-surface mb-4">All Branches</h3>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                    <tr class="bg-surface-canvas border-b border-border-default">
+                        <th class="px-4 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Branch</th>
+                        <th class="px-4 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Company</th>
+                        <th class="px-4 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Location</th>
+                        <th class="px-4 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Status</th>
+                        <th class="px-4 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody class="divide-y divide-border-default">
+                    <tr th:each="branch : ${branches}" class="table-row-hover transition-colors">
+                        <td class="px-4 py-3 font-body-medium text-on-surface" th:text="${branch.name}"></td>
+                        <td class="px-4 py-3 text-secondary" th:text="${branch.companyName}"></td>
+                        <td class="px-4 py-3 text-secondary" th:text="${branch.locationName}"></td>
+                        <td class="px-4 py-3">
+                                <span th:if="${branch.status == 'ACTIVE'}"
+                                      class="px-2 py-0.5 bg-status-success/10 text-status-success rounded-full text-badge-label font-badge-label">ACTIVE</span>
+                            <span th:if="${branch.status != 'ACTIVE'}"
+                                  class="px-2 py-0.5 bg-status-warning/10 text-status-warning rounded-full text-badge-label font-badge-label"
+                                  th:text="${branch.status}"></span>
+                        </td>
+                        <td class="px-4 py-3">
+                            <form method="POST" th:action="@{'/superadmin/branch/delete/' + ${branch.id}}"
+                                  style="display:inline;"
+                                  onsubmit="return confirm('Delete this branch? This cannot be undone.');">
+                                <th:block th:if="${_csrf != null}">
+                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                                </th:block>
+                                <button type="submit" class="text-error hover:text-red-700 transition-colors">
+                                    <span class="material-symbols-outlined">delete</span>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(branches)}">
+                        <td colspan="5" class="px-4 py-8 text-center text-secondary">No branches found.</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div><!-- /#branches-tab -->
+
+    <!-- ─── UNIFIED MODAL ─── -->
+    <div id="dataModal" class="modal-overlay">
+        <div class="modal-box" style="max-width: 600px; max-height: 85vh; overflow-y: auto;">
+            <div class="flex justify-between items-center mb-5 sticky top-0 bg-white pb-4">
+                <h3 class="font-card-header text-card-header text-on-surface flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary" id="modalIcon">add</span>
+                    <span id="modalTitle">Create Item</span>
+                </h3>
+                <button type="button" id="closeDataModal" class="text-secondary hover:text-on-surface transition-colors text-2xl leading-none">&times;</button>
+            </div>
+
+            <!-- ── Company Form ── -->
+            <form method="POST" th:action="@{/superadmin/company/create}" id="companyForm" class="hidden space-y-4">
+                <input type="hidden" name="companyId" id="companyEditId" value="" />
+                <th:block th:if="${_csrf != null}">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                </th:block>
+                <div>
+                    <label class="block text-label-small text-secondary font-label-small mb-2 uppercase tracking-wider">Company Name *</label>
+                    <input type="text" name="name" id="companyNameInput" required placeholder="e.g., JustJava Inc."
+                           class="w-full h-input-height px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                </div>
+                <div>
+                    <label class="block text-label-small text-secondary font-label-small mb-2 uppercase tracking-wider">Description</label>
+                    <textarea name="description" id="companyDescInput" rows="2" placeholder="Company description"
+                              class="w-full px-3 py-2 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none"></textarea>
+                </div>
+                <div>
+                    <label class="block text-label-small text-secondary font-label-small mb-2 uppercase tracking-wider">Registration Number</label>
+                    <input type="text" name="registrationNumber" id="companyRegInput" placeholder="Reg. number"
+                           class="w-full h-input-height px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                </div>
+                <div>
+                    <label class="block text-label-small text-secondary font-label-small mb-2 uppercase tracking-wider">Tax ID</label>
+                    <input type="text" name="taxId" id="companyTaxInput" placeholder="Tax ID"
+                           class="w-full h-input-height px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                </div>
+                <div>
+                    <label class="block text-label-small text-secondary font-label-small mb-2 uppercase tracking-wider">Industry</label>
+                    <input type="text" name="industry" id="companyIndustryInput" placeholder="e.g., Technology"
+                           class="w-full h-input-height px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                </div>
+                <div class="flex gap-3 mt-6">
+                    <button type="submit" id="companySubmitBtn" class="flex-1 h-button-height bg-primary text-on-primary hover:bg-brand-primary-dark rounded-lg font-body-medium text-sm transition-colors">
+                        Create Company
+                    </button>
+                    <button type="button" class="px-5 h-button-height border border-border-default text-secondary hover:text-on-surface hover:border-border-strong rounded-lg font-body-medium text-sm transition-colors closeModalBtn">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+
+            <!-- ── Location Form ── -->
+            <form method="POST" th:action="@{/superadmin/location/create}" id="locationForm" class="hidden space-y-4">
+                <th:block th:if="${_csrf != null}">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                </th:block>
+                <div>
+                    <label class="block text-label-small text-secondary font-label-small mb-2 uppercase tracking-wider">Company *</label>
+                    <select name="companyId" required
+                            class="w-full h-input-height px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                        <option value="">Select Company</option>
+                        <option th:each="company : ${companies}" th:value="${company.id}" th:text="${company.name}"></option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-label-small text-secondary font-label-small mb-2 uppercase tracking-wider">Location Name *</label>
+                    <input type="text" name="name" required placeholder="e.g., Main Office"
+                           class="w-full h-input-height px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                </div>
+                <div>
+                    <label class="block text-label-small text-secondary font-label-small mb-2 uppercase tracking-wider">Address</label>
+                    <input type="text" name="address" placeholder="Street address"
+                           class="w-full h-input-height px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-label-small text-secondary font-label-small mb-2 uppercase tracking-wider">City</label>
+                        <input type="text" name="city" placeholder="City"
+                               class="w-full h-input-height px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-label-small text-secondary font-label-small mb-2 uppercase tracking-wider">State</label>
+                        <input type="text" name="state" placeholder="State"
+                               class="w-full h-input-height px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-label-small text-secondary font-label-small mb-2 uppercase tracking-wider">Country</label>
+                        <input type="text" name="country" placeholder="Country"
+                               class="w-full h-input-height px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-label-small text-secondary font-label-small mb-2 uppercase tracking-wider">Postal Code</label>
+                        <input type="text" name="postalCode" placeholder="Postal code"
+                               class="w-full h-input-height px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-label-small text-secondary font-label-small mb-2 uppercase tracking-wider">Type</label>
+                    <select name="locationType"
+                            class="w-full h-input-height px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                        <option th:each="type : ${locationTypes}" th:value="${type}" th:text="${type}"></option>
+                    </select>
+                </div>
+                <div class="flex gap-3 mt-6">
+                    <button type="submit" class="flex-1 h-button-height bg-primary text-on-primary hover:bg-brand-primary-dark rounded-lg font-body-medium text-sm transition-colors">
+                        Create Location
+                    </button>
+                    <button type="button" class="px-5 h-button-height border border-border-default text-secondary hover:text-on-surface hover:border-border-strong rounded-lg font-body-medium text-sm transition-colors closeModalBtn">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+
+            <!-- ── Branch Form ── -->
+            <form method="POST" th:action="@{/superadmin/branch/create}" id="branchForm" class="hidden space-y-4">
+                <th:block th:if="${_csrf != null}">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                </th:block>
+                <div>
+                    <label class="block text-label-small text-secondary font-label-small mb-2 uppercase tracking-wider">Company *</label>
+                    <select name="companyId" required
+                            class="branchCompanySelect w-full h-input-height px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                        <option value="">Select Company</option>
+                        <option th:each="company : ${companies}" th:value="${company.id}" th:text="${company.name}"></option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-label-small text-secondary font-label-small mb-2 uppercase tracking-wider">Location *</label>
+                    <select name="locationId" required
+                            class="branchLocationSelect w-full h-input-height px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                        <option value="">Select Location</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-label-small text-secondary font-label-small mb-2 uppercase tracking-wider">Branch Name *</label>
+                    <input type="text" name="name" required placeholder="e.g., Lagos Branch"
+                           class="w-full h-input-height px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                </div>
+                <div>
+                    <label class="block text-label-small text-secondary font-label-small mb-2 uppercase tracking-wider">Description</label>
+                    <textarea name="description" rows="2" placeholder="Branch description"
+                              class="w-full px-3 py-2 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none"></textarea>
+                </div>
+                <div>
+                    <label class="block text-label-small text-secondary font-label-small mb-2 uppercase tracking-wider">Manager Name</label>
+                    <input type="text" name="managerName" placeholder="Manager name"
+                           class="w-full h-input-height px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                </div>
+                <div class="flex gap-3 mt-6">
+                    <button type="submit" class="flex-1 h-button-height bg-primary text-on-primary hover:bg-brand-primary-dark rounded-lg font-body-medium text-sm transition-colors">
+                        Create Branch
+                    </button>
+                    <button type="button" class="px-5 h-button-height border border-border-default text-secondary hover:text-on-surface hover:border-border-strong rounded-lg font-body-medium text-sm transition-colors closeModalBtn">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+
+        </div><!-- /.modal-box -->
+    </div><!-- /#dataModal -->
+
+
+    <!-- ════════════════════════════════════════════════════════════ -->
+    <!-- ─── JAVASCRIPT ─── -->
+    <!-- ════════════════════════════════════════════════════════════ -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+
+            // ─── TAB SWITCHING ──────────────────────────────────────
+            const tabs = document.querySelectorAll('.tab-btn');
+
+            function showTab(tabId) {
+                document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+                const target = document.getElementById(tabId);
+                if (target) target.style.display = 'block';
+                tabs.forEach(btn => btn.classList.remove('active'));
+                const activeBtn = document.querySelector(`.tab-btn[data-tab="${tabId}"]`);
+                if (activeBtn) activeBtn.classList.add('active');
+            }
+
+            tabs.forEach(btn => btn.addEventListener('click', function () {
+                showTab(this.dataset.tab);
+            }));
+
+            showTab('companies-tab');
+
+            // ─── MODAL MANAGEMENT ───────────────────────────────────
+            const modal         = document.getElementById('dataModal');
+            const modalTitle    = document.getElementById('modalTitle');
+            const modalIcon     = document.getElementById('modalIcon');
+            const companyForm   = document.getElementById('companyForm');
+            const locationForm  = document.getElementById('locationForm');
+            const branchForm    = document.getElementById('branchForm');
+
+            function hideAllForms() {
+                [companyForm, locationForm, branchForm].forEach(f => f.classList.add('hidden'));
+            }
+
+            function openModal(formElement, title, icon) {
+                hideAllForms();
+                formElement.classList.remove('hidden');
+                modalTitle.textContent = title;
+                modalIcon.textContent  = icon;
+                modal.classList.add('open');
+            }
+
+            function closeModal() {
+                modal.classList.remove('open');
+                hideAllForms();
+            }
+
+            // Create buttons
+            document.querySelector('.create-company-btn')
+                .addEventListener('click', () => {
+                    companyForm.reset();
+                    document.getElementById('companyEditId').value = '';
+                    document.getElementById('companySubmitBtn').textContent = 'Create Company';
+                    companyForm.action = /*[[@{/superadmin/company/create}]]*/ '/superadmin/company/create';
+                    openModal(companyForm, 'Create Company', 'add_business');
+                });
+
+            document.querySelector('.create-location-btn')
+                .addEventListener('click', () => {
+                    locationForm.reset();
+                    openModal(locationForm, 'Create Location', 'add_location');
+                });
+
+            document.querySelector('.create-branch-btn')
+                .addEventListener('click', () => {
+                    branchForm.reset();
+                    branchLocationSelect.innerHTML = '<option value="">Select Location</option>';
+                    openModal(branchForm, 'Create Branch', 'add_domain');
+                });
+
+            // Edit Company buttons — populate form and switch action to update endpoint
+            document.querySelectorAll('.edit-company-btn').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    companyForm.reset();
+                    document.getElementById('companyEditId').value        = this.dataset.id;
+                    document.getElementById('companyNameInput').value     = this.dataset.name     || '';
+                    document.getElementById('companyIndustryInput').value = this.dataset.industry || '';
+                    document.getElementById('companyRegInput').value      = this.dataset.registration || '';
+                    document.getElementById('companyTaxInput').value      = this.dataset.tax       || '';
+                    document.getElementById('companyDescInput').value     = this.dataset.description || '';
+                    document.getElementById('companySubmitBtn').textContent = 'Update Company';
+                    // Point the form to the update endpoint
+                    companyForm.action = '/superadmin/company/update/' + this.dataset.id;
+                    openModal(companyForm, 'Edit Company', 'edit');
+                });
+            });
+
+            // Close handlers
+            document.getElementById('closeDataModal').addEventListener('click', closeModal);
+            document.querySelectorAll('.closeModalBtn').forEach(btn => btn.addEventListener('click', closeModal));
+            modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+            document.addEventListener('keydown', e => {
+                if (e.key === 'Escape' && modal.classList.contains('open')) closeModal();
+            });
+
+            // ─── LOAD LOCATIONS FOR BRANCH ──────────────────────────
+            const branchCompanySelect  = branchForm.querySelector('.branchCompanySelect');
+            const branchLocationSelect = branchForm.querySelector('.branchLocationSelect');
+
+            branchCompanySelect.addEventListener('change', function () {
+                loadLocationsForBranch(this.value);
+            });
+
+            function loadLocationsForBranch(companyId) {
+                branchLocationSelect.innerHTML  = '<option value="">Loading…</option>';
+                branchLocationSelect.disabled   = true;
+
+                if (!companyId) {
+                    branchLocationSelect.innerHTML = '<option value="">Select Location</option>';
+                    branchLocationSelect.disabled  = false;
+                    return;
+                }
+
+                fetch('/superadmin/api/locations/' + encodeURIComponent(companyId))
+                    .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+                    .then(data => {
+                        const list = Array.isArray(data) ? data : (data.data || []);
+                        branchLocationSelect.innerHTML = '<option value="">Select Location</option>';
+                        if (list.length === 0) {
+                            branchLocationSelect.innerHTML = '<option value="">No locations available</option>';
+                        } else {
+                            list.forEach(loc => {
+                                const opt = document.createElement('option');
+                                opt.value       = loc.id;
+                                opt.textContent = loc.name;
+                                branchLocationSelect.appendChild(opt);
+                            });
+                        }
+                        branchLocationSelect.disabled = false;
+                    })
+                    .catch(err => {
+                        console.error('Failed to load locations:', err);
+                        branchLocationSelect.innerHTML = '<option value="">Error loading locations</option>';
+                        branchLocationSelect.disabled  = false;
+                    });
+            }
+
+            // Validate location selection before branch submit
+            branchForm.addEventListener('submit', function (e) {
+                if (!branchLocationSelect.value) {
+                    e.preventDefault();
+                    alert('Please select a location.');
+                    branchLocationSelect.focus();
+                }
+            });
+
+            // ─── TRIM INPUTS ON SUBMIT ───────────────────────────────
+            document.querySelectorAll('form[method="POST"]').forEach(form => {
+                form.addEventListener('submit', function () {
+                    this.querySelectorAll('input[type="text"], textarea').forEach(inp => {
+                        if (inp.value) inp.value = inp.value.trim();
+                    });
+                });
+            });
+
+            // ─── KEYBOARD SHORTCUT: Ctrl+1/2/3 ─────────────────────
+            document.addEventListener('keydown', function (e) {
+                if (e.ctrlKey && e.key >= '1' && e.key <= '3') {
+                    e.preventDefault();
+                    const tabBtns = document.querySelectorAll('.tab-btn');
+                    const idx = parseInt(e.key) - 1;
+                    if (tabBtns[idx]) tabBtns[idx].click();
+                }
+            });
+
+        });
+    </script>
+</main>
+
+
+</body>
+</html>
