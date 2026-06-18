@@ -1030,6 +1030,28 @@
     <span class="fab-tooltip">Instant Scan</span>
 </div>
 
+<!-- Scanner modal / overlay -->
+<div id="scan-modal" style="display:none;position:fixed;inset:0;z-index:120;background:rgba(0,0,0,0.6);align-items:center;justify-content:center;">
+    <div style="width:100%;max-width:760px;margin:1.5rem;position:relative;">
+        <div style="background:#fff;border-radius:12px;overflow:hidden;">
+            <div style="padding:10px 12px;border-bottom:1px solid #E4E6EA;display:flex;align-items:center;justify-content:space-between;">
+                <div style="display:flex;align-items:center;gap:10px"><strong>Scan Asset Tag</strong><span class="text-label-small" style="color:#6b7280">Point the camera at the barcode</span></div>
+                <div>
+                    <button id="scan-close" aria-label="Close scanner" style="background:transparent;border:none;font-size:20px;cursor:pointer;padding:8px;">✕</button>
+                </div>
+            </div>
+            <div style="background:#000;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+                <video id="scan-video" autoplay playsinline muted style="width:100%;height:420px;object-fit:cover;background:#000"></video>
+                <canvas id="scan-canvas" style="display:none;"></canvas>
+                <div id="scan-hint" style="padding:12px;color:#fff;background:rgba(0,0,0,0.4);width:100%;text-align:center;">Searching for barcode…</div>
+            </div>
+            <div style="padding:12px;display:flex;gap:8px;justify-content:flex-end;">
+                <button id="scan-cancel" style="height:36px;padding:0 14px;border-radius:8px;border:none;background:#F4F5F7;">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- ══ GLOBAL TOOLTIP CONTAINER ══ -->
 <div id="tooltip-container" style="position:fixed;top:0;left:0;pointer-events:none;z-index:9999;"></div>
 
@@ -1290,15 +1312,141 @@
             state: function() { return isCollapsed; }
         };
 
-        // ── FAB click ──
+        // ── FAB click / Scanner bridge ──
         const scanBtn = document.getElementById('scanButton');
         if (scanBtn) {
-            scanBtn.addEventListener('click', () => {
-                alert('Initializing mobile scanner bridge…');
-            });
+            const scanModal = document.getElementById('scan-modal');
+            const video = document.getElementById('scan-video');
+            const canvas = document.getElementById('scan-canvas');
+            const hint = document.getElementById('scan-hint');
+            let stream = null;
+            let scanning = false;
+            let detector = null;
+            let zxingReader = null;
+            let rafId = null;
+
+            function loadScript(src) {
+                return new Promise((resolve, reject) => {
+                    const s = document.createElement('script');
+                    s.src = src;
+                    s.async = true;
+                    s.onload = () => resolve();
+                    s.onerror = e => reject(e);
+                    document.head.appendChild(s);
+                });
+            }
+
+            async function startScanner() {
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    alert('Camera API not supported in this browser. Please use Chrome on mobile.');
+                    return;
+                }
+
+                scanModal.style.display = 'flex';
+                hint.textContent = 'Requesting camera...';
+                try {
+                    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+                    video.srcObject = stream;
+                    await video.play();
+                    scanning = true;
+                    hint.textContent = 'Searching for barcode...';
+
+                    // Prefer the native BarcodeDetector when available (Chrome)
+                    if ('BarcodeDetector' in window) {
+                        try {
+                            const formats = await BarcodeDetector.getSupportedFormats();
+                            detector = new BarcodeDetector({ formats });
+                            tickDetect();
+                            return;
+                        } catch (e) {
+                            // fall through to ZXing
+                            console.warn('BarcodeDetector failed, falling back to ZXing', e);
+                        }
+                    }
+
+                    // Fallback: load ZXing JS library dynamically
+                    if (!window.ZXing && !window.ZXingBrowser) {
+                        hint.textContent = 'Loading scanner library...';
+                        await loadScript('https://unpkg.com/@zxing/library@0.18.6/umd/index.min.js');
+                    }
+                    // The UMD build exposes ZXing or BrowserMultiFormatReader under window.ZXing or ZXing
+                    const ZX = window.ZXing || window.ZXingBrowser || window.ZXingJs || window.ZXing;
+                    if (!ZX || !ZX.BrowserMultiFormatReader) {
+                        hint.textContent = 'Scanner library failed to load.';
+                        return;
+                    }
+                    zxingReader = new ZX.BrowserMultiFormatReader();
+                    zxingReader.decodeFromVideoElementContinuously(video, (result, err) => {
+                        if (result && result.text) {
+                            handleDetected(result.text);
+                        }
+                    });
+
+                } catch (err) {
+                    console.error(err);
+                    hint.textContent = 'Camera access was denied or is not available.';
+                }
+            }
+
+            async function tickDetect() {
+                if (!scanning || !detector) return;
+                try {
+                    const barcodes = await detector.detect(video);
+                    if (barcodes && barcodes.length) {
+                        handleDetected(barcodes[0].rawValue || barcodes[0].raw_value || barcodes[0].raw_text || barcodes[0].rawData || barcodes[0].rawvalue);
+                        return;
+                    }
+                } catch (e) {
+                    // ignore and continue
+                }
+                rafId = requestAnimationFrame(tickDetect);
+            }
+
+            function stopScanner() {
+                scanning = false;
+                if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+                try { if (zxingReader && zxingReader.reset) zxingReader.reset(); } catch (e) {}
+                if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
+                try { video.pause(); video.srcObject = null; } catch (e) {}
+                scanModal.style.display = 'none';
+                hint.textContent = '';
+            }
+
+            function handleDetected(code) {
+                if (!code) return;
+                hint.textContent = 'Scanned: ' + code;
+                // If we're on the verifications page and there is a manual input, populate and trigger lookup
+                const manualInput = document.getElementById('manual-code');
+                if (manualInput) {
+                    manualInput.value = code;
+                    // If lookupAsset function exists on the page, call it
+                    if (typeof lookupAsset === 'function') {
+                        try { lookupAsset(); } catch (e) { console.warn(e); }
+                    }
+                    stopScanner();
+                    return;
+                }
+
+                // If verification form exists with hidden scanned-code field, set it
+                const scannedField = document.getElementById('scanned-code');
+                if (scannedField) {
+                    scannedField.value = code;
+                    stopScanner();
+                    return;
+                }
+
+                // Otherwise navigate to verifications page with scanned code as query param
+                stopScanner();
+                window.location.href = '/auditor/verifications?scanned=' + encodeURIComponent(code);
+            }
+
+            scanBtn.addEventListener('click', startScanner);
+            document.getElementById('scan-close')?.addEventListener('click', stopScanner);
+            document.getElementById('scan-cancel')?.addEventListener('click', stopScanner);
         }
 
     })();
+    </script>
     <script>
         (function() {
             'use strict';

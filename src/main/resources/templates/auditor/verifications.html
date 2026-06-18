@@ -188,6 +188,21 @@
             submitter?.querySelector('.submit-spinner')?.classList.remove('hidden');
             form.querySelectorAll('button[type="submit"]').forEach(button => button.setAttribute('disabled', 'disabled'));
         }));
+
+        // If a scanned code was provided via query param, populate and lookup automatically
+        (function() {
+            try {
+                const params = new URLSearchParams(window.location.search);
+                const scanned = params.get('scanned');
+                if (scanned) {
+                    const manual = document.getElementById('manual-code');
+                    if (manual) {
+                        manual.value = scanned;
+                        if (typeof lookupAsset === 'function') lookupAsset();
+                    }
+                }
+            } catch (e) { /* ignore */ }
+        })();
     </script>
 </main>
 </body>
