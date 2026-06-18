@@ -163,7 +163,6 @@
       overflow: visible;
     }
 
-    /* Inner wrapper for scroll & clipping */
     #sidebar-inner {
       flex: 1;
       display: flex;
@@ -174,7 +173,6 @@
       width: 100%;
     }
 
-    /* Scrollable nav area */
     #sidebar-nav {
       flex: 1;
       overflow-y: auto;
@@ -193,7 +191,6 @@
       border-radius: 10px;
     }
 
-    /* Brand */
     .sidebar-brand {
       display: flex;
       align-items: center;
@@ -241,7 +238,6 @@
       margin: 0;
     }
 
-    /* Nav links */
     .nav-link-wrap {
       position: relative;
       display: flex;
@@ -293,7 +289,6 @@
       color: #fff !important;
     }
 
-    /* Tooltip – positioned outside sidebar overflow */
     .nav-tooltip {
       position: fixed;
       background: #1A1D23;
@@ -325,7 +320,6 @@
       transform: scale(1);
     }
 
-    /* ── Sidebar collapsed state ── */
     #sidebar.collapsed {
       width: var(--sidebar-collapsed-w);
     }
@@ -354,7 +348,7 @@
     #sidebar.collapsed .nav-link .nav-icon {
       margin: 0;
     }
-    /* User profile in footer */
+
     .sidebar-user {
       display: flex;
       align-items: center;
@@ -496,7 +490,6 @@
     }
 
     /* ── Responsive ── */
-
     @media (max-width: 1023px) {
       :root {
         --sidebar-margin: 14px;
@@ -728,7 +721,6 @@
       color: #9aa0aa;
     }
 
-    /* topbar actions */
     .topbar-actions {
       display: flex;
       align-items: center;
@@ -775,17 +767,74 @@
       font-size: 22px;
     }
   </style>
+  <!-- Modal & logout button styles (exactly matching the original study) -->
   <style>
-    .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;z-index:10000;opacity:0;visibility:hidden;transition:opacity 200ms ease,visibility 200ms ease;backdrop-filter:blur(2px)}
-    .modal-overlay.visible{opacity:1;visibility:visible}
-    .modal-content{background:#fff;border-radius:16px;padding:28px;max-width:400px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.12);border:1px solid #E4E6EA}
-    @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
-    .modal-header .modal-icon{width:48px;height:48px;background:#ffebee;border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:12px}
-    .modal-btn{height:36px;padding:0 20px;border-radius:10px;font-size:13px;font-weight:500;border:none;cursor:pointer}
-    .modal-btn-secondary{background:#F4F5F7;color:#1A1D23;border:1px solid #E4E6EA}
-    .modal-btn-primary{background:#ba1a1a;color:#fff}
-    .sidebar-user .logout-btn{display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:8px;background:transparent;border:none;cursor:pointer;color:#5d5e65}
-    .sidebar-user .logout-btn:hover{background:#f0f2f8;color:#ba1a1a}
+    /* ── Modal Styles ── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 200ms ease, visibility 200ms ease;
+      backdrop-filter: blur(2px);
+    }
+    .modal-overlay.visible {
+      opacity: 1;
+      visibility: visible;
+    }
+    .modal-content {
+      background: white;
+      border-radius: 16px;
+      padding: 32px;
+      max-width: 400px;
+      width: 90%;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.12);
+      animation: slideUp 200ms cubic-bezier(0.4,0,0.2,1);
+      border: 1px solid #E4E6EA;
+    }
+    @keyframes slideUp { from { transform: translateY(20px); opacity: 0 } to { transform: translateY(0); opacity: 1 } }
+    @keyframes spin { from { transform: rotate(0deg) } to { transform: rotate(360deg) } }
+    .modal-header { margin-bottom: 16px }
+    .modal-header .modal-icon { width: 48px; height: 48px; background: #ffebee; border-radius: 12px; display:flex; align-items:center; justify-content:center; margin-bottom:16px }
+    .modal-header .modal-icon .material-symbols-outlined { color: #ba1a1a; font-size: 28px }
+    .modal-header h2 { margin:0; font-size:18px; font-weight:600; color:#1A1D23; line-height:1.4 }
+    .modal-body { margin-bottom: 24px }
+    .modal-body p { margin:0; font-size:13px; color:#5d5e65; line-height:1.6 }
+    .modal-footer { display:flex; gap:12px; justify-content:flex-end }
+    .modal-btn { height:36px; padding:0 20px; border-radius:10px; font-size:13px; font-weight:500; border:none; cursor:pointer; transition: all 150ms; white-space:nowrap }
+    .modal-btn-secondary { background:#F4F5F7; color:#1A1D23; border:1px solid #E4E6EA }
+    .modal-btn-secondary:hover { background:#e8eaef }
+    .modal-btn-primary { background:#ba1a1a; color:#fff }
+    .modal-btn-primary:hover { background:#8f0f1e }
+    .modal-btn-primary:active { transform: scale(0.98) }
+
+    /* ── Logout Button in Sidebar ── */
+    .sidebar-user .logout-btn { display:flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:8px; background:transparent; border:none; cursor:pointer; color:#5d5e65; transition: all 150ms; flex-shrink:0 }
+    .sidebar-user .logout-btn:hover { background:#f0f2f8; color:#ba1a1a }
+
+    @media (max-width: 1023px) {
+      .modal-content { width:95%; max-width:380px; padding:28px }
+      .modal-header h2 { font-size:17px }
+      body:not(.manual-override) #sidebar .sidebar-user .logout-btn { opacity:1 }
+    }
+    @media (max-width: 640px) {
+      .sidebar-user .logout-btn { width:24px; height:24px }
+      .sidebar-user .logout-btn .material-symbols-outlined { font-size:18px }
+    }
+    @media (max-width: 400px) {
+      .modal-content { padding:24px; width:95%; max-width:none }
+      .modal-header .modal-icon { width:40px; height:40px }
+      .modal-header h2 { font-size:16px }
+      .modal-body p { font-size:12px }
+      .modal-btn { font-size:12px; height:32px; padding:0 16px }
+      .modal-footer { flex-direction: column-reverse; gap:8px }
+      .modal-btn { width:100% }
+    }
   </style>
   <link rel="stylesheet" th:href="@{/css/responsive.css}" href="/css/responsive.css" />
 </head>
@@ -840,7 +889,6 @@
     <!-- User profile (department head) -->
     <div class="sidebar-user">
       <div class="avatar bg-gradient-to-br from-primary/30 to-primary-container/50 flex items-center justify-center text-primary">
-        <!-- initials derived from authenticated user via GlobalControllerAdvice -->
         <span th:text="${currentUserInitials}" class="text-sm font-bold">AA</span>
       </div>
       <div class="user-text">
@@ -855,7 +903,7 @@
   </div>
 </aside>
 
-<!-- ══ TOPBAR (Register Asset button removed) ══ -->
+<!-- ══ TOPBAR (no Register Asset button) ══ -->
 <header id="topbar">
   <button id="toggle-btn" aria-label="Toggle sidebar">
     <span class="material-symbols-outlined icon-open">menu_open</span>
@@ -868,7 +916,6 @@
   </div>
 
   <div class="topbar-actions">
-    <!-- No Register Asset button, just notifications and account -->
     <a class="icon-btn" th:href="@{/notifications}" aria-label="Notifications">
       <span class="material-symbols-outlined">notifications</span>
       <span class="badge-dot"></span>
@@ -939,7 +986,6 @@
     let isManualOverride = false;
     let isCollapsed = false;
     let resizeTimer = null;
-    // backdrop for small-screen sidebar (click outside to close)
     let backdropEl = null;
 
     function createTooltip() {
@@ -952,7 +998,6 @@
     }
     tooltipEl = createTooltip();
 
-    // create backdrop element and append to body (hidden by default)
     function createBackdrop() {
       const b = document.createElement('div');
       b.id = 'sidebar-backdrop';
@@ -972,15 +1017,15 @@
 
     function applyCollapse(collapse) {
       isCollapsed = collapse;
-        if (collapse) {
-          body.classList.add('sidebar-collapsed');
-          sidebar.classList.add('collapsed');
-          if (backdropEl) backdropEl.style.display = 'none';
-        } else {
-          body.classList.remove('sidebar-collapsed');
-          sidebar.classList.remove('collapsed');
-          if (backdropEl && window.innerWidth < 1024) backdropEl.style.display = 'block';
-        }
+      if (collapse) {
+        body.classList.add('sidebar-collapsed');
+        sidebar.classList.add('collapsed');
+        if (backdropEl) backdropEl.style.display = 'none';
+      } else {
+        body.classList.remove('sidebar-collapsed');
+        sidebar.classList.remove('collapsed');
+        if (backdropEl && window.innerWidth < 1024) backdropEl.style.display = 'block';
+      }
       if (tooltipEl) {
         tooltipEl.classList.remove('visible');
       }
@@ -1154,51 +1199,52 @@
       state: function() { return isCollapsed; }
     };
   })();
-    <script>
-      (function() {
-        'use strict';
+</script>
+<script>
+  (function() {
+    'use strict';
 
-        const logoutModal = document.getElementById('logout-modal');
-        const sidebarLogoutBtn = document.getElementById('sidebar-logout-btn');
-        const logoutCancelBtn = document.getElementById('logout-cancel-btn');
-        const logoutConfirmBtn = document.getElementById('logout-confirm-btn');
+    const logoutModal = document.getElementById('logout-modal');
+    const sidebarLogoutBtn = document.getElementById('sidebar-logout-btn');
+    const logoutCancelBtn = document.getElementById('logout-cancel-btn');
+    const logoutConfirmBtn = document.getElementById('logout-confirm-btn');
 
-        if (!logoutModal || !sidebarLogoutBtn) return;
+    if (!logoutModal || !sidebarLogoutBtn) return;
 
-        sidebarLogoutBtn.addEventListener('click', function(e) {
-          e.preventDefault();
-          logoutModal.classList.add('visible');
-          setTimeout(() => logoutCancelBtn?.focus(), 50);
-        });
+    sidebarLogoutBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      logoutModal.classList.add('visible');
+      setTimeout(() => logoutCancelBtn?.focus(), 50);
+    });
 
-        logoutCancelBtn.addEventListener('click', function(e) {
-          e.preventDefault();
+    logoutCancelBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      logoutModal.classList.remove('visible');
+    });
+
+    logoutModal.addEventListener('click', function(e) {
+      if (e.target === logoutModal) {
+        logoutModal.classList.remove('visible');
+      }
+    });
+
+    logoutConfirmBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      logoutConfirmBtn.disabled = true;
+      logoutConfirmBtn.innerHTML = '<span class="material-symbols-outlined" style="display:inline-block;animation:spin 1s linear infinite;">hourglass_empty</span>';
+      window.location.href = '/users/logout';
+    });
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape' || e.key === 'Esc') {
+        if (logoutModal.classList.contains('visible')) {
           logoutModal.classList.remove('visible');
-        });
+        }
+      }
+    });
 
-        logoutModal.addEventListener('click', function(e) {
-          if (e.target === logoutModal) {
-            logoutModal.classList.remove('visible');
-          }
-        });
-
-        logoutConfirmBtn.addEventListener('click', function(e) {
-          e.preventDefault();
-          logoutConfirmBtn.disabled = true;
-          logoutConfirmBtn.innerHTML = '<span class="material-symbols-outlined" style="display:inline-block;animation:spin 1s linear infinite;">hourglass_empty</span>';
-          window.location.href = '/users/logout';
-        });
-
-        document.addEventListener('keydown', function(e) {
-          if (e.key === 'Escape' || e.key === 'Esc') {
-            if (logoutModal.classList.contains('visible')) {
-              logoutModal.classList.remove('visible');
-            }
-          }
-        });
-
-      })();
-    </script>
+  })();
+</script>
 
 </body>
 </html>
