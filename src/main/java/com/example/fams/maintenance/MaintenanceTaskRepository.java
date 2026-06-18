@@ -13,5 +13,8 @@ public interface MaintenanceTaskRepository extends JpaRepository<MaintenanceTask
     @EntityGraph(attributePaths = {"asset", "schedule"})
     List<MaintenanceTask> findTop8ByOrderByDueDateDescCreatedAtDesc();
 
+    @EntityGraph(attributePaths = {"asset", "schedule"})
+    List<MaintenanceTask> findTop5ByOrderByDueDateAscCreatedAtDesc();
+
     long countByStatus(MaintenanceStatus status);
 }
