@@ -818,60 +818,20 @@
           </a>
         </div>
 
-        <!-- Asset Management -->
-        <div class="nav-link-wrap" data-label="Asset Management">
+        <!-- Department Assets -->
+        <div class="nav-link-wrap" data-label="Department Assets">
           <a class="nav-link" th:classappend="${#strings.startsWith(currentPath, '/department-head/assets')} ? ' sidebar-active' : ''" th:href="@{/department-head/assets}">
             <span class="nav-icon material-symbols-outlined">inventory_2</span>
-            <span class="nav-label">Asset Management</span>
+            <span class="nav-label">Department Assets</span>
           </a>
         </div>
 
-        <!-- Operations -->
-        <div class="nav-link-wrap" data-label="Operations">
-          <a class="nav-link" th:classappend="${#strings.startsWith(currentPath, '/department-head/operations')} ? ' sidebar-active' : ''" th:href="@{/department-head/operations}">
-            <span class="nav-icon material-symbols-outlined">settings_applications</span>
-            <span class="nav-label">Operations</span>
+        <!-- Transfer Approvals -->
+        <div class="nav-link-wrap" data-label="Transfer Approvals">
+          <a class="nav-link" th:classappend="${#strings.startsWith(currentPath, '/department-head/approvals')} ? ' sidebar-active' : ''" th:href="@{/department-head/approvals}">
+            <span class="nav-icon material-symbols-outlined">approval</span>
+            <span class="nav-label">Approvals</span>
           </a>
-        </div>
-
-        <!-- Finance -->
-        <div class="nav-link-wrap" data-label="Finance">
-          <a class="nav-link" th:classappend="${#strings.startsWith(currentPath, '/department-head/finance')} ? ' sidebar-active' : ''" th:href="@{/department-head/finance}">
-            <span class="nav-icon material-symbols-outlined">payments</span>
-            <span class="nav-label">Finance</span>
-          </a>
-        </div>
-
-        <!-- Compliance -->
-        <div class="nav-link-wrap" data-label="Compliance">
-          <a class="nav-link" th:classappend="${#strings.startsWith(currentPath, '/department-head/compliance')} ? ' sidebar-active' : ''" th:href="@{/department-head/compliance}">
-            <span class="nav-icon material-symbols-outlined">verified_user</span>
-            <span class="nav-label">Compliance</span>
-          </a>
-        </div>
-
-        <!-- Administration -->
-        <div class="nav-link-wrap" data-label="Administration">
-          <a class="nav-link" th:classappend="${#strings.startsWith(currentPath, '/department-head/administration')} ? ' sidebar-active' : ''" th:href="@{/department-head/administration}">
-            <span class="nav-icon material-symbols-outlined">admin_panel_settings</span>
-            <span class="nav-label">Administration</span>
-          </a>
-        </div>
-
-        <!-- Bottom section: Support & Settings -->
-        <div class="pt-4 mt-2 border-t border-border-default/40">
-          <div class="nav-link-wrap" data-label="Support">
-            <a class="nav-link" th:classappend="${currentPath == '/department-head/support'} ? ' sidebar-active' : ''" th:href="@{/department-head/support}">
-              <span class="nav-icon material-symbols-outlined">help</span>
-              <span class="nav-label">Support</span>
-            </a>
-          </div>
-          <div class="nav-link-wrap" data-label="Settings">
-            <a class="nav-link" th:classappend="${currentPath == '/department-head/settings'} ? ' sidebar-active' : ''" th:href="@{/department-head/settings}">
-              <span class="nav-icon material-symbols-outlined">settings</span>
-              <span class="nav-label">Settings</span>
-            </a>
-          </div>
         </div>
 
       </div>

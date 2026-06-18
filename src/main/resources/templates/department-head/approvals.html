@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html class="light" lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layouts/department-head-layout}">
+<head>
+    <title>Transfer Approvals | JustJava FAMS</title>
+</head>
+<body>
+<main id="main-content" class="space-y-6" layout:fragment="content">
+    <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
+        <div>
+            <h2 class="font-page-title text-page-title text-on-background">Transfer Approvals</h2>
+            <p class="text-body-default text-secondary mt-1">Approve or decline intra-department asset transfers for <span th:text="${departmentLabel}">Department</span>.</p>
+        </div>
+        <a th:href="@{/department-head/assets}" class="h-[38px] px-4 border border-border-strong text-on-surface rounded-lg font-body-medium hover:bg-surface-canvas inline-flex items-center gap-2">
+            <span class="material-symbols-outlined text-[18px]">inventory_2</span>
+            Department Assets
+        </a>
+    </div>
+
+    <div th:if="${successMessage}" class="bg-status-success/10 border border-status-success/20 text-status-success rounded-xl p-4 flex items-center gap-3">
+        <span class="material-symbols-outlined">check_circle</span>
+        <p class="font-body-medium" th:text="${successMessage}">Approval saved.</p>
+    </div>
+    <div th:if="${errorMessage}" class="bg-error-container border border-error/20 text-on-error-container rounded-xl p-4 flex items-center gap-3">
+        <span class="material-symbols-outlined">error</span>
+        <p class="font-body-medium" th:text="${errorMessage}">Unable to update approval.</p>
+    </div>
+
+    <div class="bg-surface-card border border-border-default rounded-xl overflow-hidden card-shadow">
+        <div th:if="${#lists.isEmpty(pendingApprovals)}" class="p-12 sm:p-20 text-center">
+            <span class="material-symbols-outlined text-[48px] text-secondary">task_alt</span>
+            <h3 class="font-card-header text-card-header text-on-surface mt-4">No pending transfer approvals</h3>
+            <p class="text-body-default text-secondary mt-2">Eligible intra-department transfers will appear here when submitted.</p>
+        </div>
+        <div th:unless="${#lists.isEmpty(pendingApprovals)}" class="divide-y divide-border-default">
+            <div th:each="workflow : ${pendingApprovals}" class="p-5 flex flex-col xl:flex-row xl:items-start justify-between gap-5">
+                <div class="min-w-0">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <p class="font-card-header text-card-header text-on-surface" th:text="${workflow.asset.name}">Asset</p>
+                        <span class="px-2 py-0.5 rounded text-technical-data bg-surface-variant text-primary" th:text="${workflow.asset.assetCode}">AST</span>
+                        <span class="px-2 py-0.5 rounded-full text-badge-label font-badge-label bg-status-warning/10 text-status-warning" th:text="${workflow.status}">PENDING</span>
+                    </div>
+                    <p class="text-body-default text-secondary mt-2" th:text="${workflow.reason ?: 'No notes provided.'}">Reason</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4 text-sm">
+                        <div><p class="text-label-small text-secondary">Requester</p><p class="font-body-medium text-on-surface" th:text="${workflow.requestedBy}">Requester</p></div>
+                        <div><p class="text-label-small text-secondary">From</p><p class="font-body-medium text-on-surface" th:text="${workflow.fromEmployee ?: workflow.fromDepartment}">From</p></div>
+                        <div><p class="text-label-small text-secondary">To</p><p class="font-body-medium text-on-surface" th:text="${workflow.toEmployee ?: workflow.toDepartment ?: workflow.asset.custodian}">To</p></div>
+                    </div>
+                </div>
+                <div th:with="tasks=${pendingTasks[workflow.id]}" class="w-full xl:w-[360px] shrink-0">
+                    <div th:if="${tasks == null || #lists.isEmpty(tasks)}" class="p-4 rounded-xl bg-surface-canvas border border-border-default text-body-default text-secondary">
+                        No active approval task is available for this workflow.
+                    </div>
+                    <form th:unless="${tasks == null || #lists.isEmpty(tasks)}" th:action="@{/department-head/approvals/{workflowId}/tasks/{taskId}/decision(workflowId=${workflow.id},taskId=${tasks[0].id})}" method="post" class="space-y-3" data-spinner-form>
+                        <textarea name="comment" rows="3" placeholder="Approval comment" class="w-full px-3 py-2 border border-border-default rounded-lg bg-surface-canvas text-body-default focus:ring-2 focus:ring-primary focus:border-primary outline-none resize-none"></textarea>
+                        <div class="flex gap-2">
+                            <button name="decision" value="APPROVED" type="submit" class="flex-1 h-[38px] px-4 bg-primary text-on-primary rounded-lg font-body-medium hover:bg-brand-primary-dark inline-flex items-center justify-center gap-2">
+                                <span class="material-symbols-outlined text-[16px] submit-icon">check</span>
+                                <span class="hidden submit-spinner w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin"></span>
+                                Approve
+                            </button>
+                            <button name="decision" value="REJECTED" type="submit" class="flex-1 h-[38px] px-4 border border-error/30 text-error rounded-lg font-body-medium hover:bg-error/10">Decline</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        document.querySelectorAll('[data-spinner-form]').forEach(form => form.addEventListener('submit', event => {
+            const submitter = event.submitter;
+            submitter?.querySelector('.submit-icon')?.classList.add('hidden');
+            submitter?.querySelector('.submit-spinner')?.classList.remove('hidden');
+            form.querySelectorAll('button[type="submit"]').forEach(button => button.setAttribute('disabled', 'disabled'));
+        }));
+    </script>
+</main>
+</body>
+</html>

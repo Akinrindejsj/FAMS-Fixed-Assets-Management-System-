@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html class="light" lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layouts/department-head-layout}">
+<head>
+    <title>Department Assets | JustJava FAMS</title>
+</head>
+<body>
+<main id="main-content" class="space-y-6" layout:fragment="content">
+    <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div>
+            <div class="flex items-center gap-3">
+                <h2 class="font-page-title text-page-title text-on-background">Department Assets</h2>
+                <span class="px-2.5 py-0.5 bg-surface-container-high text-on-secondary-fixed-variant rounded-full text-badge-label font-badge-label" th:text="${#lists.size(departmentAssets)} + ' assets'">0 assets</span>
+            </div>
+            <p class="text-body-default text-secondary mt-1" th:text="${departmentLabel}">Department</p>
+        </div>
+        <a th:href="@{/department-head/approvals}" class="h-[38px] px-4 bg-primary text-on-primary rounded-lg font-body-medium hover:bg-brand-primary-dark inline-flex items-center gap-2">
+            <span class="material-symbols-outlined text-[18px]">approval</span>
+            Transfer Approvals
+        </a>
+    </div>
+
+    <div class="bg-surface-card border border-border-default rounded-xl p-4 card-shadow">
+        <div class="relative">
+            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-secondary text-[20px]">search</span>
+            <input id="asset-search" type="text" placeholder="Search department assets..." class="w-full h-[38px] pl-10 pr-4 bg-surface-canvas border border-border-default rounded-lg text-body-default focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+        </div>
+    </div>
+
+    <div class="bg-surface-card border border-border-default rounded-xl overflow-hidden card-shadow">
+        <div th:if="${#lists.isEmpty(departmentAssets)}" class="p-12 sm:p-20 text-center">
+            <span class="material-symbols-outlined text-[48px] text-secondary">inventory_2</span>
+            <h3 class="font-card-header text-card-header text-on-surface mt-4">No department assets</h3>
+            <p class="text-body-default text-secondary mt-2">Assets registered to your department will appear here.</p>
+        </div>
+        <div th:unless="${#lists.isEmpty(departmentAssets)}" class="overflow-x-auto">
+            <table class="w-full text-left border-collapse min-w-[860px]">
+                <thead>
+                <tr class="bg-surface-canvas border-b border-border-default">
+                    <th class="px-5 py-3 text-label-small text-secondary uppercase tracking-wider">Asset</th>
+                    <th class="px-5 py-3 text-label-small text-secondary uppercase tracking-wider">Asset ID</th>
+                    <th class="px-5 py-3 text-label-small text-secondary uppercase tracking-wider">Category</th>
+                    <th class="px-5 py-3 text-label-small text-secondary uppercase tracking-wider">Custodian</th>
+                    <th class="px-5 py-3 text-label-small text-secondary uppercase tracking-wider">Branch</th>
+                    <th class="px-5 py-3 text-label-small text-secondary uppercase tracking-wider">Status</th>
+                    <th class="px-5 py-3 text-label-small text-secondary uppercase tracking-wider text-right">Value</th>
+                </tr>
+                </thead>
+                <tbody class="divide-y divide-border-default">
+                <tr th:each="asset : ${departmentAssets}" class="asset-row hover:bg-surface-canvas/50 transition-colors">
+                    <td class="px-5 py-3">
+                        <p class="font-body-medium text-on-surface" th:text="${asset.name}">Asset</p>
+                        <p class="text-label-small text-secondary" th:text="${asset.serialNumber ?: 'No serial number'}">Serial</p>
+                    </td>
+                    <td class="px-5 py-3 font-technical-data text-primary" th:text="${asset.assetCode}">AST</td>
+                    <td class="px-5 py-3 text-body-default text-secondary" th:text="${asset.category}">Category</td>
+                    <td class="px-5 py-3 text-body-default text-on-surface" th:text="${asset.custodian}">Custodian</td>
+                    <td class="px-5 py-3 text-body-default text-secondary" th:text="${asset.branch}">Branch</td>
+                    <td class="px-5 py-3"><span class="px-2.5 py-0.5 rounded-full bg-status-info/10 text-status-info text-badge-label font-badge-label" th:text="${asset.status}">Assigned</span></td>
+                    <td class="px-5 py-3 text-right font-technical-data text-on-surface" th:utext="${asset.purchaseCost != null ? '&#8358;' + #numbers.formatDecimal(asset.purchaseCost, 1, 'COMMA', 2, 'POINT') : '&#8358;0.00'}">0.00</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <div id="no-search-results" class="hidden p-12 text-center border-t border-border-default">
+            <span class="material-symbols-outlined text-[42px] text-secondary">search_off</span>
+            <p class="font-body-medium text-on-surface mt-3">No matching assets found</p>
+        </div>
+    </div>
+    <script>
+        const searchInput = document.getElementById('asset-search');
+        const rows = Array.from(document.querySelectorAll('.asset-row'));
+        const noResults = document.getElementById('no-search-results');
+        searchInput?.addEventListener('input', () => {
+            const query = searchInput.value.trim().toLowerCase();
+            let visible = 0;
+            rows.forEach(row => {
+                const match = row.innerText.toLowerCase().includes(query);
+                row.classList.toggle('hidden', !match);
+                if (match) visible++;
+            });
+            noResults?.classList.toggle('hidden', visible > 0);
+        });
+    </script>
+</main>
+</body>
+</html>

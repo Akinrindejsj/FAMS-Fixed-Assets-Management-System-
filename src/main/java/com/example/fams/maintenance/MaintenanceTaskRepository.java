@@ -17,4 +17,6 @@ public interface MaintenanceTaskRepository extends JpaRepository<MaintenanceTask
     List<MaintenanceTask> findTop5ByOrderByDueDateAscCreatedAtDesc();
 
     long countByStatus(MaintenanceStatus status);
+
+    long countByAsset_DepartmentIgnoreCaseAndStatus(String department, MaintenanceStatus status);
 }
