@@ -110,14 +110,12 @@
     <div class="flex justify-between items-end">
         <div>
             <h2 class="font-page-title text-page-title text-on-background">User Management</h2>
-            <p class="text-body-default text-secondary">Manage users and group permissions
-                <span class="ml-2 text-xs font-mono bg-primary/10 text-primary px-2 py-0.5 rounded-full" th:text="${realmName}">realm</span>
-            </p>
+            <p class="text-body-default text-secondary">View and manage all user accounts</p>
         </div>
         <div class="flex gap-3">
             <button onclick="openGroupsModal()"
                     class="h-[38px] px-4 rounded-lg text-sm font-semibold text-primary border border-border-strong bg-surface-card hover:bg-surface-canvas shadow-sm flex items-center gap-1.5 transition-all">
-                <span class="material-symbols-outlined text-[18px]">folder_shared</span> Manage Groups
+                <span class="material-symbols-outlined text-[18px]">folder_shared</span> Groups
             </button>
             <button onclick="openCreateModal()"
                     class="h-[38px] px-5 rounded-lg text-sm font-semibold text-on-primary bg-primary hover:bg-brand-primary-dark shadow-md transition-all flex items-center gap-2">
@@ -126,8 +124,8 @@
         </div>
     </div>
 
-    <!-- Stats (KPI Strip) -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <!-- Stats (KPI Strip) — removed the Realm Groups card -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <div class="bg-surface-card p-5 rounded-xl card-shadow">
             <div class="flex items-center gap-4">
                 <div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
@@ -136,7 +134,7 @@
                 <div>
                     <p class="text-label-small text-secondary uppercase tracking-wider font-medium">Total Users</p>
                     <p class="text-[28px] font-bold font-headline text-on-surface" th:text="${totalUsers}">0</p>
-                    <p class="text-[11px] text-secondary/70 mt-0.5">All provisioned accounts</p>
+                    <p class="text-[11px] text-secondary/70 mt-0.5">All user accounts</p>
                 </div>
             </div>
         </div>
@@ -148,7 +146,7 @@
                 <div>
                     <p class="text-label-small text-secondary uppercase tracking-wider font-medium">Active Users</p>
                     <p class="text-[28px] font-bold font-headline text-on-surface" th:text="${totalActive}">0</p>
-                    <p class="text-[11px] text-secondary/70 mt-0.5" th:text="${totalUsers > 0 ? #numbers.formatDecimal(totalActive * 100.0 / totalUsers, 0, 0) + '% active rate' : '—'}">—</p>
+                    <p class="text-[11px] text-secondary/70 mt-0.5" th:text="${totalUsers > 0 ? #numbers.formatDecimal(totalActive * 100.0 / totalUsers, 0, 0) + '% active' : '—'}">—</p>
                 </div>
             </div>
         </div>
@@ -160,19 +158,7 @@
                 <div>
                     <p class="text-label-small text-secondary uppercase tracking-wider font-medium">Inactive Users</p>
                     <p class="text-[28px] font-bold font-headline text-on-surface" th:text="${totalUsers - totalActive}">0</p>
-                    <p class="text-[11px] text-secondary/70 mt-0.5">Disabled accounts</p>
-                </div>
-            </div>
-        </div>
-        <div class="bg-surface-card p-5 rounded-xl card-shadow">
-            <div class="flex items-center gap-4">
-                <div class="w-12 h-12 rounded-xl bg-error/10 flex items-center justify-center text-error">
-                    <span class="material-symbols-outlined text-2xl">folder_shared</span>
-                </div>
-                <div>
-                    <p class="text-label-small text-secondary uppercase tracking-wider font-medium">Realm Groups</p>
-                    <p class="text-[28px] font-bold font-headline text-on-surface" th:text="${groups.size()}">0</p>
-                    <p class="text-[11px] text-secondary/70 mt-0.5" th:text="${realmName}">realm</p>
+                    <p class="text-[11px] text-secondary/70 mt-0.5">Not active</p>
                 </div>
             </div>
         </div>
@@ -182,19 +168,18 @@
     <div class="bg-surface-card rounded-xl card-shadow overflow-hidden">
         <div class="px-6 py-5 border-b border-border-default flex flex-wrap justify-between items-center gap-4">
             <div class="flex items-center gap-2 flex-wrap">
-                <h3 class="font-section-header text-section-header text-on-surface">Directory</h3>
                 <span class="bg-primary/10 text-primary text-xs font-semibold px-2.5 py-0.5 rounded-full" th:text="${totalUsers} + ' users'">0 users</span>
                 <span th:if="${search != null and !search.isBlank()}" class="bg-status-info/10 text-status-info text-xs font-semibold px-2.5 py-0.5 rounded-full flex items-center gap-1">
-                    <span class="material-symbols-outlined text-[13px]">search</span>
-                    <span th:text="'&quot;' + search + '&quot;'"></span>
-                    <a th:href="@{/admin/users}" class="hover:text-error ml-0.5"><span class="material-symbols-outlined text-[13px]">close</span></a>
-                </span>
+                <span class="material-symbols-outlined text-[13px]">search</span>
+                <span th:text="'&quot;' + search + '&quot;'"></span>
+                <a th:href="@{/admin/users}" class="hover:text-error ml-0.5"><span class="material-symbols-outlined text-[13px]">close</span></a>
+            </span>
             </div>
             <div class="flex items-center gap-3">
                 <!-- Improved search bar -->
                 <div class="search-pill">
                     <span class="material-symbols-outlined search-icon">search</span>
-                    <input type="text" id="tableSearch" placeholder="Filter users…" aria-label="Filter users">
+                    <input type="text" id="tableSearch" placeholder="Search users…" aria-label="Search users">
                     <button id="clearSearchBtn" class="clear-btn" aria-label="Clear search">
                         <span class="material-symbols-outlined" style="font-size:1rem;">close</span>
                     </button>
@@ -205,9 +190,6 @@
                     <input type="text" name="search" th:value="${search}" placeholder="Search…" class="h-[38px] text-xs py-1.5 px-3 rounded-full w-36 bg-surface-canvas border border-border-default outline-none focus:ring-2 focus:ring-primary focus:border-primary">
                     <button type="submit" class="p-1.5 text-primary bg-primary/10 hover:bg-primary/20 rounded-lg"><span class="material-symbols-outlined text-sm">search</span></button>
                 </form>
-                <a th:href="@{/admin/users(search=${search})}" class="p-2 text-secondary hover:text-primary hover:bg-surface-canvas rounded-xl transition-colors" title="Refresh">
-                    <span class="material-symbols-outlined">refresh</span>
-                </a>
             </div>
         </div>
         <div class="overflow-x-auto">
@@ -231,7 +213,6 @@
                             </div>
                             <div>
                                 <p class="font-body-medium text-sm text-on-surface user-fullname" th:text="${(user.firstName != null ? user.firstName : '') + ' ' + (user.lastName != null ? user.lastName : '')}">Full Name</p>
-                                <p class="text-[10px] text-secondary/60 font-mono" th:text="${'ID: ' + #strings.substring(user.id,0,8) + '…'}">ID: …</p>
                             </div>
                         </div>
                     </td>
@@ -262,7 +243,7 @@
                     <td colspan="5" class="px-6 py-16 text-center">
                         <div class="flex flex-col items-center gap-3">
                             <div class="w-16 h-16 rounded-2xl bg-surface-canvas flex items-center justify-center text-secondary/40"><span class="material-symbols-outlined text-4xl">manage_search</span></div>
-                            <p class="font-semibold text-on-surface/60" th:text="${search != null and !search.isBlank() ? 'No users found for &quot;' + search + '&quot;' : 'No users provisioned yet'}">No users</p>
+                            <p class="font-semibold text-on-surface/60" th:text="${search != null and !search.isBlank() ? 'No users found for &quot;' + search + '&quot;' : 'No users yet'}">No users</p>
                             <p class="text-label-small text-secondary/50" th:text="${search != null and !search.isBlank() ? 'Try a different search term.' : 'Click &quot;Create User&quot; to get started.'}">—</p>
                         </div>
                     </td>
@@ -278,15 +259,15 @@
                     <span class="material-symbols-outlined text-sm">chevron_left</span> Prev
                 </a>
                 <span th:unless="${currentPage > 0}" class="px-4 py-1.5 text-label-small font-semibold rounded-lg border border-border-default bg-surface-canvas text-secondary/30 cursor-not-allowed flex items-center gap-1">
-                    <span class="material-symbols-outlined text-sm">chevron_left</span> Prev
-                </span>
+            <span class="material-symbols-outlined text-sm">chevron_left</span> Prev
+        </span>
                 <span class="text-label-small font-semibold text-secondary px-2" th:text="(currentPage + 1) + ' / ' + totalPages">1 / 1</span>
                 <a th:if="${currentPage + 1 < totalPages}" th:href="@{/admin/users(page=${currentPage + 1}, search=${search}, size=${pageSize})}" class="px-4 py-1.5 text-label-small font-semibold rounded-lg border border-border-default bg-surface-card hover:bg-surface-canvas shadow-sm flex items-center gap-1">
                     Next <span class="material-symbols-outlined text-sm">chevron_right</span>
                 </a>
                 <span th:unless="${currentPage + 1 < totalPages}" class="px-4 py-1.5 text-label-small font-semibold rounded-lg border border-border-default bg-surface-canvas text-secondary/30 cursor-not-allowed flex items-center gap-1">
-                    Next <span class="material-symbols-outlined text-sm">chevron_right</span>
-                </span>
+            Next <span class="material-symbols-outlined text-sm">chevron_right</span>
+        </span>
             </div>
         </div>
     </div>
@@ -298,12 +279,13 @@
 
     <!-- ════════════════ CREATE USER MODAL ════════════════ -->
     <div id="createUserModal" class="fixed inset-0 z-[100] items-end sm:items-center justify-center p-0 sm:p-4 hidden" role="dialog" aria-modal="true">
-        <div class="modal-overlay absolute inset-0 bg-on-surface/40 backdrop-blur-sm" onclick="closeCreateModal()"></div>
+        <!-- Updated overlay: solid grey background with 50% opacity, no blur for cleaner greyout -->
+        <div class="modal-overlay absolute inset-0 bg-black/50" onclick="closeCreateModal()"></div>
         <div class="modal-panel relative w-full sm:max-w-2xl bg-surface-card rounded-t-3xl sm:rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh] sm:max-h-[86vh] border border-border-default">
             <div class="flex items-start justify-between px-6 pt-6 pb-5 border-b border-border-default shrink-0">
                 <div class="flex items-center gap-4">
                     <div class="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0"><span class="material-symbols-outlined text-2xl">person_add</span></div>
-                    <div><h3 class="font-headline text-xl font-bold text-on-surface">Create New User</h3><p class="text-label-small text-secondary mt-0.5">Provision a new Keycloak account</p></div>
+                    <div><h3 class="font-headline text-xl font-bold text-on-surface">Create New User</h3><p class="text-label-small text-secondary mt-0.5">Add a new account</p></div>
                 </div>
                 <button onclick="closeCreateModal()" class="p-1.5 rounded-xl text-secondary hover:bg-surface-canvas shrink-0 ml-4"><span class="material-symbols-outlined">close</span></button>
             </div>
@@ -389,7 +371,7 @@
                 <!-- Step 3 -->
                 <div id="cu-step-3" class="form-section space-y-5">
                     <div class="rounded-xl bg-surface-canvas border border-border-default p-4">
-                        <p class="text-label-small text-secondary leading-relaxed"><span class="font-semibold text-on-surface">Optional:</span> Add key-value attributes that map to Keycloak user attributes.</p>
+                        <p class="text-label-small text-secondary leading-relaxed"><span class="font-semibold text-on-surface">Optional:</span> Add extra information to this user's profile.</p>
                     </div>
                     <div class="space-y-1.5">
                         <label class="text-label-small font-semibold text-secondary uppercase tracking-wider">Add Attribute</label>
@@ -428,14 +410,15 @@
         </div>
     </div>
 
-    <!-- ════════════════ MANAGE GROUPS MODAL ════════════════ -->
+    <!-- ════════════════ GROUPS MODAL ════════════════ -->
     <div id="groupsModal" class="fixed inset-0 z-[100] items-center justify-center p-4 hidden" role="dialog" aria-modal="true">
-        <div class="modal-overlay absolute inset-0 bg-on-surface/40 backdrop-blur-sm" onclick="closeGroupsModal()"></div>
+        <!-- Updated overlay: solid grey -->
+        <div class="modal-overlay absolute inset-0 bg-black/50" onclick="closeGroupsModal()"></div>
         <div class="modal-panel relative w-full sm:max-w-lg bg-surface-card rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] border border-border-default">
             <div class="flex items-start justify-between px-6 pt-6 pb-5 border-b border-border-default shrink-0">
                 <div class="flex items-center gap-4">
                     <div class="w-11 h-11 rounded-xl bg-secondary/10 flex items-center justify-center text-secondary shrink-0"><span class="material-symbols-outlined text-2xl">folder_shared</span></div>
-                    <div><h3 class="font-headline text-xl font-bold text-on-surface">Manage Groups</h3><p class="text-label-small text-secondary mt-0.5">Create and view realm groups</p></div>
+                    <div><h3 class="font-headline text-xl font-bold text-on-surface">Groups</h3><p class="text-label-small text-secondary mt-0.5">Create and manage user groups</p></div>
                 </div>
                 <button onclick="closeGroupsModal()" class="p-1.5 rounded-xl text-secondary hover:bg-surface-canvas shrink-0 ml-4"><span class="material-symbols-outlined">close</span></button>
             </div>
@@ -468,12 +451,11 @@
                     <p class="text-label-small font-bold uppercase tracking-wider text-secondary/60">Existing Groups
                         <span class="font-normal normal-case text-secondary/50" th:text="'(' + ${groups.size()} + ')'"></span>
                     </p>
-                    <div th:if="${#lists.isEmpty(groups)}" class="rounded-xl bg-surface-canvas border border-border-default p-4 text-label-small text-secondary/50 text-center">No groups in this realm yet.</div>
+                    <div th:if="${#lists.isEmpty(groups)}" class="rounded-xl bg-surface-canvas border border-border-default p-4 text-label-small text-secondary/50 text-center">No groups yet.</div>
                     <div th:unless="${#lists.isEmpty(groups)}" class="flex flex-wrap gap-2">
                         <div th:each="g : ${groups}" class="attr-chip">
                             <span class="material-symbols-outlined text-[13px]">folder_shared</span>
                             <span th:text="${g.name}">Group</span>
-                            <span class="opacity-30 text-[10px] font-mono ml-0.5" th:text="${'#' + #strings.substring(g.id,0,6)}"></span>
                         </div>
                     </div>
                 </div>
@@ -486,7 +468,8 @@
 
     <!-- ════════════════ MANAGE USER SLIDE-OVER ════════════════ -->
     <div id="manageModal" class="fixed inset-0 z-[100] items-start justify-end hidden" role="dialog" aria-modal="true">
-        <div class="absolute inset-0 bg-on-surface/30 backdrop-blur-sm" onclick="closeManageModal()"></div>
+        <!-- Updated overlay: solid grey -->
+        <div class="absolute inset-0 bg-black/50" onclick="closeManageModal()"></div>
         <div class="slide-panel relative w-full sm:max-w-md bg-surface-card h-full shadow-2xl flex flex-col overflow-hidden border-l border-border-default">
             <div class="px-6 pt-6 pb-5 border-b border-border-default shrink-0">
                 <div class="flex items-start justify-between gap-4 mb-4">
@@ -511,18 +494,14 @@
                 </div>
                 <div class="flex gap-1 mt-4 bg-surface-canvas p-1 rounded-xl">
                     <button class="tab-btn active flex-1" onclick="mgTab('overview',this)">Overview</button>
-                    <button class="tab-btn flex-1"        onclick="mgTab('access',  this)">Access</button>
+                    <button class="tab-btn flex-1"        onclick="mgTab('access',  this)">Groups</button>
                     <button class="tab-btn flex-1"        onclick="mgTab('danger',  this)">Danger</button>
                 </div>
             </div>
             <div class="overflow-y-auto flex-1 px-6 py-5 space-y-5">
                 <div id="mg-tab-overview" class="manage-tab active space-y-4">
-                    <div class="rounded-xl bg-surface-canvas p-4 flex items-center gap-3">
-                        <span class="material-symbols-outlined text-secondary/50 text-lg">fingerprint</span>
-                        <div><p class="text-[10px] font-bold uppercase tracking-wider text-secondary/60">User ID</p><p id="mg-id-display" class="text-label-small font-mono text-on-surface/70 break-all">—</p></div>
-                    </div>
                     <div class="rounded-xl border border-border-default p-4 space-y-3">
-                        <p class="text-label-small font-bold uppercase tracking-wider text-secondary/60">Account Control</p>
+                        <p class="text-label-small font-bold uppercase tracking-wider text-secondary/60">Account Status</p>
                         <div class="flex gap-2">
                             <form th:action="@{/admin/enable-user}" method="post" class="flex-1">
                                 <input type="hidden" name="userId" id="mg-userId-enable"/>
@@ -575,11 +554,11 @@
                 <div id="mg-tab-danger" class="manage-tab space-y-4">
                     <div class="rounded-xl border border-error/20 bg-error/5 p-4 space-y-3">
                         <div class="flex items-center gap-2 text-error"><span class="material-symbols-outlined text-xl">warning</span><p class="text-sm font-bold">Danger Zone</p></div>
-                        <p class="text-label-small text-secondary leading-relaxed">Deleting this user is <strong>permanent and irreversible</strong>. All sessions, credentials, and group memberships will be removed from Keycloak immediately.</p>
+                        <p class="text-label-small text-secondary leading-relaxed">Deleting this user is <strong>permanent</strong>. All data, sessions, and group memberships will be removed.</p>
                         <form th:action="@{/admin/delete-user}" method="post" onsubmit="return confirmDelete(event)">
                             <input type="hidden" name="userId" id="mg-userId-delete"/>
                             <button type="submit" class="w-full py-2.5 mt-1 rounded-xl text-sm font-semibold text-on-primary bg-error hover:bg-red-700 flex items-center justify-center gap-2 shadow-md">
-                                <span class="material-symbols-outlined text-sm">delete_forever</span> Delete User Account
+                                <span class="material-symbols-outlined text-sm">delete_forever</span> Delete User
                             </button>
                         </form>
                     </div>
@@ -694,7 +673,6 @@
             document.getElementById('mg-title').textContent=(fn+' '+ln).trim()||un;
             document.getElementById('mg-username').textContent='@'+un;
             document.getElementById('mg-email').textContent=d.email||'—';
-            document.getElementById('mg-id-display').textContent=d.userId;
             const active=d.enabled==='true';
             document.getElementById('mg-status-active').classList.toggle('flex',active);document.getElementById('mg-status-active').classList.toggle('hidden',!active);
             document.getElementById('mg-status-inactive').classList.toggle('flex',!active);document.getElementById('mg-status-inactive').classList.toggle('hidden',active);
@@ -760,10 +738,8 @@
                     if (match) visibleCount++;
                 });
 
-                // Show/hide clear button
                 clearBtn.classList.toggle('visible', query.length > 0);
 
-                // Show/hide result count badge
                 if (query && rows.length > 0) {
                     resultBadge.style.display = 'inline';
                     resultBadge.textContent = visibleCount;
@@ -771,11 +747,9 @@
                     resultBadge.style.display = 'none';
                 }
 
-                // Handle the "no results" row (server-side placeholder)
                 const noRowsMsg = tableBody?.querySelector('tr td[colspan]')?.closest('tr');
                 if (noRowsMsg) {
-                    // Only show the "no results" row if there are actual rows and none are visible, or if there are no rows at all
-                    const actualRows = rows.length > 1; // more than just the no-results row
+                    const actualRows = rows.length > 1;
                     if (actualRows) {
                         noRowsMsg.style.display = visibleCount === 0 ? '' : 'none';
                     } else {
@@ -784,17 +758,13 @@
                 }
             }
 
-            // Clear button
             clearBtn.addEventListener('click', function() {
                 searchInput.value = '';
                 searchInput.focus();
                 updateFilter();
             });
 
-            // Input event
             searchInput.addEventListener('input', updateFilter);
-
-            // Initial run
             updateFilter();
         });
     </script>
