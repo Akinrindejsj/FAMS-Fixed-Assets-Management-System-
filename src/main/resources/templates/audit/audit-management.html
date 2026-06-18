@@ -529,6 +529,8 @@
         </section>
     </div>
 
+    <!-- ZXing JS fallback for browsers without BarcodeDetector -->
+    <script src="https://unpkg.com/@zxing/library@0.18.6/umd/index.min.js"></script>
     <script th:inline="javascript">
         const activeSessionId = [[${activeSession != null ? activeSession.id : null}]];
         const sessionActive = [[${activeSession != null && activeSession.status.name() == 'ACTIVE'}]];
@@ -566,6 +568,7 @@
         let currentAsset = null;
         let stream = null;
         let detector = null;
+        let codeReader = null; // ZXing fallback reader
         let scanning = false;
         let lastDetectedCode = '';
         let lastDetectedAt = 0;
@@ -781,20 +784,54 @@
 
         async function startCamera() {
             if (!sessionActive) return;
-            if (!('BarcodeDetector' in window)) {
-                scannerMessage.textContent = 'This browser does not support camera barcode detection. Use manual entry.';
-                return;
-            }
             try {
-                detector = new BarcodeDetector({ formats: ['qr_code', 'code_128', 'code_39', 'ean_13', 'ean_8', 'upc_a', 'upc_e'] });
+                // Start media stream
                 stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false });
                 video.srcObject = stream;
                 await video.play();
-                scanning = true;
                 document.getElementById('camera-empty').classList.add('hidden');
                 document.getElementById('scan-reticle').classList.remove('hidden');
-                scannerMessage.textContent = 'Camera active. Position the tag inside the frame.';
-                scanLoop();
+
+                // Prefer native BarcodeDetector when available
+                if ('BarcodeDetector' in window) {
+                    detector = new BarcodeDetector({ formats: ['qr_code', 'code_128', 'code_39', 'ean_13', 'ean_8', 'upc_a', 'upc_e'] });
+                    scanning = true;
+                    scannerMessage.textContent = 'Camera active. Position the tag inside the frame.';
+                    scanLoop();
+                    return;
+                }
+
+                // Fallback: use ZXing's BrowserMultiFormatReader if loaded
+                if (window.ZXing && typeof ZXing.BrowserMultiFormatReader === 'function') {
+                    try {
+                        codeReader = new ZXing.BrowserMultiFormatReader();
+                        scanning = true;
+                        scannerMessage.textContent = 'Camera active (ZXing). Position the tag inside the frame.';
+                        // decodeFromVideoDevice accepts deviceId (null for default) and element id
+                        codeReader.decodeFromVideoDevice(null, 'scanner-video', (result, err) => {
+                            if (result && result.text) {
+                                const code = result.text;
+                                const now = Date.now();
+                                if (code && (code !== lastDetectedCode || now - lastDetectedAt > 3000)) {
+                                    lastDetectedCode = code;
+                                    lastDetectedAt = now;
+                                    manualCode.value = code;
+                                    lookupAsset(code);
+                                }
+                            }
+                        });
+                        return;
+                    } catch (e) {
+                        // fall through to error handling below
+                    }
+                }
+
+                // If we reached here, no detector available
+                scannerMessage.textContent = 'This browser does not support camera barcode detection. Use manual entry.';
+                // stop the stream we started
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+                video.srcObject = null;
             } catch (error) {
                 scannerMessage.textContent = 'Camera could not be started. Check browser permissions or use manual entry.';
             }
@@ -802,7 +839,10 @@
 
         function stopCamera() {
             scanning = false;
+            // Stop BarcodeDetector loop
             if (stream) { stream.getTracks().forEach(track => track.stop()); stream = null; }
+            // Reset ZXing reader if used
+            if (codeReader) { try { codeReader.reset(); } catch (e) { /* ignore */ } codeReader = null; }
             if (video) video.srcObject = null;
             document.getElementById('camera-empty')?.classList.remove('hidden');
             document.getElementById('scan-reticle')?.classList.add('hidden');
