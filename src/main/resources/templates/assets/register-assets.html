@@ -194,8 +194,7 @@
                          </select>
                      </div>
                     <div class="space-y-1.5">
-                         <label for="custodian" class="font-label-small text-label-small text-secondary">Custodian <span class="text-error">*</span><br>
-                             <span class="text-[11px] text-secondary font-normal">(Users with employee group)</span>
+                         <label for="custodian" class="font-label-small text-label-small text-secondary">Custodian <span class="text-error">*</span>
                          </label>
                          <select id="custodian" th:field="*{custodian}" required
                                  class="w-full h-11 px-4 bg-surface-canvas border border-border-default rounded-xl focus:ring-2 focus:ring-primary focus:border-primary outline-none">
@@ -203,15 +202,6 @@
                              <option th:each="custodian : ${custodians}" th:value="${custodian.username}" th:text="${custodian.name}"></option>
                          </select>
                      </div>
-                    <div class="space-y-1.5">
-                        <label for="status" class="font-label-small text-label-small text-secondary">Initial Status</label>
-                        <select id="status" th:field="*{status}" required
-                                class="w-full h-11 px-4 bg-surface-canvas border border-border-default rounded-xl focus:ring-2 focus:ring-primary focus:border-primary outline-none">
-                            <option value="In Stock">In Stock</option>
-                            <option value="Assigned">Assigned</option>
-                            <option value="Maintenance">Maintenance</option>
-                        </select>
-                    </div>
                 </div>
             </section>
 
