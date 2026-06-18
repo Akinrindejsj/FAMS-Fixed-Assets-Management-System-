@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 
 public interface MaintenanceRecordRepository extends JpaRepository<MaintenanceRecord, Long> {
@@ -13,10 +14,15 @@ public interface MaintenanceRecordRepository extends JpaRepository<MaintenanceRe
     List<MaintenanceRecord> findByAssetOrderByMaintenanceDateDescCreatedAtDesc(Asset asset);
 
     @EntityGraph(attributePaths = "asset")
+    List<MaintenanceRecord> findByAssetInOrderByMaintenanceDateDescCreatedAtDesc(Collection<Asset> assets);
+
+    @EntityGraph(attributePaths = "asset")
     List<MaintenanceRecord> findByMaintenanceDateBetweenOrderByMaintenanceDateDesc(LocalDate start, LocalDate end);
 
     @EntityGraph(attributePaths = "asset")
     List<MaintenanceRecord> findTop8ByTypeOrderByMaintenanceDateDescCreatedAtDesc(MaintenanceType type);
 
     long countByType(MaintenanceType type);
+
+    long countByAssetInAndStatus(Collection<Asset> assets, MaintenanceStatus status);
 }

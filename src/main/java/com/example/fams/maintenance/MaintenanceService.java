@@ -124,11 +124,22 @@ public class MaintenanceService {
                                               String serviceProvider,
                                               BigDecimal maintenanceCost,
                                               LocalDate resolutionDate) {
+        return recordCorrective(assetId, issueDescription, serviceProvider, maintenanceCost, resolutionDate, null);
+    }
+
+    @Transactional
+    public MaintenanceRecord recordCorrective(Long assetId,
+                                              String issueDescription,
+                                              String serviceProvider,
+                                              BigDecimal maintenanceCost,
+                                              LocalDate resolutionDate,
+                                              String requestedBy) {
         MaintenanceRecord record = new MaintenanceRecord();
         record.setAsset(assetService.findById(assetId));
         record.setType(MaintenanceType.CORRECTIVE);
         record.setIssueDescription(issueDescription);
-        record.setServiceProvider(serviceProvider);
+        record.setServiceProvider(clean(serviceProvider));
+        record.setRequestedBy(hasText(requestedBy) ? requestedBy.trim() : "Asset Manager");
         record.setMaintenanceCost(maintenanceCost);
         record.setMaintenanceDate(resolutionDate == null ? LocalDate.now() : resolutionDate);
         record.setResolutionDate(resolutionDate);
@@ -201,5 +212,9 @@ public class MaintenanceService {
 
     private String clean(String value) {
         return value == null || value.isBlank() ? null : value.trim();
+    }
+
+    private boolean hasText(String value) {
+        return value != null && !value.isBlank();
     }
 }

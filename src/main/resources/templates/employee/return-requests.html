@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html class="light" lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layouts/employee-layout}">
+<head>
+    <title>Return Requests | JustJava FAMS</title>
+</head>
+<body>
+<main id="main-content" class="space-y-6" layout:fragment="content">
+    <div>
+        <h2 class="font-page-title text-page-title text-on-background">Return Requests</h2>
+        <p class="text-body-default text-secondary mt-1">Initiate asset returns through the same approval workflow used by asset managers.</p>
+    </div>
+
+    <div th:if="${successMessage}" class="bg-status-success/10 border border-status-success/20 text-status-success rounded-xl p-4 flex items-center gap-3">
+        <span class="material-symbols-outlined">check_circle</span>
+        <p class="font-body-medium" th:text="${successMessage}">Request submitted.</p>
+    </div>
+    <div th:if="${errorMessage}" class="bg-error-container border border-error/20 text-on-error-container rounded-xl p-4 flex items-center gap-3">
+        <span class="material-symbols-outlined">error</span>
+        <p class="font-body-medium" th:text="${errorMessage}">Unable to submit request.</p>
+    </div>
+
+    <section class="bg-surface-card border border-border-default rounded-xl card-shadow overflow-hidden">
+        <div class="p-5 border-b border-border-default">
+            <h3 class="font-section-header text-section-header text-on-surface">New Return Request</h3>
+        </div>
+        <form th:action="@{/employee/return-requests}" method="post" class="p-5 grid grid-cols-1 lg:grid-cols-6 gap-4" data-spinner-form>
+            <div class="lg:col-span-3 space-y-1.5">
+                <label class="text-label-small text-secondary">Asset</label>
+                <select name="assetId" required class="w-full h-11 px-3 bg-surface-canvas border border-border-default rounded-xl text-body-default focus:ring-2 focus:ring-primary focus:border-primary">
+                    <option value="">Select assigned asset</option>
+                    <option th:each="asset : ${assignedAssets}" th:value="${asset.id}" th:selected="${param.assetId != null && param.assetId[0] == asset.id.toString()}" th:text="${asset.assetCode + ' - ' + asset.name}">Asset</option>
+                </select>
+            </div>
+            <div class="lg:col-span-3 space-y-1.5">
+                <label class="text-label-small text-secondary">Effective Date</label>
+                <input name="requestedEffectiveDate" type="date" required th:min="${tomorrow}" th:value="${tomorrow}" class="w-full h-11 px-3 bg-surface-canvas border border-border-default rounded-xl text-body-default focus:ring-2 focus:ring-primary focus:border-primary">
+            </div>
+            <div class="lg:col-span-6 space-y-1.5">
+                <label class="text-label-small text-secondary">Reason</label>
+                <textarea name="reason" rows="4" placeholder="Condition notes, reason for return, and preferred handover details." class="w-full px-4 py-3 bg-surface-canvas border border-border-default rounded-xl text-body-default focus:ring-2 focus:ring-primary focus:border-primary resize-y"></textarea>
+            </div>
+            <div class="lg:col-span-6 flex justify-end">
+                <button type="submit" class="h-11 px-5 bg-primary text-on-primary rounded-xl font-body-medium hover:bg-brand-primary-dark inline-flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[18px] submit-icon">send</span>
+                    <span class="hidden submit-spinner w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin"></span>
+                    Submit Return
+                </button>
+            </div>
+        </form>
+    </section>
+
+    <section class="bg-surface-card border border-border-default rounded-xl card-shadow overflow-hidden">
+        <div class="p-5 border-b border-border-default">
+            <h3 class="font-section-header text-section-header text-on-surface">My Workflow Requests</h3>
+        </div>
+        <div th:if="${#lists.isEmpty(returnRequests)}" class="p-12 text-center">
+            <span class="material-symbols-outlined text-[42px] text-secondary">assignment_return</span>
+            <p class="text-body-default text-secondary mt-2">No return or lifecycle requests yet.</p>
+        </div>
+        <div th:unless="${#lists.isEmpty(returnRequests)}" class="overflow-x-auto">
+            <table class="w-full text-left border-collapse min-w-[760px]">
+                <thead>
+                <tr class="bg-surface-canvas border-b border-border-default">
+                    <th class="px-5 py-3 text-label-small text-secondary uppercase tracking-wider">Workflow</th>
+                    <th class="px-5 py-3 text-label-small text-secondary uppercase tracking-wider">Asset</th>
+                    <th class="px-5 py-3 text-label-small text-secondary uppercase tracking-wider">Effective</th>
+                    <th class="px-5 py-3 text-label-small text-secondary uppercase tracking-wider">Status</th>
+                    <th class="px-5 py-3 text-label-small text-secondary uppercase tracking-wider">Notes</th>
+                </tr>
+                </thead>
+                <tbody class="divide-y divide-border-default">
+                <tr th:each="request : ${returnRequests}" class="hover:bg-surface-canvas/50">
+                    <td class="px-5 py-3 font-body-medium text-on-surface" th:text="${request.type}">RETURN</td>
+                    <td class="px-5 py-3">
+                        <p class="font-body-medium text-on-surface" th:text="${request.asset.name}">Asset</p>
+                        <p class="font-technical-data text-label-small text-primary" th:text="${request.asset.assetCode}">AST</p>
+                    </td>
+                    <td class="px-5 py-3 font-technical-data text-on-surface" th:text="${request.requestedEffectiveDate}">Date</td>
+                    <td class="px-5 py-3"><span class="px-2.5 py-0.5 rounded-full bg-status-info/10 text-status-info text-badge-label font-badge-label" th:text="${request.status}">PENDING</span></td>
+                    <td class="px-5 py-3 text-body-default text-secondary" th:text="${request.reason ?: 'No notes provided.'}">Notes</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+    <script>
+        document.querySelectorAll('[data-spinner-form]').forEach(form => form.addEventListener('submit', () => {
+            form.querySelector('.submit-icon')?.classList.add('hidden');
+            form.querySelector('.submit-spinner')?.classList.remove('hidden');
+            form.querySelector('button[type="submit"]')?.setAttribute('disabled', 'disabled');
+        }));
+    </script>
+</main>
+</body>
+</html>

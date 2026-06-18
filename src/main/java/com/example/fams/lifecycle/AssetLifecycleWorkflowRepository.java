@@ -13,7 +13,12 @@ public interface AssetLifecycleWorkflowRepository extends JpaRepository<AssetLif
     List<AssetLifecycleWorkflow> findByAssetOrderByRequestedAtDesc(Asset asset);
 
     @EntityGraph(attributePaths = "asset")
+    List<AssetLifecycleWorkflow> findByAssetInOrderByRequestedAtDesc(List<Asset> assets);
+
+    @EntityGraph(attributePaths = "asset")
     List<AssetLifecycleWorkflow> findAllByOrderByRequestedAtDesc();
+
+    long countByAssetInAndStatus(List<Asset> assets, LifecycleWorkflowStatus status);
 
     Optional<AssetLifecycleWorkflow> findByProcessInstanceId(String processInstanceId);
 }

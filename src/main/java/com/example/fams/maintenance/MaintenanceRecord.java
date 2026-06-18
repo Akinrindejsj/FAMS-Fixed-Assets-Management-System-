@@ -44,6 +44,9 @@ public class MaintenanceRecord {
     @Column(length = 160)
     private String serviceProvider;
 
+    @Column(length = 160)
+    private String requestedBy;
+
     @Column(precision = 19, scale = 2)
     private BigDecimal maintenanceCost;
 
@@ -112,6 +115,14 @@ public class MaintenanceRecord {
 
     public void setServiceProvider(String serviceProvider) {
         this.serviceProvider = serviceProvider;
+    }
+
+    public String getRequestedBy() {
+        return requestedBy;
+    }
+
+    public void setRequestedBy(String requestedBy) {
+        this.requestedBy = requestedBy;
     }
 
     public BigDecimal getMaintenanceCost() {

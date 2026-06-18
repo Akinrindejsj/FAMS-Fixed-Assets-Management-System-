@@ -809,60 +809,28 @@
                     </a>
                 </div>
 
-                <!-- Asset Management -->
-                <div class="nav-link-wrap" data-label="Asset Management">
+                <!-- My Assets -->
+                <div class="nav-link-wrap" data-label="My Assets">
                     <a class="nav-link" th:classappend="${#strings.startsWith(currentPath, '/employee/assets')} ? ' sidebar-active' : ''" th:href="@{/employee/assets}">
                         <span class="nav-icon material-symbols-outlined">inventory_2</span>
-                        <span class="nav-label">Asset Management</span>
+                        <span class="nav-label">My Assets</span>
                     </a>
                 </div>
 
-                <!-- Operations -->
-                <div class="nav-link-wrap" data-label="Operations">
-                    <a class="nav-link" th:classappend="${#strings.startsWith(currentPath, '/employee/operations')} ? ' sidebar-active' : ''" th:href="@{/employee/operations}">
-                        <span class="nav-icon material-symbols-outlined">settings_applications</span>
-                        <span class="nav-label">Operations</span>
+                <!-- Maintenance Requests -->
+                <div class="nav-link-wrap" data-label="Maintenance Requests">
+                    <a class="nav-link" th:classappend="${#strings.startsWith(currentPath, '/employee/maintenance-requests')} ? ' sidebar-active' : ''" th:href="@{/employee/maintenance-requests}">
+                        <span class="nav-icon material-symbols-outlined">build</span>
+                        <span class="nav-label">Maintenance</span>
                     </a>
                 </div>
 
-                <!-- Finance -->
-                <div class="nav-link-wrap" data-label="Finance">
-                    <a class="nav-link" th:classappend="${#strings.startsWith(currentPath, '/employee/finance')} ? ' sidebar-active' : ''" th:href="@{/employee/finance}">
-                        <span class="nav-icon material-symbols-outlined">payments</span>
-                        <span class="nav-label">Finance</span>
+                <!-- Return Requests -->
+                <div class="nav-link-wrap" data-label="Return Requests">
+                    <a class="nav-link" th:classappend="${#strings.startsWith(currentPath, '/employee/return-requests')} ? ' sidebar-active' : ''" th:href="@{/employee/return-requests}">
+                        <span class="nav-icon material-symbols-outlined">assignment_return</span>
+                        <span class="nav-label">Returns</span>
                     </a>
-                </div>
-
-                <!-- Compliance -->
-                <div class="nav-link-wrap" data-label="Compliance">
-                    <a class="nav-link" th:classappend="${#strings.startsWith(currentPath, '/employee/compliance')} ? ' sidebar-active' : ''" th:href="@{/employee/compliance}">
-                        <span class="nav-icon material-symbols-outlined">verified_user</span>
-                        <span class="nav-label">Compliance</span>
-                    </a>
-                </div>
-
-                <!-- Administration -->
-                <div class="nav-link-wrap" data-label="Administration">
-                    <a class="nav-link" th:classappend="${#strings.startsWith(currentPath, '/employee/administration')} ? ' sidebar-active' : ''" th:href="@{/employee/administration}">
-                        <span class="nav-icon material-symbols-outlined">admin_panel_settings</span>
-                        <span class="nav-label">Administration</span>
-                    </a>
-                </div>
-
-                <!-- Bottom section: Support & Settings -->
-                <div class="pt-4 mt-2 border-t border-border-default/40">
-                    <div class="nav-link-wrap" data-label="Support">
-                        <a class="nav-link" th:classappend="${currentPath == '/employee/support'} ? ' sidebar-active' : ''" th:href="@{/employee/support}">
-                            <span class="nav-icon material-symbols-outlined">help</span>
-                            <span class="nav-label">Support</span>
-                        </a>
-                    </div>
-                    <div class="nav-link-wrap" data-label="Settings">
-                        <a class="nav-link" th:classappend="${currentPath == '/employee/settings'} ? ' sidebar-active' : ''" th:href="@{/employee/settings}">
-                            <span class="nav-icon material-symbols-outlined">settings</span>
-                            <span class="nav-label">Settings</span>
-                        </a>
-                    </div>
                 </div>
 
             </div>

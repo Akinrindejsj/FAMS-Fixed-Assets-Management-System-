@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html class="light" lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layouts/employee-layout}">
+<head>
+    <title>Maintenance Requests | JustJava FAMS</title>
+</head>
+<body>
+<main id="main-content" class="space-y-6" layout:fragment="content">
+    <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
+        <div>
+            <h2 class="font-page-title text-page-title text-on-background">Maintenance Requests</h2>
+            <p class="text-body-default text-secondary mt-1">Report faults for assets assigned to you. Requests appear on asset manager maintenance pages.</p>
+        </div>
+    </div>
+
+    <div th:if="${successMessage}" class="bg-status-success/10 border border-status-success/20 text-status-success rounded-xl p-4 flex items-center gap-3">
+        <span class="material-symbols-outlined">check_circle</span>
+        <p class="font-body-medium" th:text="${successMessage}">Request submitted.</p>
+    </div>
+    <div th:if="${errorMessage}" class="bg-error-container border border-error/20 text-on-error-container rounded-xl p-4 flex items-center gap-3">
+        <span class="material-symbols-outlined">error</span>
+        <p class="font-body-medium" th:text="${errorMessage}">Unable to submit request.</p>
+    </div>
+
+    <section class="bg-surface-card border border-border-default rounded-xl card-shadow overflow-hidden">
+        <div class="p-5 border-b border-border-default">
+            <h3 class="font-section-header text-section-header text-on-surface">New Request</h3>
+        </div>
+        <form th:action="@{/employee/maintenance-requests}" method="post" class="p-5 grid grid-cols-1 lg:grid-cols-6 gap-4" data-spinner-form>
+            <div class="lg:col-span-2 space-y-1.5">
+                <label class="text-label-small text-secondary">Asset</label>
+                <select name="assetId" required class="w-full h-11 px-3 bg-surface-canvas border border-border-default rounded-xl text-body-default focus:ring-2 focus:ring-primary focus:border-primary">
+                    <option value="">Select assigned asset</option>
+                    <option th:each="asset : ${assignedAssets}" th:value="${asset.id}" th:selected="${param.assetId != null && param.assetId[0] == asset.id.toString()}" th:text="${asset.assetCode + ' - ' + asset.name}">Asset</option>
+                </select>
+            </div>
+            <div class="lg:col-span-2 space-y-1.5">
+                <label class="text-label-small text-secondary">Preferred Provider</label>
+                <input name="serviceProvider" placeholder="Optional" class="w-full h-11 px-3 bg-surface-canvas border border-border-default rounded-xl text-body-default focus:ring-2 focus:ring-primary focus:border-primary">
+            </div>
+            <div class="lg:col-span-6 space-y-1.5">
+                <label class="text-label-small text-secondary">Issue Description</label>
+                <textarea name="issueDescription" required rows="4" placeholder="Describe the fault, symptoms, urgency, and any troubleshooting already done." class="w-full px-4 py-3 bg-surface-canvas border border-border-default rounded-xl text-body-default focus:ring-2 focus:ring-primary focus:border-primary resize-y"></textarea>
+            </div>
+            <div class="lg:col-span-6 flex justify-end">
+                <button type="submit" class="h-11 px-5 bg-primary text-on-primary rounded-xl font-body-medium hover:bg-brand-primary-dark inline-flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[18px] submit-icon">send</span>
+                    <span class="hidden submit-spinner w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin"></span>
+                    Submit Request
+                </button>
+            </div>
+        </form>
+    </section>
+
+    <section class="bg-surface-card border border-border-default rounded-xl card-shadow overflow-hidden">
+        <div class="p-5 border-b border-border-default">
+            <h3 class="font-section-header text-section-header text-on-surface">My Maintenance History</h3>
+        </div>
+        <div th:if="${#lists.isEmpty(maintenanceRequests)}" class="p-12 text-center">
+            <span class="material-symbols-outlined text-[42px] text-secondary">construction</span>
+            <p class="text-body-default text-secondary mt-2">No maintenance requests yet.</p>
+        </div>
+        <div th:unless="${#lists.isEmpty(maintenanceRequests)}" class="divide-y divide-border-default">
+            <div th:each="request : ${maintenanceRequests}" class="p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                <div>
+                    <p class="font-body-medium text-on-surface" th:text="${request.asset.name}">Asset</p>
+                    <p class="text-body-default text-secondary mt-1" th:text="${request.issueDescription}">Issue</p>
+                </div>
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm shrink-0">
+                    <div><p class="text-label-small text-secondary">Status</p><span class="px-2 py-0.5 rounded-full bg-status-warning/10 text-status-warning text-badge-label" th:text="${request.status}">OPEN</span></div>
+                    <div><p class="text-label-small text-secondary">Submitted</p><p class="font-technical-data text-on-surface" th:text="${request.maintenanceDate}">Date</p></div>
+                    <div><p class="text-label-small text-secondary">Provider</p><p class="font-body-medium text-on-surface" th:text="${request.serviceProvider ?: 'Unassigned'}">Provider</p></div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <script>
+        document.querySelectorAll('[data-spinner-form]').forEach(form => form.addEventListener('submit', () => {
+            form.querySelector('.submit-icon')?.classList.add('hidden');
+            form.querySelector('.submit-spinner')?.classList.remove('hidden');
+            form.querySelector('button[type="submit"]')?.setAttribute('disabled', 'disabled');
+        }));
+    </script>
+</main>
+</body>
+</html>
