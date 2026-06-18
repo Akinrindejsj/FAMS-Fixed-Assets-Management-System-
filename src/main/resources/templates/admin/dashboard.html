@@ -86,20 +86,71 @@
                     <span class="material-symbols-outlined text-secondary">bar_chart</span>
                 </div>
                 <div class="p-4 sm:p-6">
+                    <!-- Empty state when no chart data available -->
                     <div th:if="${#lists.isEmpty(assetValueBars)}" class="min-h-64 flex flex-col items-center justify-center text-center border border-dashed border-border-default rounded-xl bg-surface-canvas/60 p-8">
                         <span class="material-symbols-outlined text-secondary mb-2" style="font-size:34px;">query_stats</span>
                         <p class="font-body-medium text-on-surface">No asset value data yet</p>
                         <p class="text-body-default text-secondary mt-1">Assets with current-year purchase dates will populate this chart.</p>
                     </div>
-                    <div th:unless="${#lists.isEmpty(assetValueBars)}">
-                        <div class="flex justify-between items-end h-64 gap-2 sm:gap-3">
-                            <div class="flex-1 min-w-0 flex flex-col items-center justify-end gap-2" th:each="bar : ${assetValueBars}">
-                                <div class="w-full bg-primary/10 hover:bg-primary/25 transition-colors rounded-t-lg relative group" th:style="${'height:' + bar.height + '%'}">
-                                    <div class="absolute -top-7 left-1/2 -translate-x-1/2 bg-on-surface text-white text-[10px] px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap transition-opacity" th:text="${bar.value}">NGN 0.00</div>
-                                </div>
-                                <span class="text-[10px] text-secondary font-medium uppercase tracking-tight" th:text="${bar.month}">Jan</span>
-                            </div>
-                        </div>
+
+                    <!-- Chart area when data is available -->
+                    <div th:unless="${#lists.isEmpty(assetValueBars)}" class="h-64">
+                        <canvas id="assetValueChart" class="w-full h-full"></canvas>
+
+                        <!-- Chart.js from CDN -->
+                        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+                        <!-- Render data to hidden DOM elements to avoid Thymeleaf JS-inlining issues -->
+                        <ul id="asset-bars-data" class="hidden" aria-hidden="true">
+                            <li th:each="bar : ${assetValueBars}"
+                                th:attr="data-month=${bar.month},data-height=${bar.height}"></li>
+                        </ul>
+
+                        <script>
+                            (function(){
+                                var ctx = document.getElementById('assetValueChart').getContext('2d');
+                                var items = document.querySelectorAll('#asset-bars-data li');
+                                var labels = [];
+                                var data = [];
+                                items.forEach(function(li){
+                                    labels.push(li.getAttribute('data-month'));
+                                    var h = li.getAttribute('data-height');
+                                    data.push(h ? parseFloat(h) : 0);
+                                });
+
+                                var gradient = ctx.createLinearGradient(0,0,0,200);
+                                gradient.addColorStop(0, 'rgba(59,130,246,0.9)');
+                                gradient.addColorStop(1, 'rgba(59,130,246,0.5)');
+
+                                if (window.__assetValueChartInstance) {
+                                    try { window.__assetValueChartInstance.destroy(); } catch(e){}
+                                }
+
+                                window.__assetValueChartInstance = new Chart(ctx, {
+                                    type: 'bar',
+                                    data: {
+                                        labels: labels,
+                                        datasets: [{
+                                            label: 'Monthly purchase value (relative)',
+                                            data: data,
+                                            backgroundColor: gradient,
+                                            borderRadius: 8,
+                                            barPercentage: 0.6,
+                                            categoryPercentage: 0.7
+                                        }]
+                                    },
+                                    options: {
+                                        responsive: true,
+                                        maintainAspectRatio: false,
+                                        plugins: { legend: { display: false } },
+                                        scales: {
+                                            x: { grid: { display: false } },
+                                            y: { beginAtZero: true }
+                                        }
+                                    }
+                                });
+                            })();
+                        </script>
                     </div>
                 </div>
             </div>
@@ -131,7 +182,7 @@
                         </tr>
                         </thead>
                         <tbody class="divide-y divide-border-default">
-                        <tr class="hover:bg-surface-canvas/50 transition-colors" th:each="item : ${activityItems}">
+                        <tr class="hover:bg-surface-canvas/50 transition-colors" th:each="item, iterStat : ${activityItems}" th:if="${iterStat.index &lt; 5}">
                             <td class="px-5 py-3 font-body-medium text-on-surface" th:text="${item.description}">Lifecycle event</td>
                             <td class="px-5 py-3 font-technical-data text-secondary" th:text="${item.actor}">System</td>
                             <td class="px-5 py-3 text-secondary text-body-default" th:text="${item.when}">Now</td>
