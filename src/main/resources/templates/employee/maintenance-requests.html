@@ -60,15 +60,15 @@
             <p class="text-body-default text-secondary mt-2">No maintenance requests yet.</p>
         </div>
         <div th:unless="${#lists.isEmpty(maintenanceRequests)}" class="divide-y divide-border-default">
-            <div th:each="request : ${maintenanceRequests}" class="p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <div th:each="req : ${maintenanceRequests}" class="p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                 <div>
-                    <p class="font-body-medium text-on-surface" th:text="${request.asset.name}">Asset</p>
-                    <p class="text-body-default text-secondary mt-1" th:text="${request.issueDescription}">Issue</p>
+                    <p class="font-body-medium text-on-surface" th:text="${req.asset.name}">Asset</p>
+                    <p class="text-body-default text-secondary mt-1" th:text="${req.issueDescription}">Issue</p>
                 </div>
                 <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm shrink-0">
-                    <div><p class="text-label-small text-secondary">Status</p><span class="px-2 py-0.5 rounded-full bg-status-warning/10 text-status-warning text-badge-label" th:text="${request.status}">OPEN</span></div>
-                    <div><p class="text-label-small text-secondary">Submitted</p><p class="font-technical-data text-on-surface" th:text="${request.maintenanceDate}">Date</p></div>
-                    <div><p class="text-label-small text-secondary">Provider</p><p class="font-body-medium text-on-surface" th:text="${request.serviceProvider ?: 'Unassigned'}">Provider</p></div>
+                    <div><p class="text-label-small text-secondary">Status</p><span class="px-2 py-0.5 rounded-full bg-status-warning/10 text-status-warning text-badge-label" th:text="${req.status}">OPEN</span></div>
+                    <div><p class="text-label-small text-secondary">Submitted</p><p class="font-technical-data text-on-surface" th:text="${req.maintenanceDate}">Date</p></div>
+                    <div><p class="text-label-small text-secondary">Provider</p><p class="font-body-medium text-on-surface" th:text="${req.serviceProvider ?: 'Unassigned'}">Provider</p></div>
                 </div>
             </div>
         </div>

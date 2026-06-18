@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html class="light" lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layouts/auditor-layout}">
+<head>
+    <title>Audit Reports | JustJava FAMS</title>
+</head>
+<body>
+<main id="main-content" class="space-y-6" layout:fragment="content">
+    <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
+        <div>
+            <h2 class="font-page-title text-page-title text-on-background">Audit Reports</h2>
+            <p class="text-body-default text-secondary mt-1">Generate completed audit history reports by date range.</p>
+        </div>
+    </div>
+
+    <form th:action="@{/auditor/reports}" method="get" class="bg-surface-card border border-border-default rounded-xl p-4 card-shadow grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-3 items-end">
+        <div>
+            <label class="block text-label-small text-secondary mb-1">From</label>
+            <input name="from" type="date" th:value="${from}" class="w-full h-[38px] px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+        </div>
+        <div>
+            <label class="block text-label-small text-secondary mb-1">To</label>
+            <input name="to" type="date" th:value="${to}" class="w-full h-[38px] px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+        </div>
+        <button type="submit" class="h-[38px] px-5 bg-primary text-on-primary rounded-lg font-body-medium hover:bg-brand-primary-dark inline-flex items-center justify-center gap-2">
+            <span class="material-symbols-outlined text-[18px]">summarize</span>
+            Generate
+        </button>
+    </form>
+
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="bg-surface-card border border-border-default rounded-xl p-5 card-shadow">
+            <p class="text-label-small text-secondary">Completed Audits</p>
+            <p class="text-2xl font-semibold text-on-surface mt-2" th:text="${historyReport.completedAuditCount}">0</p>
+        </div>
+        <div class="bg-surface-card border border-border-default rounded-xl p-5 card-shadow">
+            <p class="text-label-small text-secondary">Report From</p>
+            <p class="text-lg font-semibold text-on-surface mt-2" th:text="${historyReport.from}">Date</p>
+        </div>
+        <div class="bg-surface-card border border-border-default rounded-xl p-5 card-shadow">
+            <p class="text-label-small text-secondary">Report To</p>
+            <p class="text-lg font-semibold text-on-surface mt-2" th:text="${historyReport.to}">Date</p>
+        </div>
+    </div>
+
+    <div class="bg-surface-card border border-border-default rounded-xl overflow-hidden card-shadow">
+        <div th:if="${#lists.isEmpty(historyReport.audits)}" class="p-12 sm:p-20 text-center">
+            <span class="material-symbols-outlined text-[48px] text-secondary">event_available</span>
+            <h3 class="font-card-header text-card-header text-on-surface mt-4">No completed audits found</h3>
+            <p class="text-body-default text-secondary mt-2">Try a different date range.</p>
+        </div>
+        <div th:unless="${#lists.isEmpty(historyReport.audits)}" class="overflow-x-auto">
+            <table class="w-full text-left border-collapse min-w-[760px]">
+                <thead>
+                <tr class="bg-surface-canvas border-b border-border-default">
+                    <th class="px-5 py-3 text-label-small text-secondary uppercase tracking-wider">Audit</th>
+                    <th class="px-5 py-3 text-label-small text-secondary uppercase tracking-wider">Auditor</th>
+                    <th class="px-5 py-3 text-label-small text-secondary uppercase tracking-wider">Completed</th>
+                    <th class="px-5 py-3 text-label-small text-secondary uppercase tracking-wider">Verified</th>
+                    <th class="px-5 py-3 text-label-small text-secondary uppercase tracking-wider">Missing</th>
+                    <th class="px-5 py-3 text-label-small text-secondary uppercase tracking-wider">Issues</th>
+                </tr>
+                </thead>
+                <tbody class="divide-y divide-border-default">
+                <tr th:each="audit : ${historyReport.audits}" class="hover:bg-surface-canvas/50">
+                    <td class="px-5 py-3">
+                        <p class="font-body-medium text-on-surface" th:text="${audit.title}">Audit</p>
+                        <p class="text-label-small text-secondary" th:text="${audit.scopeLocation ?: 'All registered assets'}">Scope</p>
+                    </td>
+                    <td class="px-5 py-3 text-body-default text-on-surface" th:text="${audit.auditorName}">Auditor</td>
+                    <td class="px-5 py-3 text-label-small text-secondary" th:text="${audit.completedAt != null ? #temporals.format(audit.completedAt, 'dd MMM yyyy HH:mm') : 'Not completed'}">Date</td>
+                    <td class="px-5 py-3 font-technical-data text-on-surface" th:text="${audit.verifiedCount}">0</td>
+                    <td class="px-5 py-3 font-technical-data text-error" th:text="${audit.missingCount}">0</td>
+                    <td class="px-5 py-3 font-technical-data text-status-warning" th:text="${audit.discrepancyCount}">0</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+</body>
+</html>

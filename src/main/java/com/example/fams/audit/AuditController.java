@@ -29,7 +29,7 @@ public class AuditController {
         this.auditService = auditService;
     }
 
-    @GetMapping({"/audit", "/auditor/assets", "/auditor/compliance"})
+    @GetMapping("/audit")
     public String auditManagement(@RequestParam(required = false) Long sessionId, Model model) {
         AuditSession activeSession = auditService.findSession(sessionId);
         model.addAttribute("sessions", auditService.findSessionSummaries());
@@ -42,11 +42,6 @@ public class AuditController {
         }
         model.addAttribute("historyReport", auditService.historyReport(LocalDate.now().minusMonths(1), LocalDate.now()));
         return "audit/audit-management";
-    }
-
-    @GetMapping("/auditor/audits/new")
-    public String newAuditorAudit() {
-        return "redirect:/audit";
     }
 
     @PostMapping("/audit/sessions")

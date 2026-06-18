@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html class="light" lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layouts/auditor-layout}">
+<head>
+    <title>Physical Verification | JustJava FAMS</title>
+</head>
+<body>
+<main id="main-content" class="space-y-6" layout:fragment="content">
+    <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
+        <div>
+            <h2 class="font-page-title text-page-title text-on-background">Physical Verification</h2>
+            <p class="text-body-default text-secondary mt-1">Scan or enter asset tags, verify condition and location, and log discrepancies.</p>
+        </div>
+        <details class="relative" id="start-audit-details">
+            <summary class="h-[38px] px-4 bg-primary text-on-primary rounded-lg font-body-medium hover:bg-brand-primary-dark inline-flex items-center gap-2 cursor-pointer list-none">
+                <span class="material-symbols-outlined text-[18px]">add_task</span>
+                New Audit Session
+            </summary>
+            <form th:action="@{/auditor/audit-sessions}" method="post" class="absolute right-0 top-[calc(100%+8px)] z-30 bg-surface-card border border-border-default rounded-xl p-4 card-shadow w-[340px] sm:w-[420px] space-y-3" data-spinner-form>
+                <p class="font-card-header text-card-header text-on-surface">Start audit session</p>
+                <input name="title" required maxlength="160" th:value="${defaultAuditTitle}" class="h-[38px] w-full px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                <input name="scopeLocation" maxlength="160" placeholder="Scope / location" class="h-[38px] w-full px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                <textarea name="notes" rows="2" placeholder="Notes" class="w-full px-3 py-2 bg-surface-canvas border border-border-default rounded-lg text-body-default focus:ring-2 focus:ring-primary focus:border-primary outline-none resize-none"></textarea>
+                <button type="submit" class="w-full h-[38px] bg-primary text-on-primary rounded-lg font-body-medium hover:bg-brand-primary-dark inline-flex items-center justify-center gap-2">
+                    <span class="material-symbols-outlined text-[18px] submit-icon">add_task</span>
+                    <span class="hidden submit-spinner w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin"></span>
+                    Start Session
+                </button>
+            </form>
+        </details>
+    </div>
+
+    <div th:if="${successMessage}" class="bg-status-success/10 border border-status-success/20 text-status-success rounded-xl p-4 flex items-center gap-3">
+        <span class="material-symbols-outlined">check_circle</span>
+        <p class="font-body-medium" th:text="${successMessage}">Done.</p>
+    </div>
+    <div th:if="${errorMessage}" class="bg-error-container border border-error/20 text-on-error-container rounded-xl p-4 flex items-center gap-3">
+        <span class="material-symbols-outlined">error</span>
+        <p class="font-body-medium" th:text="${errorMessage}">Error.</p>
+    </div>
+
+    <div th:if="${activeSession == null}" class="bg-surface-card border border-border-default rounded-xl card-shadow p-14 text-center">
+        <span class="material-symbols-outlined text-[48px] text-primary">qr_code_scanner</span>
+        <h3 class="font-card-header text-card-header text-on-surface mt-4">No audit session active</h3>
+        <p class="text-body-default text-secondary mt-2">Start a session to record physical verification results.</p>
+    </div>
+
+    <div th:if="${activeSession != null}" class="grid grid-cols-1 xl:grid-cols-12 gap-6">
+        <section class="xl:col-span-7 bg-surface-card border border-border-default rounded-xl card-shadow overflow-hidden">
+            <div class="p-5 border-b border-border-default flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                    <h3 class="font-section-header text-section-header text-on-surface" th:text="${activeSession.title}">Active audit</h3>
+                    <p class="text-label-small text-secondary" th:text="${activeSession.scopeLocation ?: 'All registered assets'}">Scope</p>
+                </div>
+                <form th:if="${activeSession.status.name() == 'ACTIVE'}" th:action="@{/auditor/audit-sessions/{id}/complete(id=${activeSession.id})}" method="post" data-spinner-form>
+                    <button type="submit" class="h-[38px] px-4 border border-border-strong rounded-lg font-body-medium hover:bg-surface-canvas inline-flex items-center gap-2">
+                        <span class="material-symbols-outlined text-[18px] submit-icon">task_alt</span>
+                        <span class="hidden submit-spinner w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin"></span>
+                        Complete Audit
+                    </button>
+                </form>
+            </div>
+            <div class="p-5 space-y-5">
+                <div class="flex gap-2">
+                    <input id="manual-code" placeholder="Scan or enter asset code" th:disabled="${activeSession.status.name() != 'ACTIVE'}" class="flex-1 h-[42px] px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                    <button id="lookup-button" type="button" th:disabled="${activeSession.status.name() != 'ACTIVE'}" class="h-[42px] px-4 bg-primary text-on-primary rounded-lg font-body-medium hover:bg-brand-primary-dark inline-flex items-center gap-2 disabled:opacity-50">
+                        <span class="material-symbols-outlined text-[18px]">search</span>
+                        Lookup
+                    </button>
+                </div>
+                <div id="lookup-error" class="hidden bg-error/10 border border-error/20 text-error rounded-lg p-3 text-body-default"></div>
+                <div id="asset-card" class="hidden bg-surface-canvas border border-border-default rounded-xl p-4">
+                    <p id="asset-name" class="font-card-header text-card-header text-on-surface">Asset</p>
+                    <p id="asset-meta" class="text-label-small text-secondary mt-1">Asset code</p>
+                    <p id="asset-location" class="text-body-default text-secondary mt-3">Location</p>
+                </div>
+                <form id="verification-form" class="space-y-4">
+                    <input id="asset-id" type="hidden">
+                    <input id="scanned-code" type="hidden">
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                        <label th:each="status : ${verificationStatuses}" class="h-[38px] px-3 border border-border-default rounded-lg bg-surface-canvas flex items-center justify-center gap-2 cursor-pointer text-body-default">
+                            <input type="radio" name="resultStatus" th:value="${status}" th:checked="${status.name() == 'FOUND'}" class="text-primary">
+                            <span th:text="${status}">FOUND</span>
+                        </label>
+                    </div>
+                    <input id="actual-location" placeholder="Actual location" class="w-full h-[42px] px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                    <textarea id="condition-notes" rows="4" placeholder="Condition notes or discrepancy details" class="w-full px-3 py-2 bg-surface-canvas border border-border-default rounded-lg text-body-default focus:ring-2 focus:ring-primary focus:border-primary outline-none resize-y"></textarea>
+                    <button id="submit-verification" type="submit" th:disabled="${activeSession.status.name() != 'ACTIVE'}" class="w-full h-[42px] bg-primary text-on-primary rounded-lg font-body-medium hover:bg-brand-primary-dark inline-flex items-center justify-center gap-2 disabled:opacity-50">
+                        <span class="material-symbols-outlined text-[18px]">save</span>
+                        Save Verification
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <aside class="xl:col-span-5 bg-surface-card border border-border-default rounded-xl card-shadow overflow-hidden">
+            <div class="p-5 border-b border-border-default flex justify-between items-center">
+                <h3 class="font-section-header text-section-header text-on-surface">Session Results</h3>
+                <span class="px-2.5 py-0.5 bg-surface-container-high rounded-full text-badge-label" th:text="${#lists.size(results)} + ' verified'">0 verified</span>
+            </div>
+            <div id="verification-feed" th:if="${#lists.isEmpty(results)}" class="p-10 text-center">
+                <span class="material-symbols-outlined text-[40px] text-secondary">fact_check</span>
+                <p class="text-body-default text-secondary mt-2">No results recorded in this session.</p>
+            </div>
+            <div th:unless="${#lists.isEmpty(results)}" class="divide-y divide-border-default max-h-[620px] overflow-y-auto">
+                <div th:each="result : ${results}" class="p-4">
+                    <div class="flex justify-between gap-3">
+                        <div>
+                            <p class="font-body-medium text-on-surface" th:text="${result.assetName}">Asset</p>
+                            <p class="font-technical-data text-label-small text-primary" th:text="${result.assetCode}">AST</p>
+                        </div>
+                        <span class="h-fit px-2 py-0.5 rounded-full text-badge-label font-badge-label"
+                              th:classappend="${result.resultStatus.name() == 'FOUND'} ? ' bg-status-success/10 text-status-success' : ' bg-error/10 text-error'"
+                              th:text="${result.resultStatus}">FOUND</span>
+                    </div>
+                    <p class="text-label-small text-secondary mt-2" th:text="${result.actualLocation ?: result.expectedLocation}">Location</p>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <script th:inline="javascript">
+        const activeSessionId = [[${activeSession != null ? activeSession.id : null}]];
+        const sessionActive = [[${activeSession != null && activeSession.status.name() == 'ACTIVE'}]];
+        const lookupButton = document.getElementById('lookup-button');
+        const manualCode = document.getElementById('manual-code');
+        const lookupError = document.getElementById('lookup-error');
+        const assetCard = document.getElementById('asset-card');
+        function showError(message) { lookupError.textContent = message; lookupError.classList.remove('hidden'); }
+        function clearError() { lookupError.classList.add('hidden'); }
+        async function lookupAsset() {
+            clearError();
+            const code = manualCode.value.trim();
+            if (!code) { showError('Enter or scan an asset code.'); return; }
+            lookupButton.disabled = true;
+            lookupButton.innerHTML = '<span class="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin"></span> Lookup';
+            try {
+                const response = await fetch(`/api/audits/assets/lookup?code=${encodeURIComponent(code)}`);
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.message || 'Asset was not found.');
+                document.getElementById('asset-id').value = data.id;
+                document.getElementById('scanned-code').value = code;
+                document.getElementById('asset-name').textContent = data.name;
+                document.getElementById('asset-meta').textContent = `${data.assetCode} · ${data.status} · ${data.custodian || 'Unassigned'}`;
+                document.getElementById('asset-location').textContent = data.expectedLocation || 'No expected location recorded';
+                document.getElementById('actual-location').value = data.expectedLocation || '';
+                assetCard.classList.remove('hidden');
+            } catch (error) {
+                showError(error.message);
+            } finally {
+                lookupButton.disabled = !sessionActive;
+                lookupButton.innerHTML = '<span class="material-symbols-outlined text-[18px]">search</span> Lookup';
+            }
+        }
+        lookupButton?.addEventListener('click', lookupAsset);
+        manualCode?.addEventListener('keydown', event => { if (event.key === 'Enter') { event.preventDefault(); lookupAsset(); } });
+        document.getElementById('verification-form')?.addEventListener('submit', async event => {
+            event.preventDefault();
+            clearError();
+            const assetId = document.getElementById('asset-id').value;
+            if (!assetId) { showError('Look up an asset before saving verification.'); return; }
+            const submit = document.getElementById('submit-verification');
+            submit.disabled = true;
+            submit.innerHTML = '<span class="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin"></span> Saving';
+            try {
+                const response = await fetch(`/api/audits/sessions/${activeSessionId}/results`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    body: JSON.stringify({
+                        assetId: Number(assetId),
+                        scannedCode: document.getElementById('scanned-code').value,
+                        resultStatus: document.querySelector('input[name="resultStatus"]:checked').value,
+                        actualLocation: document.getElementById('actual-location').value,
+                        conditionNotes: document.getElementById('condition-notes').value
+                    })
+                });
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.message || 'Verification could not be saved.');
+                window.location.reload();
+            } catch (error) {
+                showError(error.message);
+                submit.disabled = !sessionActive;
+                submit.innerHTML = '<span class="material-symbols-outlined text-[18px]">save</span> Save Verification';
+            }
+        });
+        document.querySelectorAll('[data-spinner-form]').forEach(form => form.addEventListener('submit', event => {
+            const submitter = event.submitter;
+            submitter?.querySelector('.submit-icon')?.classList.add('hidden');
+            submitter?.querySelector('.submit-spinner')?.classList.remove('hidden');
+            form.querySelectorAll('button[type="submit"]').forEach(button => button.setAttribute('disabled', 'disabled'));
+        }));
+    </script>
+</main>
+</body>
+</html>

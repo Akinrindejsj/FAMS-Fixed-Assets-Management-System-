@@ -69,15 +69,15 @@
                 </tr>
                 </thead>
                 <tbody class="divide-y divide-border-default">
-                <tr th:each="request : ${returnRequests}" class="hover:bg-surface-canvas/50">
-                    <td class="px-5 py-3 font-body-medium text-on-surface" th:text="${request.type}">RETURN</td>
+                <tr th:each="req : ${returnRequests}" class="hover:bg-surface-canvas/50">
+                    <td class="px-5 py-3 font-body-medium text-on-surface" th:text="${req.type}">RETURN</td>
                     <td class="px-5 py-3">
-                        <p class="font-body-medium text-on-surface" th:text="${request.asset.name}">Asset</p>
-                        <p class="font-technical-data text-label-small text-primary" th:text="${request.asset.assetCode}">AST</p>
+                        <p class="font-body-medium text-on-surface" th:text="${req.asset.name}">Asset</p>
+                        <p class="font-technical-data text-label-small text-primary" th:text="${req.asset.assetCode}">AST</p>
                     </td>
-                    <td class="px-5 py-3 font-technical-data text-on-surface" th:text="${request.requestedEffectiveDate}">Date</td>
-                    <td class="px-5 py-3"><span class="px-2.5 py-0.5 rounded-full bg-status-info/10 text-status-info text-badge-label font-badge-label" th:text="${request.status}">PENDING</span></td>
-                    <td class="px-5 py-3 text-body-default text-secondary" th:text="${request.reason ?: 'No notes provided.'}">Notes</td>
+                    <td class="px-5 py-3 font-technical-data text-on-surface" th:text="${req.requestedEffectiveDate}">Date</td>
+                    <td class="px-5 py-3"><span class="px-2.5 py-0.5 rounded-full bg-status-info/10 text-status-info text-badge-label font-badge-label" th:text="${req.status}">PENDING</span></td>
+                    <td class="px-5 py-3 text-body-default text-secondary" th:text="${req.reason ?: 'No notes provided.'}">Notes</td>
                 </tr>
                 </tbody>
             </table>

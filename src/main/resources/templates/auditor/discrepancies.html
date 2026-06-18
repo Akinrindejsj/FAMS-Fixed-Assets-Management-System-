@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html class="light" lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layouts/auditor-layout}">
+<head>
+    <title>Discrepancies | JustJava FAMS</title>
+</head>
+<body>
+<main id="main-content" class="space-y-6" layout:fragment="content">
+    <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
+        <div>
+            <h2 class="font-page-title text-page-title text-on-background">Discrepancies</h2>
+            <p class="text-body-default text-secondary mt-1">Missing, damaged, and location-mismatch findings from the selected audit session.</p>
+        </div>
+        <a th:href="@{/auditor/verifications}" class="h-[38px] px-4 bg-primary text-on-primary rounded-lg font-body-medium hover:bg-brand-primary-dark inline-flex items-center gap-2">
+            <span class="material-symbols-outlined text-[18px]">qr_code_scanner</span>
+            Continue Verification
+        </a>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="bg-surface-card border border-border-default rounded-xl p-5 card-shadow">
+            <p class="text-label-small text-secondary">Verified In Session</p>
+            <p class="text-2xl font-semibold text-on-surface mt-2" th:text="${discrepancyReport.totalVerified}">0</p>
+        </div>
+        <div class="bg-surface-card border border-border-default rounded-xl p-5 card-shadow">
+            <p class="text-label-small text-secondary">Discrepancies</p>
+            <p class="text-2xl font-semibold text-error mt-2" th:text="${discrepancyReport.discrepancyCount}">0</p>
+        </div>
+        <div class="bg-surface-card border border-border-default rounded-xl p-5 card-shadow">
+            <p class="text-label-small text-secondary">Session</p>
+            <p class="text-lg font-semibold text-on-surface mt-2 truncate" th:text="${discrepancyReport.sessionTitle}">Session</p>
+        </div>
+    </div>
+
+    <div class="bg-surface-card border border-border-default rounded-xl overflow-hidden card-shadow">
+        <div th:if="${discrepancyReport.discrepancyCount == 0}" class="p-12 sm:p-20 text-center">
+            <span class="material-symbols-outlined text-[48px] text-status-success">verified</span>
+            <h3 class="font-card-header text-card-header text-on-surface mt-4">No discrepancies recorded</h3>
+            <p class="text-body-default text-secondary mt-2">Issues will appear here after auditors submit non-matching verification results.</p>
+        </div>
+        <div th:unless="${discrepancyReport.discrepancyCount == 0}" class="overflow-x-auto">
+            <table class="w-full text-left border-collapse min-w-[760px]">
+                <thead>
+                <tr class="bg-surface-canvas border-b border-border-default">
+                    <th class="px-5 py-3 text-label-small text-secondary uppercase tracking-wider">Asset</th>
+                    <th class="px-5 py-3 text-label-small text-secondary uppercase tracking-wider">Type</th>
+                    <th class="px-5 py-3 text-label-small text-secondary uppercase tracking-wider">Expected</th>
+                    <th class="px-5 py-3 text-label-small text-secondary uppercase tracking-wider">Actual</th>
+                    <th class="px-5 py-3 text-label-small text-secondary uppercase tracking-wider">Notes</th>
+                </tr>
+                </thead>
+                <tbody class="divide-y divide-border-default">
+                <tr th:each="item : ${discrepancyReport.discrepancies}" class="hover:bg-surface-canvas/50">
+                    <td class="px-5 py-3">
+                        <p class="font-body-medium text-on-surface" th:text="${item.assetName}">Asset</p>
+                        <p class="font-technical-data text-label-small text-primary" th:text="${item.assetCode}">AST</p>
+                    </td>
+                    <td class="px-5 py-3"><span class="px-2 py-0.5 rounded-full bg-error/10 text-error text-badge-label font-badge-label" th:text="${item.discrepancyType}">Missing</span></td>
+                    <td class="px-5 py-3 text-body-default text-secondary" th:text="${item.expectedLocation}">Expected</td>
+                    <td class="px-5 py-3 text-body-default text-on-surface" th:text="${item.actualLocation ?: 'Not recorded'}">Actual</td>
+                    <td class="px-5 py-3 text-body-default text-secondary" th:text="${item.conditionNotes ?: 'No notes'}">Notes</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+</body>
+</html>

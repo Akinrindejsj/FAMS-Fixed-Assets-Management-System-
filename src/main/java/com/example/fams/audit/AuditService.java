@@ -37,6 +37,18 @@ public class AuditService {
     }
 
     @Transactional(readOnly = true)
+    public List<AuditResultView> recentResults() {
+        return resultRepository.findTop8ByOrderByVerifiedAtDesc().stream()
+                .map(this::toView)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public long totalDiscrepancyCount() {
+        return resultRepository.countByDiscrepancyTypeIsNotNull();
+    }
+
+    @Transactional(readOnly = true)
     public AuditSession findActiveOrLatestSession() {
         List<AuditSession> activeSessions = sessionRepository.findByStatusOrderByStartedAtDesc(AuditSessionStatus.ACTIVE);
         if (!activeSessions.isEmpty()) {

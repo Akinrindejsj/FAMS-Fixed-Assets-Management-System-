@@ -93,15 +93,15 @@
                     <p class="text-body-default text-secondary mt-2">No requests submitted yet.</p>
                 </div>
                 <div class="divide-y divide-border-default">
-                    <div th:each="request, iter : ${maintenanceRequests}" th:if="${iter.index < 3}" class="p-5">
+                    <div th:each="req, iter : ${maintenanceRequests}" th:if="${iter.index < 3}" class="p-5">
                         <p class="font-body-medium text-on-surface">Maintenance</p>
-                        <p class="text-body-default text-secondary mt-1" th:text="${request.asset.name}">Asset</p>
-                        <span class="mt-2 inline-flex px-2 py-0.5 rounded-full bg-status-warning/10 text-status-warning text-badge-label" th:text="${request.status}">OPEN</span>
+                        <p class="text-body-default text-secondary mt-1" th:text="${req.asset.name}">Asset</p>
+                        <span class="mt-2 inline-flex px-2 py-0.5 rounded-full bg-status-warning/10 text-status-warning text-badge-label" th:text="${req.status}">OPEN</span>
                     </div>
-                    <div th:each="request, iter : ${returnRequests}" th:if="${iter.index < 3}" class="p-5">
-                        <p class="font-body-medium text-on-surface" th:text="${request.type}">RETURN</p>
-                        <p class="text-body-default text-secondary mt-1" th:text="${request.asset.name}">Asset</p>
-                        <span class="mt-2 inline-flex px-2 py-0.5 rounded-full bg-status-info/10 text-status-info text-badge-label" th:text="${request.status}">PENDING</span>
+                    <div th:each="rreq, iter : ${returnRequests}" th:if="${iter.index < 3}" class="p-5">
+                        <p class="font-body-medium text-on-surface" th:text="${rreq.type}">RETURN</p>
+                        <p class="text-body-default text-secondary mt-1" th:text="${rreq.asset.name}">Asset</p>
+                        <span class="mt-2 inline-flex px-2 py-0.5 rounded-full bg-status-info/10 text-status-info text-badge-label" th:text="${rreq.status}">PENDING</span>
                     </div>
                 </div>
             </div>

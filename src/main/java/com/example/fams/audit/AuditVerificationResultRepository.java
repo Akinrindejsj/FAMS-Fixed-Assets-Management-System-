@@ -7,6 +7,8 @@ import java.util.Optional;
 
 public interface AuditVerificationResultRepository extends JpaRepository<AuditVerificationResult, Long> {
 
+    List<AuditVerificationResult> findTop8ByOrderByVerifiedAtDesc();
+
     List<AuditVerificationResult> findBySessionIdOrderByVerifiedAtDesc(Long sessionId);
 
     Optional<AuditVerificationResult> findBySessionIdAndAssetId(Long sessionId, Long assetId);
@@ -16,4 +18,6 @@ public interface AuditVerificationResultRepository extends JpaRepository<AuditVe
     long countBySessionIdAndResultStatus(Long sessionId, AuditVerificationStatus resultStatus);
 
     long countBySessionIdAndDiscrepancyTypeIsNotNull(Long sessionId);
+
+    long countByDiscrepancyTypeIsNotNull();
 }
