@@ -2,6 +2,7 @@ package com.example.fams.admin;
 
 import com.example.fams.aau.keycloak.KeycloakAdminService;
 import com.example.fams.core.config.AuthenticationManager;
+import com.example.fams.dashboard.DashboardModelService;
 import com.example.fams.settings.AdminSettingsService;
 import com.example.fams.settings.AssetCategory;
 import jakarta.servlet.http.HttpServletRequest;
@@ -33,6 +34,9 @@ public class AdminController {
     @Autowired
     AuthenticationManager authenticationManager;
 
+    @Autowired
+    DashboardModelService dashboardModelService;
+
     /** Primary realm this admin panel operates on. */
     @Value("fams")
     private String realmName;
@@ -41,7 +45,8 @@ public class AdminController {
 
 
     @GetMapping("/dashboard")
-    public String adminDashboard() {
+    public String adminDashboard(Model model) {
+        dashboardModelService.addDashboardModel(model);
         return "admin/dashboard";
     }
 
