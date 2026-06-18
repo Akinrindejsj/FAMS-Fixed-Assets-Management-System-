@@ -3,6 +3,8 @@ package com.example.fams.organization;
 import com.example.fams.organization.dto.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import com.example.fams.aau.keycloak.KeycloakAdminService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,6 +32,12 @@ public class CompanyStructureService {
 
     @Autowired
     private DepartmentHeadRepository departmentHeadRepository;
+
+    @Autowired
+    private KeycloakAdminService keycloakAdminService;
+
+    @Value("${keycloak.realm}")
+    private String realmName;
 
     // ============== COMPANY MANAGEMENT ==============
 
@@ -381,6 +389,26 @@ public class CompanyStructureService {
 
             DepartmentHead saved = departmentHeadRepository.save(head);
             log.info("Department head assigned: " + saved.getId());
+
+            // Update Keycloak groups: remove 'employees' and add 'departmentHead'
+            try {
+                if (dto.getUserId() != null) {
+                    // best-effort: remove employees group if present
+                    try {
+                        keycloakAdminService.removeUserFromGroup(realmName, dto.getUserId(), "employees");
+                    } catch (Exception ignore) {
+                        // ignore failures to remove (group may not exist or user not in group)
+                    }
+                    // add departmentHead group
+                    try {
+                        keycloakAdminService.addUserToGroup(realmName, dto.getUserId(), "departmentHead");
+                    } catch (Exception ex) {
+                        log.warn("Failed to add user to departmentHead group in Keycloak: " + ex.getMessage());
+                    }
+                }
+            } catch (Exception e) {
+                log.warn("Could not update Keycloak groups for department head assignment: " + e.getMessage());
+            }
             return mapDepartmentHeadToDTO(saved);
         } catch (Exception e) {
             log.error("Error assigning department head: " + e.getMessage());
@@ -398,6 +426,25 @@ public class CompanyStructureService {
             head.setRemovedAt(LocalDateTime.now());
             departmentHeadRepository.save(head);
             log.info("Department head removed: " + headId);
+
+            // Update Keycloak groups: remove 'departmentHead' and add back 'employees'
+            try {
+                String userId = head.getUserId();
+                if (userId != null) {
+                    try {
+                        keycloakAdminService.removeUserFromGroup(realmName, userId, "departmentHead");
+                    } catch (Exception ignore) {
+                        // ignore failure
+                    }
+                    try {
+                        keycloakAdminService.addUserToGroup(realmName, userId, "employees");
+                    } catch (Exception ex) {
+                        log.warn("Failed to add user back to employees group in Keycloak: " + ex.getMessage());
+                    }
+                }
+            } catch (Exception e) {
+                log.warn("Could not update Keycloak groups for department head removal: " + e.getMessage());
+            }
         } catch (Exception e) {
             log.error("Error removing department head: " + e.getMessage());
             throw new Exception("Failed to remove department head: " + e.getMessage());
