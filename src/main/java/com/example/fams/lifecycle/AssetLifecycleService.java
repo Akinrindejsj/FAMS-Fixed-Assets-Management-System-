@@ -148,16 +148,24 @@ public class AssetLifecycleService {
         AssetLifecycleWorkflow workflow = workflowRepository.findById(workflowId)
                 .orElseThrow(() -> new NoSuchElementException("Workflow not found."));
         log.debug("Decide called for workflow id={}, taskId={}, decision={}, comment={}", workflowId, taskId, decision, comment);
+        log.info("Approval action by user='{}'. Workflow fromDept='{}', type='{}'", currentActor(), workflow.getFromDepartment(), workflow.getType());
         Task task = taskService.createTaskQuery()
                 .taskId(taskId)
                 .processInstanceId(workflow.getProcessInstanceId())
                 .singleResult();
-        log.debug("Found task: {} for processInstanceId={}", task == null ? null : task.getId(), workflow.getProcessInstanceId());
+        log.debug("Found task: {} for processInstanceId={}. Task info={}", task == null ? null : task.getId(), workflow.getProcessInstanceId(), task == null ? null : task.toString());
         if (task == null) {
             throw new IllegalArgumentException("The approval task is no longer available.");
         }
-        if (workflow.getType() == LifecycleWorkflowType.TRANSFER && !currentUserHeadsDepartment(workflow.getFromDepartment())) {
-            throw new IllegalArgumentException("Only the department head of the asset's current department can approve this transfer.");
+
+        // Enforce role-based checks according to the task being completed.
+        // Department-level approvals must be performed by a department head for the asset's department.
+        String taskName = task.getName() == null ? "" : task.getName();
+        if (taskName.toLowerCase().contains("department")) {
+            // Require that the current user has department head group and is the head for the asset's from department
+            if (!authenticationManager.isDepartmentHead() || !currentUserHeadsDepartment(workflow.getFromDepartment())) {
+                throw new IllegalArgumentException("Only the department head of the asset's current department can approve this transfer.");
+            }
         }
 
         AssetLifecycleApprovalAction action = new AssetLifecycleApprovalAction();

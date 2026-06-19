@@ -69,15 +69,30 @@
         </div>
     </div>
     <script>
-        // Add a small compatibility fallback for browsers that don't expose event.submitter
+        // Compatibility fallback: make sure the clicked submit button's name/value are preserved
+        // by injecting a hidden input for the submitter before disabling buttons (some browsers
+        // omit disabled submit button values when serializing the form).
         document.querySelectorAll('[data-spinner-form]').forEach(form => form.addEventListener('submit', event => {
             let submitter = event.submitter || document.activeElement;
-            // If activeElement is outside the form, try to find a focused submit button inside the form
             if (submitter && !form.contains(submitter)) {
                 submitter = form.querySelector('button[type="submit"]');
             }
+
+            // If we successfully found the submit button, preserve its name/value as a hidden input
+            if (submitter && submitter.name) {
+                // Remove any existing hidden surrogate for this name
+                const existing = form.querySelector('input[type="hidden"][name="' + submitter.name + '"]');
+                if (existing) existing.remove();
+                const hidden = document.createElement('input');
+                hidden.type = 'hidden';
+                hidden.name = submitter.name;
+                hidden.value = submitter.value;
+                form.appendChild(hidden);
+            }
+
             submitter?.querySelector('.submit-icon')?.classList.add('hidden');
             submitter?.querySelector('.submit-spinner')?.classList.remove('hidden');
+            // Delay disabling to ensure serialization in some browsers — but we've already injected hidden input.
             form.querySelectorAll('button[type="submit"]').forEach(button => button.setAttribute('disabled', 'disabled'));
         }));
     </script>
