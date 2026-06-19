@@ -258,6 +258,25 @@ public class AssetController {
         }
         model.addAttribute("asset", asset);
         model.addAttribute("workflowType", type);
+        // Override the custodians list for this form to exclude the currently assigned employee.
+        try {
+            String currentCustodian = asset.getCustodian() == null ? null : asset.getCustodian().trim();
+            List<CustodianDTO> filtered = custodians().stream()
+                    .filter(c -> {
+                        if (currentCustodian == null || currentCustodian.isBlank()) return true;
+                        String name = c.getName() == null ? "" : c.getName().trim();
+                        String username = c.getUsername() == null ? "" : c.getUsername().trim();
+                        String id = c.getId() == null ? "" : c.getId().trim();
+                        return !currentCustodian.equalsIgnoreCase(name)
+                                && !currentCustodian.equalsIgnoreCase(username)
+                                && !currentCustodian.equalsIgnoreCase(id);
+                    })
+                    .collect(Collectors.toList());
+            model.addAttribute("custodians", filtered);
+        } catch (Exception e) {
+            // If anything goes wrong, fall back to the full custodians list
+            model.addAttribute("custodians", custodians());
+        }
         return template;
     }
 }
