@@ -1,0 +1,557 @@
+
+<!-- Checkout Form Fragment -->
+<div th:fragment="checkout-form" id="checkoutFormFragment">
+    <style>
+        .form-section {
+            margin-bottom: 24px;
+        }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1A1D23;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #E4E6EA;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 16px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: #1A1D23;
+            margin-bottom: 6px;
+        }
+
+        .form-label .required {
+            color: #ba1a1a;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #E4E6EA;
+            border-radius: 10px;
+            font-size: 13px;
+            font-family: inherit;
+            transition: border-color 150ms, box-shadow 150ms;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #c0182a;
+            box-shadow: 0 0 0 3px rgba(192, 24, 42, 0.12);
+        }
+
+        .form-control::placeholder {
+            color: #9aa0aa;
+        }
+
+        textarea.form-control {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .helpers {
+            font-size: 12px;
+            color: #5d5e65;
+            margin-top: 4px;
+        }
+
+        .card {
+            background: #f9f9ff;
+            border: 1px solid #E4E6EA;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .card-title {
+            font-weight: 600;
+            color: #1A1D23;
+            margin-bottom: 8px;
+        }
+
+        .card-info {
+            font-size: 13px;
+            color: #5d5e65;
+        }
+
+        .card-info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+        }
+
+        .asset-info {
+            background: white;
+            border: 1px solid #E4E6EA;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+
+        .asset-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 12px;
+        }
+
+        .asset-icon {
+            width: 48px;
+            height: 48px;
+            background: #c0182a;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .asset-header-text h3 {
+            margin: 0;
+            font-size: 15px;
+            font-weight: 600;
+            color: #1A1D23;
+        }
+
+        .asset-header-text p {
+            margin: 4px 0 0 0;
+            font-size: 12px;
+            color: #5d5e65;
+        }
+
+        .asset-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+        }
+
+        .detail-item {
+            border-top: 1px solid #E4E6EA;
+            padding-top: 8px;
+        }
+
+        .detail-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #5d5e65;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .detail-value {
+            font-size: 13px;
+            color: #1A1D23;
+            margin-top: 4px;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #c0182a;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .button-group {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #E4E6EA;
+        }
+
+        .btn {
+            height: 36px;
+            padding: 0 20px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 500;
+            border: none;
+            cursor: pointer;
+            transition: all 150ms;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+        }
+
+        .btn-primary {
+            background: #c0182a;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #8F0F1E;
+        }
+
+        .btn-primary:disabled {
+            background: #d4a5a5;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: #F4F5F7;
+            color: #1A1D23;
+            border: 1px solid #E4E6EA;
+        }
+
+        .btn-secondary:hover {
+            background: #e8eaef;
+        }
+    </style>
+
+    <div class="card-container">
+        <!-- Asset Information -->
+        <div class="asset-info">
+            <div class="asset-header">
+                <div class="asset-icon">
+                    <span class="material-symbols-outlined">inventory_2</span>
+                </div>
+                <div class="asset-header-text">
+                    <h3 th:text="${asset.name}"></h3>
+                    <p th:text="${'Asset Code: ' + asset.assetCode}"></p>
+                </div>
+            </div>
+            <div class="asset-details">
+                <div class="detail-item">
+                    <div class="detail-label">Category</div>
+                    <div class="detail-value" th:text="${asset.category}"></div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Serial Number</div>
+                    <div class="detail-value" th:text="${asset.serialNumber ?: 'N/A'}"></div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Current Custodian</div>
+                    <div class="detail-value" th:text="${asset.custodian}"></div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Department</div>
+                    <div class="detail-value" th:text="${asset.department}"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Checkout Form -->
+        <form th:action="@{/assets/checkout/{assetId}/create(assetId=${asset.id})}" method="post" id="checkoutForm">
+
+            <!-- Checkout Details Section -->
+            <div class="form-section">
+                <div class="section-title">Checkout Details</div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">
+                            Checked Out By <span class="required">*</span>
+                        </label>
+                        <input type="text" name="checkedOutBy" class="form-control"
+                               placeholder="Employee name or ID" required>
+                        <div class="helpers">Who is checking out this asset?</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">
+                            Checkout Date <span class="required">*</span>
+                        </label>
+                        <input type="date" name="checkoutDate" class="form-control"
+                               th:value="${checkoutDate}" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">
+                            Due Return Date <span class="required">*</span>
+                        </label>
+                        <input type="date" name="dueReturnDate" class="form-control"
+                               th:value="${dueReturnDate}" required>
+                        <div class="helpers">When should this asset be returned?</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Purpose & Condition Section -->
+            <div class="form-section">
+                <div class="section-title">Purpose & Condition</div>
+                <div class="form-grid">
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label class="form-label">Purpose</label>
+                        <textarea name="purpose" class="form-control"
+                                  placeholder="Why is this asset being checked out? (e.g., Field survey, training, repair)"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Condition Before Checkout</label>
+                        <select name="conditionBeforeCheckout" class="form-control">
+                            <option value="">Select condition...</option>
+                            <option value="Excellent">Excellent</option>
+                            <option value="Good">Good</option>
+                            <option value="Fair">Fair</option>
+                            <option value="Poor">Poor</option>
+                            <option value="Needs Repair">Needs Repair</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Previous Checkouts -->
+            <div th:if="${!#lists.isEmpty(previousCheckouts)}" class="form-section">
+                <div class="section-title">Previous Checkout History</div>
+                <div class="card">
+                    <div th:each="prev : ${previousCheckouts}" class="card-info" style="padding: 8px 0; border-bottom: 1px solid #dde2f5; margin-bottom: 8px;">
+                        <div class="card-info-row">
+                            <span>
+                                <strong th:text="${#temporals.format(prev.checkoutDate, 'dd MMM yyyy')}"></strong> -
+                                <span th:text="${prev.checkedOutBy}"></span>
+                            </span>
+                            <span style="background: #ecf5ec; color: #0d5e3e; padding: 2px 8px; border-radius: 4px; font-size: 11px;"
+                                  th:text="${prev.status}"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Buttons -->
+            <div class="button-group">
+                <button type="button" class="btn btn-secondary" onclick="history.back()">
+                    Cancel
+                </button>
+                <button type="submit" class="btn btn-primary" id="submitBtn">
+                    <span class="material-symbols-outlined">check_circle</span>
+                    Checkout Asset
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('checkoutForm');
+            const submitBtn = document.getElementById('submitBtn');
+
+            form.addEventListener('submit', function() {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="spinner"></span>Processing...';
+            });
+
+            // Set minimum due date to tomorrow
+            const dateInput = form.querySelector('input[name="dueReturnDate"]');
+            const today = new Date();
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            dateInput.min = tomorrow.toISOString().split('T')[0];
+
+            // Validate due date is after checkout date
+            const checkoutDateInput = form.querySelector('input[name="checkoutDate"]');
+            checkoutDateInput.addEventListener('change', function() {
+                const checkoutDate = new Date(this.value);
+                const dueDate = new Date(dateInput.value);
+                if (dueDate <= checkoutDate) {
+                    dateInput.value = null;
+                }
+            });
+        });
+    </script>
+</div>
+
+<!-- Return Form Fragment -->
+<!-- Only render the return form fragment when a checkout model is provided to avoid SpEL null errors -->
+<div th:fragment="return-form" th:if="${checkout != null}" id="returnFormFragment">
+    <div class="card-container">
+        <!-- Asset Information -->
+        <div class="asset-info">
+            <div class="asset-header">
+                <div class="asset-icon">
+                    <span class="material-symbols-outlined">check_circle</span>
+                </div>
+                <div class="asset-header-text">
+                    <h3>Process Return</h3>
+                    <p th:text="${asset.name}"></p>
+                </div>
+            </div>
+            <div class="asset-details">
+                <div class="detail-item">
+                    <div class="detail-label">Asset Code</div>
+                    <div class="detail-value" th:text="${asset.assetCode}"></div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Checked Out By</div>
+                    <div class="detail-value" th:text="${checkout.checkedOutBy}"></div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Checkout Date</div>
+                    <div class="detail-value" th:text="${#temporals.format(checkout.checkoutDate, 'dd MMM yyyy')}"></div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Due Date</div>
+                    <div class="detail-value" th:text="${#temporals.format(checkout.dueReturnDate, 'dd MMM yyyy')}"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Return Form -->
+        <form th:action="@{/assets/checkout/{checkoutId}/return(checkoutId=${checkout.id})}" method="post" id="returnForm">
+
+            <div class="form-section">
+                <div class="section-title">Return Information</div>
+                <div class="form-grid">
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label class="form-label">Condition After Return</label>
+                        <select name="conditionAfterReturn" class="form-control">
+                            <option value="">Select condition...</option>
+                            <option value="Excellent">Excellent</option>
+                            <option value="Good">Good</option>
+                            <option value="Fair">Fair</option>
+                            <option value="Poor">Poor</option>
+                            <option value="Damaged">Damaged</option>
+                            <option value="Lost">Lost</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label class="form-label">Return Notes</label>
+                        <textarea name="returnNotes" class="form-control"
+                                  placeholder="Any observations or issues found? Document damage, maintenance needs, etc."></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Buttons -->
+            <div class="button-group">
+                <button type="button" class="btn btn-secondary" onclick="history.back()">
+                    Cancel
+                </button>
+                <button type="submit" class="btn btn-primary" id="returnSubmitBtn">
+                    <span class="material-symbols-outlined">check_circle</span>
+                    Submit Return
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('returnForm');
+            const submitBtn = document.getElementById('returnSubmitBtn');
+
+            form.addEventListener('submit', function() {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="spinner"></span>Processing...';
+            });
+        });
+    </script>
+</div>
+
+<!-- Verify Form Fragment -->
+<!-- Only render the verify form fragment when a checkout model is provided to avoid SpEL null errors -->
+<div th:fragment="verify-form" th:if="${checkout != null}" id="verifyFormFragment">
+    <div class="card-container">
+        <!-- Asset Information -->
+        <div class="asset-info">
+            <div class="asset-header">
+                <div class="asset-icon">
+                    <span class="material-symbols-outlined">verified_user</span>
+                </div>
+                <div class="asset-header-text">
+                    <h3>Verify Return</h3>
+                    <p th:text="${asset.name}"></p>
+                </div>
+            </div>
+            <div class="asset-details">
+                <div class="detail-item">
+                    <div class="detail-label">Checked Out By</div>
+                    <div class="detail-value" th:text="${checkout.checkedOutBy}"></div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Returned Date</div>
+                    <div class="detail-value" th:text="${#temporals.format(checkout.returnDate, 'dd MMM yyyy')}"></div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Condition on Return</div>
+                    <div class="detail-value" th:text="${checkout.conditionAfterReturn ?: 'Not specified'}"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Verification Form -->
+        <form th:action="@{/assets/checkout/{checkoutId}/verify(checkoutId=${checkout.id})}" method="post" id="verifyForm">
+
+            <div class="form-section">
+                <div class="section-title">Verification Details</div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">
+                            Verified By <span class="required">*</span>
+                        </label>
+                        <input type="text" name="verifiedBy" class="form-control"
+                               placeholder="Your name or ID" required>
+                        <div class="helpers">Who is verifying this return?</div>
+                    </div>
+                </div>
+
+                <div class="form-grid" style="margin-top: 16px;">
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label class="form-label">Verification Notes</label>
+                        <textarea name="notes" class="form-control"
+                                  placeholder="Record any findings from inspection: damage, repairs needed, etc."></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Return Notes Display -->
+            <div th:if="${checkout.returnNotes}" class="form-section">
+                <div class="section-title">Previous Return Notes</div>
+                <div class="card">
+                    <div class="card-info" th:text="${checkout.returnNotes}"></div>
+                </div>
+            </div>
+
+            <!-- Buttons -->
+            <div class="button-group">
+                <button type="button" class="btn btn-secondary" onclick="history.back()">
+                    Cancel
+                </button>
+                <button type="submit" class="btn btn-primary" id="verifySubmitBtn">
+                    <span class="material-symbols-outlined">check_circle</span>
+                    Complete Verification
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('verifyForm');
+            const submitBtn = document.getElementById('verifySubmitBtn');
+
+            form.addEventListener('submit', function() {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="spinner"></span>Processing...';
+            });
+        });
+    </script>
+</div>
+
+

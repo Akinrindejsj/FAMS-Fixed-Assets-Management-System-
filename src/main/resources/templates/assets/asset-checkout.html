@@ -1,0 +1,1186 @@
+<!DOCTYPE html>
+<html class="light" lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/app}">
+<head>
+    <title>Asset Check-In/Check-Out | JustJava FAMS</title>
+    <style>
+        /* ── Base Reset & Variables ── */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --color-primary: #c0182a;
+            --color-primary-dark: #8F0F1E;
+            --color-primary-light: #fce4e4;
+            --color-success: #1A7A4A;
+            --color-success-light: #ecf5ec;
+            --color-warning: #A05C00;
+            --color-warning-light: #fff5e6;
+            --color-info: #1558A8;
+            --color-info-light: #e3f2fd;
+            --color-danger: #ba1a1a;
+            --color-danger-light: #fce4e4;
+            --color-gray-50: #f9f9ff;
+            --color-gray-100: #F4F5F7;
+            --color-gray-200: #E4E6EA;
+            --color-gray-300: #d0d3da;
+            --color-gray-400: #9aa0aa;
+            --color-gray-500: #5d5e65;
+            --color-gray-700: #1A1D23;
+            --radius: 12px;
+            --radius-sm: 8px;
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04);
+            --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 4px 20px rgba(0, 0, 0, 0.08);
+            --transition: all 200ms ease;
+            --font: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+        }
+
+        body {
+            font-family: var(--font);
+            color: var(--color-gray-700);
+            background: #f7f8fc;
+            line-height: 1.6;
+        }
+
+        /* ── Loading Spinner ── */
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(192, 24, 42, 0.15);
+            border-top-color: var(--color-primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        .spinner-lg {
+            width: 44px;
+            height: 44px;
+            border-width: 4px;
+        }
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .loading-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.88);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+        .loading-overlay.active {
+            display: flex;
+        }
+        .loading-content {
+            text-align: center;
+            background: white;
+            padding: 32px 40px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+        }
+        .loading-content p {
+            margin-top: 16px;
+            color: var(--color-gray-500);
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        /* ── Alerts ── */
+        .alert {
+            padding: 14px 18px;
+            border-radius: var(--radius);
+            border: 1px solid transparent;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            animation: slideDown 300ms ease-out;
+        }
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-12px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .alert-success {
+            background: var(--color-success-light);
+            border-color: #b8d9c8;
+            color: #005e47;
+        }
+        .alert-error {
+            background: var(--color-danger-light);
+            border-color: #f0c8c8;
+            color: #8f0f1e;
+        }
+        .alert-warning {
+            background: var(--color-warning-light);
+            border-color: #f0d5b8;
+            color: #7a3c00;
+        }
+        .alert-info {
+            background: var(--color-info-light);
+            border-color: #b8cfe8;
+            color: #0d47a1;
+        }
+        .alert-icon {
+            font-size: 22px;
+            flex-shrink: 0;
+            line-height: 1.4;
+            display: inline-flex;
+            align-items: center;
+        }
+        .alert-content {
+            flex: 1;
+        }
+        .alert-title {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 2px;
+        }
+        .alert-message {
+            font-size: 13px;
+            opacity: 0.9;
+        }
+
+        /* ── Cards ── */
+        .card {
+            background: #ffffff;
+            border-radius: var(--radius);
+            border: 1px solid var(--color-gray-200);
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: var(--shadow-sm);
+            transition: box-shadow 200ms ease;
+        }
+        .card:hover {
+            box-shadow: var(--shadow-md);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--color-gray-200);
+        }
+        .card-header-left {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .card-header-left h2 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--color-gray-700);
+            letter-spacing: -0.01em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .card-header-left h2 .material-symbols-outlined {
+            font-size: 22px;
+            color: var(--color-primary);
+        }
+        .card-subtitle {
+            font-size: 13px;
+            color: var(--color-gray-500);
+            margin: 0;
+        }
+
+        .card-header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        /* ── Buttons ── */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            height: 38px;
+            padding: 0 20px;
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            font-weight: 500;
+            border: none;
+            cursor: pointer;
+            transition: var(--transition);
+            text-decoration: none;
+            white-space: nowrap;
+            font-family: inherit;
+            line-height: 1;
+        }
+        .btn .material-symbols-outlined {
+            font-size: 18px;
+            line-height: 1;
+        }
+
+        .btn-primary {
+            background: var(--color-primary);
+            color: #fff;
+        }
+        .btn-primary:hover {
+            background: var(--color-primary-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(192, 24, 42, 0.30);
+        }
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-secondary {
+            background: var(--color-gray-100);
+            color: var(--color-gray-700);
+            border: 1px solid var(--color-gray-200);
+        }
+        .btn-secondary:hover {
+            background: #e8eaef;
+            border-color: var(--color-gray-300);
+        }
+
+        .btn-success {
+            background: var(--color-success);
+            color: #fff;
+        }
+        .btn-success:hover {
+            background: #134f33;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(26, 122, 74, 0.30);
+        }
+
+        .btn-warning {
+            background: var(--color-warning);
+            color: #fff;
+        }
+        .btn-warning:hover {
+            background: #7a4500;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(160, 92, 0, 0.30);
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--color-gray-700);
+            border: 1px solid var(--color-gray-200);
+        }
+        .btn-outline:hover {
+            background: var(--color-gray-100);
+        }
+
+        .btn-sm {
+            height: 32px;
+            padding: 0 14px;
+            font-size: 12px;
+            border-radius: 6px;
+        }
+        .btn-sm .material-symbols-outlined {
+            font-size: 16px;
+        }
+
+        /* ── Badges ── */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 3px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            white-space: nowrap;
+            line-height: 1.6;
+        }
+        .badge .material-symbols-outlined {
+            font-size: 14px;
+            line-height: 1;
+        }
+        .badge-available {
+            background: #e6f3eb;
+            color: #0d5e3e;
+        }
+        .badge-checked-out {
+            background: #fff3e6;
+            color: #7a3c00;
+        }
+        .badge-returned {
+            background: #e3f2fd;
+            color: #0d47a1;
+        }
+        .badge-verified {
+            background: #ecf5ec;
+            color: #1A7A4A;
+        }
+        .badge-overdue {
+            background: #fce4e4;
+            color: #8f0f1e;
+        }
+
+        /* ── Tables ── */
+        .table-container {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            margin: 0 -4px;
+            padding: 0 4px;
+        }
+        .table-container table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            min-width: 680px;
+        }
+        .table-container thead {
+            background: var(--color-gray-50);
+            border-bottom: 2px solid var(--color-gray-200);
+        }
+        .table-container th {
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            color: var(--color-gray-500);
+            white-space: nowrap;
+        }
+        .table-container td {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--color-gray-200);
+            color: var(--color-gray-700);
+            vertical-align: middle;
+        }
+        .table-container tbody tr {
+            transition: background 150ms ease;
+        }
+        .table-container tbody tr:hover {
+            background: var(--color-gray-50);
+        }
+        .table-container .asset-cell {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .table-container .asset-cell .asset-name {
+            font-weight: 600;
+        }
+        .table-container .asset-cell .asset-code {
+            font-size: 12px;
+            color: var(--color-gray-400);
+        }
+        .table-container .actions-cell {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        /* ── Tabs ── */
+        .tabs {
+            display: flex;
+            gap: 4px;
+            border-bottom: 1px solid var(--color-gray-200);
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            padding-bottom: 0;
+        }
+        .tab {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 18px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--color-gray-500);
+            border-bottom: 2.5px solid transparent;
+            transition: var(--transition);
+            font-family: inherit;
+            white-space: nowrap;
+            border-radius: 0;
+        }
+        .tab .material-symbols-outlined {
+            font-size: 18px;
+            line-height: 1;
+        }
+        .tab:hover {
+            color: var(--color-gray-700);
+            background: var(--color-gray-50);
+            border-bottom-color: var(--color-gray-300);
+        }
+        .tab.active {
+            color: var(--color-primary);
+            border-bottom-color: var(--color-primary);
+        }
+        .tab.active:hover {
+            background: transparent;
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 300ms ease;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(6px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ── Stats Grid ── */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .stat-card {
+            background: white;
+            border: 1px solid var(--color-gray-200);
+            border-radius: var(--radius);
+            padding: 20px 24px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            box-shadow: var(--shadow-sm);
+            transition: var(--transition);
+        }
+        .stat-card:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 24px;
+        }
+        .stat-icon-red {
+            background: var(--color-primary-light);
+            color: var(--color-primary);
+        }
+        .stat-icon-orange {
+            background: var(--color-warning-light);
+            color: var(--color-warning);
+        }
+        .stat-icon-danger {
+            background: var(--color-danger-light);
+            color: var(--color-danger);
+        }
+        .stat-icon-blue {
+            background: var(--color-info-light);
+            color: var(--color-info);
+        }
+        .stat-info {
+            flex: 1;
+            min-width: 0;
+        }
+        .stat-info .stat-label {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--color-gray-500);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin-bottom: 2px;
+        }
+        .stat-info .stat-value {
+            font-size: 26px;
+            font-weight: 700;
+            color: var(--color-gray-700);
+            line-height: 1.2;
+        }
+        .stat-info .stat-value.red {
+            color: var(--color-primary);
+        }
+        .stat-info .stat-value.orange {
+            color: var(--color-warning);
+        }
+        .stat-info .stat-value.danger {
+            color: var(--color-danger);
+        }
+        .stat-info .stat-value.blue {
+            color: var(--color-info);
+        }
+
+        /* ── Empty State ── */
+        .empty-state {
+            text-align: center;
+            padding: 48px 20px 40px;
+            color: var(--color-gray-500);
+        }
+        .empty-state .material-symbols-outlined {
+            font-size: 56px;
+            color: var(--color-gray-300);
+            margin-bottom: 12px;
+            display: block;
+        }
+        .empty-state p {
+            margin: 0;
+            font-size: 14px;
+            max-width: 400px;
+            margin-inline: auto;
+        }
+        .empty-state .empty-cta {
+            margin-top: 16px;
+        }
+
+        /* ── Utilities ── */
+        .text-secondary {
+            color: var(--color-gray-500);
+        }
+        .text-center {
+            text-align: center;
+        }
+        .mt-2 {
+            margin-top: 12px;
+        }
+        .gap-2 {
+            gap: 8px;
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 1024px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .card {
+                padding: 18px;
+            }
+            .card-header {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 12px;
+            }
+            .card-header-actions {
+                width: 100%;
+            }
+            .card-header-actions .btn {
+                flex: 1;
+                justify-content: center;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 12px;
+            }
+            .stat-card {
+                padding: 16px;
+                gap: 12px;
+            }
+            .stat-icon {
+                width: 40px;
+                height: 40px;
+                font-size: 20px;
+            }
+            .stat-info .stat-value {
+                font-size: 20px;
+            }
+
+            .tabs {
+                gap: 2px;
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                padding-bottom: 0;
+            }
+            .tab {
+                padding: 8px 14px;
+                font-size: 12px;
+                flex-shrink: 0;
+            }
+            .tab .material-symbols-outlined {
+                font-size: 16px;
+            }
+
+            .table-container table {
+                font-size: 12px;
+                min-width: 600px;
+            }
+            .table-container th,
+            .table-container td {
+                padding: 10px 12px;
+            }
+
+            .alert {
+                padding: 12px 14px;
+                gap: 10px;
+            }
+            .alert-icon {
+                font-size: 18px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+            }
+            .stat-card {
+                padding: 14px;
+                flex-direction: column;
+                text-align: center;
+                gap: 8px;
+            }
+            .stat-icon {
+                width: 36px;
+                height: 36px;
+                font-size: 18px;
+            }
+            .stat-info .stat-value {
+                font-size: 18px;
+            }
+            .stat-info .stat-label {
+                font-size: 10px;
+            }
+
+            .card-header-left h2 {
+                font-size: 16px;
+            }
+            .card-header-left h2 .material-symbols-outlined {
+                font-size: 18px;
+            }
+
+            .btn {
+                height: 34px;
+                padding: 0 14px;
+                font-size: 12px;
+            }
+            .btn .material-symbols-outlined {
+                font-size: 16px;
+            }
+            .btn-sm {
+                height: 28px;
+                padding: 0 10px;
+                font-size: 11px;
+            }
+            .btn-sm .material-symbols-outlined {
+                font-size: 14px;
+            }
+
+            .table-container table {
+                font-size: 11px;
+                min-width: 480px;
+            }
+            .table-container th,
+            .table-container td {
+                padding: 8px 10px;
+            }
+            .badge {
+                font-size: 10px;
+                padding: 2px 8px;
+            }
+
+            .loading-content {
+                padding: 24px 20px;
+            }
+            .loading-content p {
+                font-size: 13px;
+            }
+        }
+
+        /* ── Print-friendly ── */
+        @media print {
+            .btn,
+            .tab,
+            .loading-overlay {
+                display: none !important;
+            }
+            .card {
+                box-shadow: none !important;
+                border-color: #ddd !important;
+            }
+            .stats-grid {
+                break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<main id="main-content" class="space-y-6" layout:fragment="content">
+
+    <!-- ─── Loading Overlay ─── -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-content">
+            <div class="spinner spinner-lg"></div>
+            <p>Processing request…</p>
+        </div>
+    </div>
+
+    <!-- ─── Alerts ─── -->
+    <div th:if="${successMessage}" class="alert alert-success">
+        <span class="alert-icon material-symbols-outlined">check_circle</span>
+        <div class="alert-content">
+            <div class="alert-title">Success</div>
+            <div class="alert-message" th:text="${successMessage}"></div>
+        </div>
+    </div>
+    <div th:if="${errorMessage}" class="alert alert-error">
+        <span class="alert-icon material-symbols-outlined">error</span>
+        <div class="alert-content">
+            <div class="alert-title">Error</div>
+            <div class="alert-message" th:text="${errorMessage}"></div>
+        </div>
+    </div>
+
+    <!-- ─── Page Header ─── -->
+    <div class="card">
+        <div class="card-header">
+            <div class="card-header-left">
+                <h2>
+                    <span class="material-symbols-outlined">swap_horiz</span>
+                    Asset Check-In / Check-Out
+                </h2>
+                <p class="card-subtitle">Manage asset checkouts, returns, and verifications across your organization</p>
+            </div>
+            <div class="card-header-actions">
+                <a href="/assets" class="btn btn-secondary">
+                    <span class="material-symbols-outlined">arrow_back</span>
+                    Back to Assets
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ─── Statistics ─── -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon stat-icon-red">
+                <span class="material-symbols-outlined">inventory_2</span>
+            </div>
+            <div class="stat-info">
+                <div class="stat-label">Total Checkouts</div>
+                <div class="stat-value red" th:text="${totalCount}">0</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon stat-icon-orange">
+                <span class="material-symbols-outlined">schedule</span>
+            </div>
+            <div class="stat-info">
+                <div class="stat-label">Currently Checked Out</div>
+                <div class="stat-value orange" th:text="${activeCount}">0</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon stat-icon-danger">
+                <span class="material-symbols-outlined">pending_actions</span>
+            </div>
+            <div class="stat-info">
+                <div class="stat-label">Overdue Returns</div>
+                <div class="stat-value danger" th:text="${overdueCount}">0</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon stat-icon-blue">
+                <span class="material-symbols-outlined">verified_user</span>
+            </div>
+            <div class="stat-info">
+                <div class="stat-label">Pending Verification</div>
+                <div class="stat-value blue" th:text="${pendingVerificationCount}">0</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ─── Main Content ─── -->
+    <div class="card">
+        <!-- Tabs -->
+        <div class="tabs" role="tablist">
+            <button class="tab active" data-tab="all-checkouts" role="tab" aria-selected="true">
+                <span class="material-symbols-outlined">list</span>
+                All Checkouts
+            </button>
+            <button class="tab" data-tab="active-checkouts" role="tab" aria-selected="false">
+                <span class="material-symbols-outlined">schedule</span>
+                Active
+            </button>
+            <button class="tab" data-tab="overdue-checkouts" role="tab" aria-selected="false">
+                <span class="material-symbols-outlined">pending_actions</span>
+                Overdue
+            </button>
+            <button class="tab" data-tab="pending-verification" role="tab" aria-selected="false">
+                <span class="material-symbols-outlined">verified_user</span>
+                Pending Verification
+            </button>
+        </div>
+
+        <!-- ─── Tab 1: All Checkouts ─── -->
+        <div id="all-checkouts" class="tab-content active" role="tabpanel">
+            <div class="table-container">
+                <div th:if="${#lists.isEmpty(allCheckouts)}" class="empty-state">
+                    <span class="material-symbols-outlined">inventory_2</span>
+                    <p>No checkout records found. Start by checking out an asset.</p>
+                </div>
+                <table th:unless="${#lists.isEmpty(allCheckouts)}">
+                    <thead>
+                    <tr>
+                        <th>Asset</th>
+                        <th>Checked Out By</th>
+                        <th>Checkout Date</th>
+                        <th>Due Return Date</th>
+                        <th>Purpose</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="checkout : ${allCheckouts}">
+                        <td>
+                            <div class="asset-cell">
+                                <span class="asset-name" th:text="${checkout.asset.name}"></span>
+                                <span class="asset-code" th:text="${checkout.asset.assetCode}"></span>
+                            </div>
+                        </td>
+                        <td th:text="${checkout.checkedOutBy}"></td>
+                        <td th:text="${#temporals.format(checkout.checkoutDate, 'dd MMM yyyy')}"></td>
+                        <td th:text="${#temporals.format(checkout.dueReturnDate, 'dd MMM yyyy')}"></td>
+                        <td th:text="${checkout.purpose ?: '—'}"></td>
+                        <td>
+                            <span class="badge"
+                                  th:classappend="${checkout.status == 'Available' ? 'badge-available' : checkout.status == 'Checked Out' ? 'badge-checked-out' : checkout.status == 'Returned' ? 'badge-returned' : 'badge-verified'}"
+                                  th:text="${checkout.status}">
+                            </span>
+                        </td>
+                        <td>
+                            <div class="actions-cell">
+                                <a th:href="@{/assets/checkout/{id}/details(id=${checkout.id})}"
+                                   class="btn btn-sm btn-secondary">
+                                    <span class="material-symbols-outlined">visibility</span>
+                                    View
+                                </a>
+                                <th:block th:if="${checkout.status == 'Checked Out'}">
+                                    <a th:href="@{/assets/checkout/{id}/return-form(id=${checkout.id})}"
+                                       class="btn btn-sm btn-success">
+                                        <span class="material-symbols-outlined">undo</span>
+                                        Return
+                                    </a>
+                                </th:block>
+                                <th:block th:if="${checkout.status == 'Returned'}">
+                                    <a th:href="@{/assets/checkout/{id}/verify-form(id=${checkout.id})}"
+                                       class="btn btn-sm btn-warning">
+                                        <span class="material-symbols-outlined">verified</span>
+                                        Verify
+                                    </a>
+                                </th:block>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ─── Tab 2: Active Checkouts ─── -->
+        <div id="active-checkouts" class="tab-content" role="tabpanel">
+            <div class="table-container">
+                <div th:if="${#lists.isEmpty(activeCheckouts)}" class="empty-state">
+                    <span class="material-symbols-outlined">check_circle</span>
+                    <p>No assets currently checked out.</p>
+                </div>
+                <table th:unless="${#lists.isEmpty(activeCheckouts)}">
+                    <thead>
+                    <tr>
+                        <th>Asset</th>
+                        <th>Checked Out By</th>
+                        <th>Checkout Date</th>
+                        <th>Due Return Date</th>
+                        <th>Condition</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="checkout : ${activeCheckouts}">
+                        <td>
+                            <div class="asset-cell">
+                                <span class="asset-name" th:text="${checkout.asset.name}"></span>
+                                <span class="asset-code" th:text="${checkout.asset.assetCode}"></span>
+                            </div>
+                        </td>
+                        <td th:text="${checkout.checkedOutBy}"></td>
+                        <td th:text="${#temporals.format(checkout.checkoutDate, 'dd MMM yyyy')}"></td>
+                        <td th:text="${#temporals.format(checkout.dueReturnDate, 'dd MMM yyyy')}"></td>
+                        <td th:text="${checkout.conditionBeforeCheckout ?: 'Good'}"></td>
+                        <td>
+                            <div class="actions-cell">
+                                <a th:href="@{/assets/checkout/{id}/return-form(id=${checkout.id})}"
+                                   class="btn btn-sm btn-success">
+                                    <span class="material-symbols-outlined">undo</span>
+                                    Return Asset
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ─── Tab 3: Overdue Checkouts ─── -->
+        <div id="overdue-checkouts" class="tab-content" role="tabpanel">
+            <div class="table-container">
+                <div th:if="${#lists.isEmpty(overdueCheckouts)}" class="empty-state">
+                    <span class="material-symbols-outlined">verified</span>
+                    <p>No overdue checkouts. Great job staying on top of returns!</p>
+                </div>
+                <table th:unless="${#lists.isEmpty(overdueCheckouts)}">
+                    <thead>
+                    <tr>
+                        <th>Asset</th>
+                        <th>Checked Out By</th>
+                        <th>Due Return Date</th>
+                        <th>Days Overdue</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="checkout : ${overdueCheckouts}">
+                        <td>
+                            <div class="asset-cell">
+                                <span class="asset-name" th:text="${checkout.asset.name}"></span>
+                                <span class="asset-code" th:text="${checkout.asset.assetCode}"></span>
+                            </div>
+                        </td>
+                        <td th:text="${checkout.checkedOutBy}"></td>
+                        <td th:text="${#temporals.format(checkout.dueReturnDate, 'dd MMM yyyy')}"></td>
+                        <td>
+                            <span style="color: var(--color-danger); font-weight: 600;"
+                                  th:text="${T(java.time.LocalDate).now().toEpochDay() - checkout.dueReturnDate.toEpochDay()} + ' days'">
+                            </span>
+                        </td>
+                        <td>
+                            <div class="actions-cell">
+                                <a th:href="@{/assets/checkout/{id}/return-form(id=${checkout.id})}"
+                                   class="btn btn-sm btn-success">
+                                    <span class="material-symbols-outlined">undo</span>
+                                    Process Return
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ─── Tab 4: Pending Verification ─── -->
+        <div id="pending-verification" class="tab-content" role="tabpanel">
+            <div class="table-container">
+                <div th:if="${#lists.isEmpty(pendingVerifications)}" class="empty-state">
+                    <span class="material-symbols-outlined">done_all</span>
+                    <p>No assets pending verification. All returns have been verified.</p>
+                </div>
+                <table th:unless="${#lists.isEmpty(pendingVerifications)}">
+                    <thead>
+                    <tr>
+                        <th>Asset</th>
+                        <th>Checked Out By</th>
+                        <th>Returned Date</th>
+                        <th>Returned Condition</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="checkout : ${pendingVerifications}">
+                        <td>
+                            <div class="asset-cell">
+                                <span class="asset-name" th:text="${checkout.asset.name}"></span>
+                                <span class="asset-code" th:text="${checkout.asset.assetCode}"></span>
+                            </div>
+                        </td>
+                        <td th:text="${checkout.checkedOutBy}"></td>
+                        <td th:text="${#temporals.format(checkout.returnDate, 'dd MMM yyyy')}"></td>
+                        <td th:text="${checkout.conditionAfterReturn ?: 'Good'}"></td>
+                        <td>
+                            <div class="actions-cell">
+                                <a th:href="@{/assets/checkout/{id}/verify-form(id=${checkout.id})}"
+                                   class="btn btn-sm btn-warning">
+                                    <span class="material-symbols-outlined">verified</span>
+                                    Verify &amp; Complete
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ─── Modal Container (for fragment forms) ─── -->
+    <div id="fragmentModal" aria-hidden="true" style="display:none; position:fixed; inset:0; z-index:10000; align-items:center; justify-content:center;">
+        <div id="fragmentModalBackdrop" style="position:absolute; inset:0; background:rgba(0,0,0,0.45);"></div>
+        <div id="fragmentModalContent" style="position:relative; width:clamp(320px, 80%, 880px); max-height:90vh; overflow:auto; border-radius:12px; background:#fff; padding:18px; box-shadow:0 12px 40px rgba(0,0,0,0.25); z-index:10001;">
+            <button id="fragmentModalClose" aria-label="Close" style="position:absolute; top:12px; right:12px; background:transparent; border:none; font-size:20px; cursor:pointer;">×</button>
+            <div id="fragmentModalInner"></div>
+        </div>
+    </div>
+
+    <!-- ─── Scripts ─── -->
+    <script>
+        (function() {
+            'use strict';
+
+            // ── Tab Switching ──
+            const tabs = document.querySelectorAll('.tab');
+            const contents = document.querySelectorAll('.tab-content');
+
+            function activateTab(tab) {
+                const target = tab.getAttribute('data-tab');
+
+                // Deactivate all
+                tabs.forEach(t => {
+                    t.classList.remove('active');
+                    t.setAttribute('aria-selected', 'false');
+                });
+                contents.forEach(c => c.classList.remove('active'));
+
+                // Activate target
+                tab.classList.add('active');
+                tab.setAttribute('aria-selected', 'true');
+                const panel = document.getElementById(target);
+                if (panel) panel.classList.add('active');
+            }
+
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    if (this.classList.contains('active')) return;
+                    activateTab(this);
+                });
+
+                // Keyboard support: Enter / Space
+                tab.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        if (this.classList.contains('active')) return;
+                        activateTab(this);
+                    }
+                });
+            });
+
+            // ── Loading Overlay on Form Submit ──
+            document.querySelectorAll('form').forEach(form => {
+                form.addEventListener('submit', function() {
+                    const overlay = document.getElementById('loadingOverlay');
+                    if (overlay) overlay.classList.add('active');
+                });
+            });
+
+            // ── Auto-dismiss Alerts ──
+            document.querySelectorAll('.alert').forEach(alert => {
+                setTimeout(() => {
+                    alert.style.transition = 'opacity 300ms ease, transform 300ms ease';
+                    alert.style.opacity = '0';
+                    alert.style.transform = 'translateY(-8px)';
+                    setTimeout(() => alert.remove(), 350);
+                }, 5000);
+            });
+
+            // ── Close overlay if user clicks outside (optional) ──
+            const overlay = document.getElementById('loadingOverlay');
+            if (overlay) {
+                overlay.addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        this.classList.remove('active');
+                    }
+                });
+            }
+
+            // ── Fragment modal logic: fetch and show fragment forms for checkout/return/verify ──
+            const modal = document.getElementById('fragmentModal');
+            const modalInner = document.getElementById('fragmentModalInner');
+            const modalClose = document.getElementById('fragmentModalClose');
+
+            function showModal(html) {
+                modalInner.innerHTML = html;
+                // Execute any inline scripts in the fetched fragment
+                modalInner.querySelectorAll('script').forEach(s => {
+                    const newScript = document.createElement('script');
+                    if (s.src) {
+                        newScript.src = s.src;
+                    } else {
+                        newScript.textContent = s.textContent;
+                    }
+                    document.body.appendChild(newScript).parentNode.removeChild(newScript);
+                });
+
+                modal.style.display = 'flex';
+                modal.setAttribute('aria-hidden', 'false');
+            }
+
+            function hideModal() {
+                modalInner.innerHTML = '';
+                modal.style.display = 'none';
+                modal.setAttribute('aria-hidden', 'true');
+            }
+
+            modalClose.addEventListener('click', hideModal);
+            document.getElementById('fragmentModalBackdrop').addEventListener('click', hideModal);
+            document.addEventListener('keydown', function(e) { if (e.key === 'Escape') hideModal(); });
+
+            // Intercept links that point to fragment endpoints and load them into the modal
+            function shouldLoadAsFragment(href) {
+                return /\/assets\/checkout\/.+\/(form|return-form|verify-form)$/.test(href);
+            }
+
+            document.querySelectorAll('a').forEach(a => {
+                const href = a.getAttribute('href');
+                if (!href) return;
+                if (shouldLoadAsFragment(href)) {
+                    a.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        fetch(href, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                            .then(r => r.ok ? r.text() : Promise.reject(r.statusText))
+                            .then(html => showModal(html))
+                            .catch(err => {
+                                console.error('Failed to load fragment', err);
+                                alert('Could not load form. Please try again or open the link in a new tab.');
+                            });
+                    });
+                }
+            });
+
+        })();
+    </script>
+
+</main>
+</body>
+</html>

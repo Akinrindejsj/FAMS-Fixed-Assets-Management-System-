@@ -96,6 +96,12 @@
                     <span class="material-symbols-outlined text-[16px] sm:text-[18px] flex-shrink-0">delete_forever</span>
                     <span class="truncate">Dispose</span>
                 </a>
+                <a th:if="${asset.status != 'Disposed'}"
+                   th:href="@{/assets/checkout/{id}/form(id=${asset.id})}"
+                   class="h-[42px] sm:h-[38px] bg-surface-card border border-border-strong text-on-surface rounded-lg font-body-medium hover:bg-surface-canvas transition-all flex items-center justify-center gap-1.5 px-2 text-sm">
+                    <span class="material-symbols-outlined text-[16px] sm:text-[18px] flex-shrink-0">assignment</span>
+                    <span class="truncate">Checkout</span>
+                </a>
                 <a th:href="@{/assets/lifecycle/workflows}"
                    class="h-[42px] sm:h-[38px] bg-surface-card border border-border-strong text-on-surface rounded-lg font-body-medium hover:bg-surface-canvas transition-all flex items-center justify-center gap-1.5 px-2 text-sm">
                     <span class="material-symbols-outlined text-[16px] sm:text-[18px] flex-shrink-0">account_tree</span>
@@ -338,6 +344,84 @@
                 alert('Unable to open print preview.');
             }
         }
+    </script>
+
+    <!-- Modal container for loading fragment forms (checkout/return/verify) -->
+    <div id="fragmentModal" aria-hidden="true" style="display:none; position:fixed; inset:0; z-index:10000; align-items:center; justify-content:center;">
+        <div id="fragmentModalBackdrop" style="position:absolute; inset:0; background:rgba(0,0,0,0.45);"></div>
+        <div id="fragmentModalContent" style="position:relative; width:clamp(320px, 80%, 880px); max-height:90vh; overflow:auto; border-radius:12px; background:#fff; padding:18px; box-shadow:0 12px 40px rgba(0,0,0,0.25); z-index:10001;">
+            <button id="fragmentModalClose" aria-label="Close" style="position:absolute; top:12px; right:12px; background:transparent; border:none; font-size:20px; cursor:pointer;">×</button>
+            <div id="fragmentModalInner"></div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            'use strict';
+
+            // Minimal fragment modal logic: fetch server-side fragments and inject into modal
+            const modal = document.getElementById('fragmentModal');
+            const modalInner = document.getElementById('fragmentModalInner');
+            const modalClose = document.getElementById('fragmentModalClose');
+
+            function showModal(html) {
+                modalInner.innerHTML = html;
+                // Execute any inline scripts in the fetched fragment
+                modalInner.querySelectorAll('script').forEach(s => {
+                    const newScript = document.createElement('script');
+                    if (s.src) {
+                        newScript.src = s.src;
+                    } else {
+                        newScript.textContent = s.textContent;
+                    }
+                    document.body.appendChild(newScript).parentNode.removeChild(newScript);
+                });
+
+                modal.style.display = 'flex';
+                modal.setAttribute('aria-hidden', 'false');
+            }
+
+            function hideModal() {
+                modalInner.innerHTML = '';
+                modal.style.display = 'none';
+                modal.setAttribute('aria-hidden', 'true');
+            }
+
+            modalClose.addEventListener('click', hideModal);
+            document.getElementById('fragmentModalBackdrop').addEventListener('click', hideModal);
+            document.addEventListener('keydown', function(e) { if (e.key === 'Escape') hideModal(); });
+
+            // Intercept links that point to fragment endpoints and load them into the modal
+            function shouldLoadAsFragment(href) {
+                return /\/assets\/checkout\/.+\/(form|return-form|verify-form)$/.test(href);
+            }
+
+            document.querySelectorAll('a').forEach(a => {
+                const href = a.getAttribute('href');
+                if (!href) return;
+                if (shouldLoadAsFragment(href)) {
+                    a.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        // show small loading state while fetching
+                        showModal('<div style="padding:24px;text-align:center;"><div class="spinner" style="width:36px;height:36px;border:4px solid rgba(0,0,0,0.08);border-top-color:#c0182a;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 12px"></div><div>Loading…</div></div>');
+                        fetch(href, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                            .then(r => r.ok ? r.text() : Promise.reject(r.statusText))
+                            .then(html => showModal(html))
+                            .catch(err => {
+                                console.error('Failed to load fragment', err);
+                                hideModal();
+                                alert('Could not load form. Please try again or open the link in a new tab.');
+                            });
+                    });
+                }
+            });
+
+            // Simple spinner keyframes for inline usage
+            const style = document.createElement('style');
+            style.textContent = '@keyframes spin { to { transform: rotate(360deg); } }';
+            document.head.appendChild(style);
+
+        })();
     </script>
 </main>
 </body>
