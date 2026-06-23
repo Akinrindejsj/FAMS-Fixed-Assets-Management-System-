@@ -76,7 +76,10 @@ public class PageController {
     }
 
     @GetMapping("/reports")
-    public String reportsModule() {
+    public String reportsModule(Model model) {
+        // Add initial data for reports page
+        model.addAttribute("pageTitle", "Reports & Analytics");
+        model.addAttribute("defaultReport", "assetRegister");
         return "reports/reports-module";
     }
 }

@@ -21,6 +21,12 @@
         </div>
     </div>
 
+    <!-- Loading Indicator -->
+    <div id="reportLoadingIndicator" class="hidden sticky top-4 z-40 flex items-center gap-2 px-4 py-2 bg-status-info/10 border border-status-info text-status-info rounded-lg">
+        <span class="material-symbols-outlined text-[18px] animate-spin">hourglass_empty</span>
+        <span class="text-body-default font-medium">Loading report...</span>
+    </div>
+
     <!-- Main Content Grid (12 columns) -->
     <div class="grid grid-cols-12 gap-6">
         <!-- Left Panel: Report Catalogue (3 columns) -->
@@ -28,7 +34,7 @@
             <div class="p-5 border-b border-border-default">
                 <h3 class="font-card-header text-card-header text-on-surface">Report Catalogue</h3>
             </div>
-            <div class="p-4 space-y-5">
+            <div class="p-4 space-y-5 max-h-[calc(100vh-300px)] overflow-y-auto">
                 <!-- Asset Reports -->
                 <div>
                     <div class="flex items-center gap-2 mb-2 px-2">
@@ -36,9 +42,9 @@
                         <h4 class="font-body-medium text-on-surface">Asset Reports</h4>
                     </div>
                     <ul class="space-y-1">
-                        <li><a href="#" class="block px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Asset Register</a></li>
-                        <li><a href="#" class="block px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Inventory Summary</a></li>
-                        <li><a href="#" class="block px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Location Audit</a></li>
+                        <li><button onclick="loadReport('asset-register')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Asset Register</button></li>
+                        <li><button onclick="loadReport('inventory-summary')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Inventory Summary</button></li>
+                        <li><button onclick="loadReport('location-audit')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Location Audit</button></li>
                     </ul>
                 </div>
                 <!-- Financial Reports -->
@@ -48,9 +54,9 @@
                         <h4 class="font-body-medium text-on-surface">Financial Reports</h4>
                     </div>
                     <ul class="space-y-1">
-                        <li><a href="#" class="block px-3 py-1.5 text-body-default font-medium bg-primary/10 text-primary rounded-lg">Valuation Report</a></li>
-                        <li><a href="#" class="block px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Depreciation Schedule</a></li>
-                        <li><a href="#" class="block px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Purchase Analysis</a></li>
+                        <li><button onclick="loadReport('valuation')" class="w-full text-left px-3 py-1.5 text-body-default font-medium bg-primary/10 text-primary rounded-lg">Valuation Report</button></li>
+                        <li><button onclick="loadReport('depreciation-schedule')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Depreciation Schedule</button></li>
+                        <li><button onclick="loadReport('purchase-analysis')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Purchase Analysis</button></li>
                     </ul>
                 </div>
                 <!-- Maintenance Reports -->
@@ -60,8 +66,8 @@
                         <h4 class="font-body-medium text-on-surface">Maintenance</h4>
                     </div>
                     <ul class="space-y-1">
-                        <li><a href="#" class="block px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Service History</a></li>
-                        <li><a href="#" class="block px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Pending Repairs</a></li>
+                        <li><button onclick="loadReport('maintenance-history')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Service History</button></li>
+                        <li><button onclick="loadReport('warranty-expiry')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Warranty Expiry</button></li>
                     </ul>
                 </div>
                 <!-- Audit & Compliance -->
@@ -71,9 +77,9 @@
                         <h4 class="font-body-medium text-on-surface">Audit &amp; Compliance</h4>
                     </div>
                     <ul class="space-y-1">
-                        <li><a href="#" class="block px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Missing Asset Report</a></li>
-                        <li><a href="#" class="block px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Warranty Expiry</a></li>
-                        <li><a href="#" class="block px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Disposal Logs</a></li>
+                        <li><button onclick="loadReport('missing-assets')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Missing Asset Report</button></li>
+                        <li><button onclick="loadReport('warranty-expiry')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Warranty Expiry</button></li>
+                        <li><button onclick="loadReport('disposal-logs')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Disposal Logs</button></li>
                     </ul>
                 </div>
             </div>
@@ -85,18 +91,18 @@
             <div class="bg-surface-card rounded-xl card-shadow border border-border-default overflow-hidden">
                 <div class="p-5 border-b border-border-default flex flex-wrap justify-between items-center gap-4">
                     <div>
-                        <h2 class="font-card-header text-card-header text-on-surface">Asset Valuation Report</h2>
-                        <p class="text-label-small text-secondary mt-1">Comprehensive view of current book values across all departments.</p>
+                        <h2 id="reportTitle" class="font-card-header text-card-header text-on-surface">Asset Valuation Report</h2>
+                        <p id="reportDescription" class="text-label-small text-secondary mt-1">Comprehensive view of current book values across all departments.</p>
                     </div>
                     <div class="flex items-center gap-2">
                         <button class="p-2 text-secondary hover:bg-surface-canvas rounded-lg transition-colors" title="Schedule Report">
                             <span class="material-symbols-outlined text-[18px]">event_repeat</span>
                         </button>
-                        <button class="h-[38px] px-4 border border-border-strong rounded-lg text-body-medium text-on-surface hover:bg-surface-canvas transition-colors flex items-center gap-2">
+                        <button onclick="exportToExcel()" class="h-[38px] px-4 border border-border-strong rounded-lg text-body-medium text-on-surface hover:bg-surface-canvas transition-colors flex items-center gap-2">
                             <span class="material-symbols-outlined text-[18px]">table_view</span>
                             Export to Excel
                         </button>
-                        <button class="h-[38px] px-4 bg-primary text-on-primary rounded-lg text-body-medium hover:bg-brand-primary-dark transition-colors flex items-center gap-2 shadow-sm">
+                        <button onclick="exportToPDF()" class="h-[38px] px-4 bg-primary text-on-primary rounded-lg text-body-medium hover:bg-brand-primary-dark transition-colors flex items-center gap-2 shadow-sm">
                             <span class="material-symbols-outlined text-[18px]">picture_as_pdf</span>
                             Export to PDF
                         </button>
@@ -107,33 +113,33 @@
                         <label class="text-label-small text-secondary uppercase tracking-wide">Date Range</label>
                         <div class="relative">
                             <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-secondary text-[18px]">calendar_today</span>
-                            <input type="text" value="Jan 01, 2024 - Mar 31, 2024" class="w-full h-[38px] pl-10 pr-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                            <input id="dateRange" type="text" value="Jan 01, 2024 - Mar 31, 2024" placeholder="Select date range" class="w-full h-[38px] pl-10 pr-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none">
                         </div>
                     </div>
                     <div class="space-y-1.5">
                         <label class="text-label-small text-secondary uppercase tracking-wide">Category</label>
-                        <select class="w-full h-[38px] px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none">
-                            <option>All Categories</option>
-                            <option>IT Hardware</option>
-                            <option>Office Furniture</option>
-                            <option>Manufacturing</option>
-                            <option>Vehicles</option>
+                        <select id="categoryFilter" onchange="reloadCurrentReport()" class="w-full h-[38px] px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                            <option value="">All Categories</option>
+                            <option value="IT Hardware">IT Hardware</option>
+                            <option value="Office Furniture">Office Furniture</option>
+                            <option value="Manufacturing">Manufacturing</option>
+                            <option value="Vehicles">Vehicles</option>
                         </select>
                     </div>
                     <div class="space-y-1.5">
                         <label class="text-label-small text-secondary uppercase tracking-wide">Department</label>
-                        <select class="w-full h-[38px] px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none">
-                            <option>Global Operations</option>
-                            <option>Finance &amp; Admin</option>
-                            <option>Engineering</option>
-                            <option>Research &amp; Dev</option>
+                        <select id="departmentFilter" onchange="reloadCurrentReport()" class="w-full h-[38px] px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                            <option value="">Global Operations</option>
+                            <option value="Finance & Admin">Finance &amp; Admin</option>
+                            <option value="Engineering">Engineering</option>
+                            <option value="Research & Dev">Research &amp; Dev</option>
                         </select>
                     </div>
                     <div class="space-y-1.5">
                         <label class="text-label-small text-secondary uppercase tracking-wide">Status</label>
                         <div class="flex items-center h-[38px]">
                             <label class="inline-flex items-center cursor-pointer">
-                                <input type="checkbox" checked class="rounded text-primary focus:ring-primary border-border-default h-4 w-4">
+                                <input type="checkbox" id="activeOnlyFilter" onchange="reloadCurrentReport()" class="rounded text-primary focus:ring-primary border-border-default h-4 w-4">
                                 <span class="ml-2 text-body-default text-on-surface">Active Only</span>
                             </label>
                         </div>
@@ -141,113 +147,81 @@
                 </div>
             </div>
 
-            <!-- Preview Area: Data Table -->
-            <div class="bg-surface-card rounded-xl card-shadow border border-border-default overflow-hidden">
-                <div class="px-5 py-3 bg-surface-canvas border-b border-border-default flex justify-between items-center">
-                    <div class="flex items-center gap-2">
-                        <span class="material-symbols-outlined text-primary text-[20px]">preview</span>
-                        <span class="text-label-small font-medium text-on-surface uppercase tracking-wider">Report Preview (Sample Data)</span>
+            <!-- Preview Area: Data Table or Empty State -->
+            <div id="reportContainer" class="bg-surface-card rounded-xl card-shadow border border-border-default overflow-hidden">
+                <!-- Empty State -->
+                <div id="emptyStateContainer" class="hidden px-5 py-12 flex flex-col items-center justify-center min-h-[400px]">
+                    <div class="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                        <span class="material-symbols-outlined text-[32px] text-primary">description</span>
                     </div>
-                    <span class="text-label-small text-secondary">Showing 5 of 1,280 assets</span>
+                    <h3 class="font-card-header text-card-header text-on-surface mb-2">No Data Available</h3>
+                    <p class="text-body-default text-secondary text-center max-w-sm">
+                        This report currently has no results matching your filters. Try adjusting your filters or selecting a different report type.
+                    </p>
                 </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                        <tr class="bg-surface-canvas border-b border-border-default">
-                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Asset ID</th>
-                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Name</th>
-                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Category</th>
-                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Acquisition Cost</th>
-                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Accum. Depr.</th>
-                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Net Book Value</th>
-                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Status</th>
-                        </tr>
-                        </thead>
-                        <tbody class="divide-y divide-border-default">
-                        <tr class="hover:bg-surface-canvas/50 transition-colors">
-                            <td class="px-5 py-3 font-technical-data text-technical-data text-on-surface">AST-2024-001</td>
-                            <td class="px-5 py-3 text-body-default font-medium text-on-surface">Precision Laser Cutter V3</td>
-                            <td class="px-5 py-3 text-body-default text-secondary">Manufacturing</td>
-                            <td class="px-5 py-3 text-body-default text-on-surface">&#8358;124,500.00</td>
-                            <td class="px-5 py-3 text-body-default text-error">(&#8358;12,450.00)</td>
-                            <td class="px-5 py-3 text-body-default font-bold text-primary">&#8358;112,050.00</td>
-                            <td class="px-5 py-3"><span class="px-2 py-0.5 rounded-full bg-status-success/10 text-status-success text-badge-label font-badge-label uppercase">Verified</span></td>
-                        </tr>
-                        <tr class="hover:bg-surface-canvas/50 transition-colors border-l-4 border-primary">
-                            <td class="px-5 py-3 font-technical-data text-technical-data text-on-surface">AST-2023-882</td>
-                            <td class="px-5 py-3 text-body-default font-medium text-on-surface">MacBook Pro M2 - HQ-02</td>
-                            <td class="px-5 py-3 text-body-default text-secondary">IT Hardware</td>
-                            <td class="px-5 py-3 text-body-default text-on-surface">&#8358;2,499.00</td>
-                            <td class="px-5 py-3 text-body-default text-error">(&#8358;833.00)</td>
-                            <td class="px-5 py-3 text-body-default font-bold text-primary">&#8358;1,666.00</td>
-                            <td class="px-5 py-3"><span class="px-2 py-0.5 rounded-full bg-status-success/10 text-status-success text-badge-label font-badge-label uppercase">Assigned</span></td>
-                        </tr>
-                        <tr class="hover:bg-surface-canvas/50 transition-colors">
-                            <td class="px-5 py-3 font-technical-data text-technical-data text-on-surface">AST-2022-451</td>
-                            <td class="px-5 py-3 text-body-default font-medium text-on-surface">Network Server Node 04</td>
-                            <td class="px-5 py-3 text-body-default text-secondary">IT Hardware</td>
-                            <td class="px-5 py-3 text-body-default text-on-surface">&#8358;15,200.00</td>
-                            <td class="px-5 py-3 text-body-default text-error">(&#8358;7,600.00)</td>
-                            <td class="px-5 py-3 text-body-default font-bold text-primary">&#8358;7,600.00</td>
-                            <td class="px-5 py-3"><span class="px-2 py-0.5 rounded-full bg-status-warning/10 text-status-warning text-badge-label font-badge-label uppercase">Maintenance</span></td>
-                        </tr>
-                        <tr class="hover:bg-surface-canvas/50 transition-colors">
-                            <td class="px-5 py-3 font-technical-data text-technical-data text-on-surface">AST-2024-112</td>
-                            <td class="px-5 py-3 text-body-default font-medium text-on-surface">Ergonomic Desk Unit x12</td>
-                            <td class="px-5 py-3 text-body-default text-secondary">Office Furniture</td>
-                            <td class="px-5 py-3 text-body-default text-on-surface">&#8358;6,000.00</td>
-                            <td class="px-5 py-3 text-body-default text-error">(&#8358;0.00)</td>
-                            <td class="px-5 py-3 text-body-default font-bold text-primary">&#8358;6,000.00</td>
-                            <td class="px-5 py-3"><span class="px-2 py-0.5 rounded-full bg-status-success/10 text-status-success text-badge-label font-badge-label uppercase">Verified</span></td>
-                        </tr>
-                        <tr class="hover:bg-surface-canvas/50 transition-colors">
-                            <td class="px-5 py-3 font-technical-data text-technical-data text-on-surface">AST-2021-009</td>
-                            <td class="px-5 py-3 text-body-default font-medium text-on-surface">Industrial Forklift XL</td>
-                            <td class="px-5 py-3 text-body-default text-secondary">Vehicles</td>
-                            <td class="px-5 py-3 text-body-default text-on-surface">&#8358;45,000.00</td>
-                            <td class="px-5 py-3 text-body-default text-error">(&#8358;22,500.00)</td>
-                            <td class="px-5 py-3 text-body-default font-bold text-primary">&#8358;22,500.00</td>
-                            <td class="px-5 py-3"><span class="px-2 py-0.5 rounded-full bg-error/10 text-error text-badge-label font-badge-label uppercase">Overdue Audit</span></td>
-                        </tr>
-                        </tbody>
-                    </table>
-                </div>
-                <!-- Pagination (matches dashboard.html) -->
-                <div class="px-5 py-3 border-t border-border-default flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div class="flex items-center gap-3">
-                        <span class="text-body-default text-secondary">Page 1 of 54</span>
-                        <div class="flex items-center gap-1">
-                            <button class="w-8 h-8 flex items-center justify-center border border-border-default rounded-lg hover:bg-surface-canvas transition-colors text-secondary disabled:opacity-50" disabled>
-                                <span class="material-symbols-outlined text-[18px]">chevron_left</span>
-                            </button>
-                            <button class="w-8 h-8 flex items-center justify-center bg-primary text-on-primary rounded-lg font-body-medium">1</button>
-                            <button class="w-8 h-8 flex items-center justify-center border border-border-default rounded-lg hover:bg-surface-canvas transition-colors font-body-medium text-on-surface">2</button>
-                            <button class="w-8 h-8 flex items-center justify-center border border-border-default rounded-lg hover:bg-surface-canvas transition-colors font-body-medium text-on-surface">3</button>
-                            <button class="w-8 h-8 flex items-center justify-center border border-border-default rounded-lg hover:bg-surface-canvas transition-colors text-secondary">
-                                <span class="material-symbols-outlined text-[18px]">chevron_right</span>
-                            </button>
+
+                <!-- Report Data Template -->
+                <div id="reportDataContainer" class="hidden">
+                    <div class="px-5 py-3 bg-surface-canvas border-b border-border-default flex justify-between items-center">
+                        <div class="flex items-center gap-2">
+                            <span class="material-symbols-outlined text-primary text-[20px]">preview</span>
+                            <span id="reportPreviewLabel" class="text-label-small font-medium text-on-surface uppercase tracking-wider">Report Preview</span>
                         </div>
+                        <span id="reportRecordCount" class="text-label-small text-secondary">Showing 0 records</span>
                     </div>
-                    <div class="flex items-center gap-2">
-                        <span class="text-body-default text-secondary">Rows per page:</span>
-                        <select class="h-[32px] px-2 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none">
-                            <option>20</option>
-                            <option>50</option>
-                            <option>100</option>
-                        </select>
+                    <div class="overflow-x-auto">
+                        <table id="reportTable" class="w-full text-left border-collapse">
+                            <thead>
+                            <tr class="bg-surface-canvas border-b border-border-default">
+                                <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Asset ID</th>
+                                <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Name</th>
+                                <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Category</th>
+                                <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Acquisition Cost</th>
+                                <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Accum. Depr.</th>
+                                <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Net Book Value</th>
+                                <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Status</th>
+                            </tr>
+                            </thead>
+                            <tbody id="reportBody" class="divide-y divide-border-default">
+                            <!-- Rows will be populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <!-- Pagination (matches dashboard.html) -->
+                    <div class="px-5 py-3 border-t border-border-default flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div class="flex items-center gap-3">
+                            <span class="text-body-default text-secondary">Page 1 of 1</span>
+                            <div class="flex items-center gap-1">
+                                <button class="w-8 h-8 flex items-center justify-center border border-border-default rounded-lg hover:bg-surface-canvas transition-colors text-secondary disabled:opacity-50" disabled>
+                                    <span class="material-symbols-outlined text-[18px]">chevron_left</span>
+                                </button>
+                                <button class="w-8 h-8 flex items-center justify-center bg-primary text-on-primary rounded-lg font-body-medium">1</button>
+                                <button class="w-8 h-8 flex items-center justify-center border border-border-default rounded-lg hover:bg-surface-canvas transition-colors text-secondary">
+                                    <span class="material-symbols-outlined text-[18px]">chevron_right</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-body-default text-secondary">Rows per page:</span>
+                            <select class="h-[32px] px-2 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                                <option>20</option>
+                                <option>50</option>
+                                <option>100</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <!-- Footer Summary Stats Cards (grid) -->
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+            <div id="summaryStatsContainer" class="grid grid-cols-1 sm:grid-cols-3 gap-5">
                 <div class="bg-surface-card rounded-xl card-shadow border border-border-default p-4 flex items-center gap-4">
                     <div class="w-10 h-10 rounded-lg bg-primary/5 flex items-center justify-center">
                         <span class="material-symbols-outlined text-primary text-[24px]">payments</span>
                     </div>
                     <div>
-                        <p class="text-label-small text-secondary uppercase tracking-wide">Total Net Book Value</p>
-                        <p class="font-page-title text-[20px] font-bold text-on-surface">&#8358;4,284,550.00</p>
+                        <p class="text-label-small text-secondary uppercase tracking-wide">Total Value</p>
+                        <p id="totalValueStat" class="font-page-title text-[20px] font-bold text-on-surface">₦0.00</p>
                     </div>
                 </div>
                 <div class="bg-surface-card rounded-xl card-shadow border border-border-default p-4 flex items-center gap-4">
@@ -255,8 +229,8 @@
                         <span class="material-symbols-outlined text-status-success text-[24px]">trending_up</span>
                     </div>
                     <div>
-                        <p class="text-label-small text-secondary uppercase tracking-wide">YTD Appreciation</p>
-                        <p class="font-page-title text-[20px] font-bold text-status-success">+&#8358;214,000.00</p>
+                        <p class="text-label-small text-secondary uppercase tracking-wide">Total Depreciation</p>
+                        <p id="totalDepreciationStat" class="font-page-title text-[20px] font-bold text-status-success">₦0.00</p>
                     </div>
                 </div>
                 <div class="bg-surface-card rounded-xl card-shadow border border-border-default p-4 flex items-center gap-4">
@@ -264,13 +238,270 @@
                         <span class="material-symbols-outlined text-status-info text-[24px]">history_edu</span>
                     </div>
                     <div>
-                        <p class="text-label-small text-secondary uppercase tracking-wide">Last Audit Date</p>
-                        <p class="font-page-title text-[20px] font-bold text-on-surface">March 12, 2024</p>
+                        <p class="text-label-small text-secondary uppercase tracking-wide">Net Book Value</p>
+                        <p id="totalNetBookValueStat" class="font-page-title text-[20px] font-bold text-on-surface">₦0.00</p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <script>
+        // Report configuration
+        const reportConfigs = {
+            'asset-register': {
+                name: 'Asset Register',
+                description: 'Complete inventory of all assets with current valuations',
+                apiEndpoint: '/api/reports/asset-register',
+                hasFilters: true
+            },
+            'inventory-summary': {
+                name: 'Inventory Summary',
+                description: 'Summary view of inventory by category and location',
+                apiEndpoint: '/api/reports/inventory-summary',
+                hasFilters: true
+            },
+            'location-audit': {
+                name: 'Location Audit',
+                description: 'Assets organized by department and location',
+                apiEndpoint: '/api/reports/location-audit',
+                hasFilters: true
+            },
+            'valuation': {
+                name: 'Asset Valuation Report',
+                description: 'Comprehensive view of current book values across all departments',
+                apiEndpoint: '/api/reports/valuation',
+                hasFilters: true
+            },
+            'depreciation-schedule': {
+                name: 'Depreciation Schedule',
+                description: 'Asset depreciation schedule and analysis',
+                apiEndpoint: '/api/reports/depreciation-schedule',
+                hasFilters: true
+            },
+            'purchase-analysis': {
+                name: 'Purchase Analysis',
+                description: 'Analysis of asset purchases by date range',
+                apiEndpoint: '/api/reports/purchase-analysis',
+                hasFilters: true
+            },
+            'maintenance-history': {
+                name: 'Service History',
+                description: 'Complete maintenance and service records',
+                apiEndpoint: '/api/reports/maintenance-history',
+                hasFilters: false
+            },
+            'warranty-expiry': {
+                name: 'Warranty Expiry',
+                description: 'Assets with warranty information and expiry dates',
+                apiEndpoint: '/api/reports/warranty-expiry',
+                hasFilters: false
+            },
+            'missing-assets': {
+                name: 'Missing Asset Report',
+                description: 'Assets not in assigned or stock status',
+                apiEndpoint: '/api/reports/missing-assets',
+                hasFilters: false
+            },
+            'disposal-logs': {
+                name: 'Disposal Logs',
+                description: 'Records of disposed and retired assets',
+                apiEndpoint: '/api/reports/disposal-logs',
+                hasFilters: false
+            }
+        };
+
+        let currentReport = 'valuation';
+
+        // Format currency
+        function formatCurrency(value) {
+            if (!value) return '₦0.00';
+            return new Intl.NumberFormat('en-NG', {
+                style: 'currency',
+                currency: 'NGN',
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }).format(value);
+        }
+
+        // Get status badge HTML
+        function getStatusBadge(status) {
+            let bgClass = 'bg-status-success/10';
+            let textClass = 'text-status-success';
+
+            if (status?.includes('Maintenance')) {
+                bgClass = 'bg-status-warning/10';
+                textClass = 'text-status-warning';
+            } else if (status?.includes('Disposed') || status?.includes('Retired')) {
+                bgClass = 'bg-error/10';
+                textClass = 'text-error';
+            } else if (status?.includes('In Stock')) {
+                bgClass = 'bg-status-info/10';
+                textClass = 'text-status-info';
+            }
+
+            return `<span class="px-2 py-0.5 rounded-full ${bgClass} ${textClass} text-badge-label font-badge-label uppercase">${status || 'Unknown'}</span>`;
+        }
+
+        // Load report data
+        async function loadReport(reportType) {
+            currentReport = reportType;
+            const config = reportConfigs[reportType];
+
+            if (!config) {
+                console.error('Unknown report type:', reportType);
+                return;
+            }
+
+            // Update UI
+            document.getElementById('reportTitle').textContent = config.name;
+            document.getElementById('reportDescription').textContent = config.description;
+            document.getElementById('reportLoadingIndicator').classList.remove('hidden');
+            document.getElementById('reportDataContainer').classList.add('hidden');
+            document.getElementById('emptyStateContainer').classList.add('hidden');
+
+            // Highlight selected menu item
+            document.querySelectorAll('.col-span-12.lg\\:col-span-3 button').forEach(btn => {
+                btn.classList.remove('bg-primary/10', 'text-primary', 'font-medium');
+                btn.classList.add('text-secondary');
+            });
+            event?.target?.classList.remove('text-secondary');
+            event?.target?.classList.add('bg-primary/10', 'text-primary', 'font-medium');
+
+            try {
+                // Build URL with filters
+                let url = config.apiEndpoint;
+                const params = new URLSearchParams();
+
+                if (config.hasFilters) {
+                    const category = document.getElementById('categoryFilter')?.value;
+                    const department = document.getElementById('departmentFilter')?.value;
+
+                    if (category && category !== 'All Categories') params.append('category', category);
+                    if (department && department !== 'Global Operations') params.append('department', department);
+                }
+
+                if (params.toString()) {
+                    url += '?' + params.toString();
+                }
+
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Failed to load report');
+
+                const result = await response.json();
+                if (result.success && result.data) {
+                    displayReport(result.data);
+                } else {
+                    showError('Failed to load report: ' + (result.message || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error loading report:', error);
+                showError('Error loading report: ' + error.message);
+            } finally {
+                document.getElementById('reportLoadingIndicator').classList.add('hidden');
+            }
+        }
+
+        // Display report data
+        function displayReport(reportData) {
+            if (reportData.isEmpty) {
+                showEmptyState();
+                return;
+            }
+
+            const tbody = document.getElementById('reportBody');
+            tbody.innerHTML = '';
+
+            // Populate table with report data
+            reportData.rows.forEach((row, index) => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-surface-canvas/50 transition-colors';
+                if (index === 0) tr.classList.add('border-l-4', 'border-primary');
+
+                tr.innerHTML = `
+            <td class="px-5 py-3 font-technical-data text-technical-data text-on-surface">${row.assetCode}</td>
+            <td class="px-5 py-3 text-body-default font-medium text-on-surface">${row.assetName}</td>
+            <td class="px-5 py-3 text-body-default text-secondary">${row.category}</td>
+            <td class="px-5 py-3 text-body-default text-on-surface">${formatCurrency(row.acquisitionCost)}</td>
+            <td class="px-5 py-3 text-body-default text-error">(${formatCurrency(row.accumulatedDepreciation)})</td>
+            <td class="px-5 py-3 text-body-default font-bold text-primary">${formatCurrency(row.netBookValue)}</td>
+            <td class="px-5 py-3">${getStatusBadge(row.status)}</td>
+        `;
+
+                tbody.appendChild(tr);
+            });
+
+            // Update summary stats
+            document.getElementById('totalValueStat').textContent = formatCurrency(reportData.totalValue);
+            document.getElementById('totalDepreciationStat').textContent = formatCurrency(reportData.totalDepreciation);
+            document.getElementById('totalNetBookValueStat').textContent = formatCurrency(reportData.totalNetBookValue);
+            document.getElementById('reportRecordCount').textContent = `Showing ${reportData.totalRecords} records`;
+
+            // Show data container, hide empty state
+            document.getElementById('reportDataContainer').classList.remove('hidden');
+            document.getElementById('emptyStateContainer').classList.add('hidden');
+        }
+
+        // Show empty state
+        function showEmptyState() {
+            document.getElementById('reportDataContainer').classList.add('hidden');
+            document.getElementById('emptyStateContainer').classList.remove('hidden');
+        }
+
+        // Show error message
+        function showError(message) {
+            // You can enhance this with a toast or alert
+            alert(message);
+        }
+
+        // Reload current report with new filters
+        function reloadCurrentReport() {
+            loadReport(currentReport);
+        }
+
+        // Export functions
+        function exportToExcel() {
+            const config = reportConfigs[currentReport];
+            const fileName = `${config.name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.xlsx`;
+
+            // Get table data
+            const table = document.getElementById('reportTable');
+            if (!table) {
+                alert('No data to export');
+                return;
+            }
+
+            // Create CSV content (for simplicity, using CSV instead of XLSX)
+            let csv = '';
+            table.querySelectorAll('tr').forEach(row => {
+                const cells = Array.from(row.querySelectorAll('td, th')).map(cell => {
+                    return '"' + cell.textContent.trim().replace(/"/g, '""') + '"';
+                });
+                csv += cells.join(',') + '\n';
+            });
+
+            // Download
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName.replace('.xlsx', '.csv');
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+
+        function exportToPDF() {
+            const config = reportConfigs[currentReport];
+            const fileName = `${config.name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+
+            alert('PDF export feature coming soon. For now, use your browser\'s print functionality (Ctrl+P) and save as PDF.');
+        }
+
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadReport('valuation');
+        });
+    </script>
 </main>
 </body>
-</html>
+
