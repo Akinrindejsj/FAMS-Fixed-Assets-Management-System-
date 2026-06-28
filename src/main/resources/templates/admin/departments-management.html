@@ -1469,17 +1469,14 @@
                                                 onclick="csEditDepartment(this)">
                                             <span class="material-symbols-outlined">edit</span>
                                         </button>
-                                        <form method="POST"
-                                              th:action="@{'/superadmin/department/delete/' + ${dept.id}}"
-                                              style="display:inline;"
-                                              onsubmit="return confirm('Delete this department? This cannot be undone.');">
-                                            <th:block th:if="${_csrf != null}">
-                                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-                                            </th:block>
-                                            <button type="submit" class="cs-action-btn danger" title="Delete department">
-                                                <span class="material-symbols-outlined">delete</span>
-                                            </button>
-                                        </form>
+                                        <button type="button"
+                                                class="cs-action-btn danger"
+                                                title="Delete department"
+                                                th:data-id="${dept.id}"
+                                                th:data-name="${dept.name}"
+                                                onclick="csConfirmDeleteDepartment(this)">
+                                            <span class="material-symbols-outlined">delete</span>
+                                        </button>
                                     </div>
                                 </td>
                             </tr>
@@ -1636,17 +1633,14 @@
                                 </td>
                                 <td>
                                     <div class="cs-row-actions">
-                                        <form method="POST"
-                                              th:action="@{'/superadmin/department-head/remove/' + ${head.id}}"
-                                              style="display:inline;"
-                                              onsubmit="return confirm('Remove this department head?');">
-                                            <th:block th:if="${_csrf != null}">
-                                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-                                            </th:block>
-                                            <button type="submit" class="cs-action-btn danger" title="Remove head">
-                                                <span class="material-symbols-outlined">delete</span>
-                                            </button>
-                                        </form>
+                                        <button type="button"
+                                                class="cs-action-btn danger"
+                                                title="Remove head"
+                                                th:data-id="${head.id}"
+                                                th:data-name="${head.fullName != null and !head.fullName.isBlank() ? head.fullName : head.userName}"
+                                                onclick="csConfirmDeleteHead(this)">
+                                            <span class="material-symbols-outlined">delete</span>
+                                        </button>
                                     </div>
                                 </td>
                             </tr>
@@ -1681,17 +1675,14 @@
                             <div class="cs-entity-card-footer">
                                 <span style="font-size:0.75rem;color:#9ca3af;" th:text="${head.userEmail}"></span>
                                 <div class="cs-entity-card-actions">
-                                    <form method="POST"
-                                          th:action="@{'/superadmin/department-head/remove/' + ${head.id}}"
-                                          style="display:inline;"
-                                          onsubmit="return confirm('Remove this department head?');">
-                                        <th:block th:if="${_csrf != null}">
-                                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-                                        </th:block>
-                                        <button type="submit" class="cs-action-btn danger" title="Remove head">
-                                            <span class="material-symbols-outlined">delete</span>
-                                        </button>
-                                    </form>
+                                    <button type="button"
+                                            class="cs-action-btn danger"
+                                            title="Remove head"
+                                            th:data-id="${head.id}"
+                                            th:data-name="${head.fullName != null and !head.fullName.isBlank() ? head.fullName : head.userName}"
+                                            onclick="csConfirmDeleteHead(this)">
+                                        <span class="material-symbols-outlined">delete</span>
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -1915,6 +1906,68 @@
                 hideAllForms();
             };
 
+            /* ── Confirm delete modal ───────────────────── */
+            var csConfirmState = { formId: null, title: '', text: '' };
+
+            function csOpenConfirmModal(title, text, formId) {
+                csConfirmState = { formId: formId, title: title, text: text };
+                document.getElementById('csConfirmTitle').textContent = title;
+                document.getElementById('csConfirmText').textContent = text;
+                document.getElementById('csConfirmModal').classList.add('open');
+                document.body.style.overflow = 'hidden';
+            }
+
+            window.csCloseConfirmModal = function () {
+                document.getElementById('csConfirmModal').classList.remove('open');
+                document.body.style.overflow = '';
+                csConfirmState = { formId: null, title: '', text: '' };
+            };
+
+            window.csSubmitConfirmForm = function () {
+                var state = csConfirmState;
+                if (!state.formId) return;
+                var form = document.getElementById(state.formId);
+                var id = state.id;
+                if (form && id) {
+                    form.setAttribute('action', state.action + id);
+                }
+                if (form) form.submit();
+            };
+
+            window.csConfirmDeleteDepartment = function (btn) {
+                var id = btn.getAttribute('data-id');
+                var name = btn.getAttribute('data-name') || 'this department';
+                csConfirmState.action = '/superadmin/department/delete/';
+                csConfirmState.id = id;
+                csOpenConfirmModal(
+                    'Delete Department',
+                    'Are you sure you want to delete "' + name + '"? This will deactivate the department and cannot be undone.',
+                    'csDeleteDeptForm'
+                );
+            };
+
+            window.csConfirmDeleteHead = function (btn) {
+                var id = btn.getAttribute('data-id');
+                var name = btn.getAttribute('data-name') || 'this department head';
+                csConfirmState.action = '/superadmin/department-head/remove/';
+                csConfirmState.id = id;
+                csOpenConfirmModal(
+                    'Remove Department Head',
+                    'Are you sure you want to remove "' + name + '" as a department head? This action cannot be undone.',
+                    'csDeleteHeadForm'
+                );
+            };
+
+            // Close confirm modal on overlay click
+            (function () {
+                var overlay = document.getElementById('csConfirmModal');
+                if (overlay) {
+                    overlay.addEventListener('click', function (e) {
+                        if (e.target === overlay) csCloseConfirmModal();
+                    });
+                }
+            })();
+
             /* ── Open modal by type ────────────────────── */
             window.csOpenModal = function (type, mode) {
                 if (type === 'department') {
@@ -2040,6 +2093,10 @@
 
             /* ── Keyboard shortcuts ─────────────────────── */
             document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape' && document.getElementById('csConfirmModal').classList.contains('open')) {
+                    csCloseConfirmModal();
+                    return;
+                }
                 if (e.key === 'Escape' && modal.classList.contains('open')) {
                     csCloseModal();
                     return;
