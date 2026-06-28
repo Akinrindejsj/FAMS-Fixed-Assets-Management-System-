@@ -100,7 +100,7 @@ public class SuperAdminCompanyController {
             @RequestParam(required = false) String registrationNumber,
             @RequestParam(required = false) String taxId,
             @RequestParam(required = false) String industry,
-            @RequestParam String status,
+            @RequestParam(required = false) String status,
             RedirectAttributes ra
     ) {
         try {
@@ -110,7 +110,7 @@ public class SuperAdminCompanyController {
                     .registrationNumber(registrationNumber)
                     .taxId(taxId)
                     .industry(industry)
-                    .status(status)
+                    .status(status != null ? status : "ACTIVE")
                     .build();
 
             CompanyDTO updated = companyStructureService.updateCompany(id, dto);
