@@ -1463,6 +1463,7 @@
                                                 th:data-description="${dept.description}"
                                                 th:data-code="${dept.departmentCode}"
                                                 th:data-budget="${dept.budget}"
+                                                th:data-status="${dept.status}"
                                                 th:data-company="${dept.companyId}"
                                                 th:data-branch="${dept.branchId}"
                                                 onclick="csEditDepartment(this)">
@@ -1521,6 +1522,7 @@
                                             th:data-description="${dept.description}"
                                             th:data-code="${dept.departmentCode}"
                                             th:data-budget="${dept.budget}"
+                                            th:data-status="${dept.status}"
                                             th:data-company="${dept.companyId}"
                                             th:data-branch="${dept.branchId}"
                                             onclick="csEditDepartment(this)">
@@ -1767,6 +1769,15 @@
                                    class="w-full h-11 px-4 bg-surface-canvas border border-border-default rounded-xl text-body-default focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all" />
                         </div>
                     </div>
+                    <div class="space-y-1.5">
+                        <label class="font-label-small text-label-small text-secondary" for="csDeptStatus">Status</label>
+                        <select id="csDeptStatus" name="status"
+                                class="w-full h-11 px-4 bg-surface-canvas border border-border-default rounded-xl text-body-default focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all">
+                            <option value="ACTIVE">Active</option>
+                            <option value="INACTIVE">Inactive</option>
+                            <option value="CLOSED">Closed</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="cs-modal-footer">
                     <button type="submit" id="csDepartmentSubmitBtn" class="cs-btn-primary">Create Department</button>
@@ -1915,6 +1926,10 @@
                     var branchSel = document.getElementById('csDeptBranch');
                     branchSel.innerHTML = '<option value="">Select company first…</option>';
                     branchSel.disabled = true;
+                    // Enable company/branch for create mode
+                    document.getElementById('csDeptCompany').disabled = false;
+                    // Default status
+                    document.getElementById('csDeptStatus').value = 'ACTIVE';
                     openModal(forms.department, 'Create Department', 'add');
 
                 } else if (type === 'head') {
@@ -1934,6 +1949,7 @@
                 document.getElementById('csDeptDesc').value        = btn.dataset.description || '';
                 document.getElementById('csDeptCode').value        = btn.dataset.code || '';
                 document.getElementById('csDeptBudget').value      = btn.dataset.budget || '';
+                document.getElementById('csDeptStatus').value      = btn.dataset.status || 'ACTIVE';
 
                 var companyId = btn.dataset.company || '';
                 var branchId  = btn.dataset.branch || '';
@@ -1941,8 +1957,10 @@
                 // Set company and load branches
                 var companySel = document.getElementById('csDeptCompany');
                 companySel.value = companyId;
-                // Trigger change to load branches
-                loadBranchesForDepartment(companyId, branchId);
+                // Disable company/branch in edit mode (department fields only)
+                companySel.disabled = true;
+                // Trigger change to load branches (keep disabled after load in edit mode)
+                loadBranchesForDepartment(companyId, branchId, true);
 
                 document.getElementById('csDepartmentSubmitBtn').textContent = 'Update Department';
                 forms.department.action = '/superadmin/department/update/' + btn.dataset.id;
@@ -1951,10 +1969,10 @@
 
             /* ── Dynamic branch loading for department form ─ */
             document.getElementById('csDeptCompany').addEventListener('change', function () {
-                loadBranchesForDepartment(this.value, null);
+                loadBranchesForDepartment(this.value, null, false);
             });
 
-            function loadBranchesForDepartment(companyId, selectedBranchId) {
+            function loadBranchesForDepartment(companyId, selectedBranchId, keepDisabled) {
                 var sel = document.getElementById('csDeptBranch');
                 sel.innerHTML = '<option value="">Loading…</option>';
                 sel.disabled = true;
@@ -1983,12 +2001,16 @@
                                 sel.appendChild(opt);
                             });
                         }
-                        sel.disabled = false;
+                        if (!keepDisabled) {
+                            sel.disabled = false;
+                        }
                     })
                     .catch(function (err) {
                         console.error('Failed to load branches:', err);
                         sel.innerHTML = '<option value="">Error loading branches</option>';
-                        sel.disabled = false;
+                        if (!keepDisabled) {
+                            sel.disabled = false;
+                        }
                     });
             }
 

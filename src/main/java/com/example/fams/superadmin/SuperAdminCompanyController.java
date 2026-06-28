@@ -381,7 +381,7 @@ public class SuperAdminCompanyController {
             @RequestParam(required = false) String description,
             @RequestParam(required = false) String departmentCode,
             @RequestParam(required = false) String budget,
-            @RequestParam String status,
+            @RequestParam(required = false) String status,
             RedirectAttributes ra
     ) {
         try {
@@ -390,7 +390,7 @@ public class SuperAdminCompanyController {
                     .description(description)
                     .departmentCode(departmentCode)
                     .budget(budget)
-                    .status(status)
+                    .status(status != null ? status : "ACTIVE")
                     .build();
 
             DepartmentDTO updated = companyStructureService.updateDepartment(id, dto);
