@@ -103,6 +103,10 @@ public class ReportExportController {
                     reportService.generateMissingAssetsReport(scope);
             case "disposal-logs" ->
                     reportService.generateDisposalLogsReport(scope);
+            case "fully-depreciated" ->
+                    reportService.generateFullyDepreciatedAssetRegisterReport(scope, category, department);
+            case "non-depreciable" ->
+                    reportService.generateNonDepreciableAssetRegisterReport(scope, category, department);
             default -> throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "Unknown report type: " + type);
         };
