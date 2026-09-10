@@ -45,6 +45,120 @@ public class ReportController {
     }
 
     /**
+     * Get Fully Depreciated Asset Register 
+     */
+    @GetMapping("/asset-register/fully-depreciated")
+    public ResponseEntity<Map<String, Object>> fullyDepreciatedAssetRegisterReport(
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) String department) {
+
+        try {
+            ReportData report = reportService.generateFullyDepreciatedAssetRegisterReport(scopeService.getScope(), category, department);
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("data", report);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "Error generating fully depreciated asset register: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    /**
+     * Get Non-Depreciable Asset Register 
+     */
+    @GetMapping("/asset-register/non-depreciable")
+    public ResponseEntity<Map<String, Object>> nonDepreciableAssetRegisterReport(
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) String department) {
+
+        try {
+            ReportData report = reportService.generateNonDepreciableAssetRegisterReport(scopeService.getScope(), category, department);
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("data", report);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "Error generating non-depreciable asset register: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    /**
+     * Get Asset Register grouped by a dimension 
+     */
+    @GetMapping("/asset-register/grouped")
+    public ResponseEntity<Map<String, Object>> groupedAssetRegisterReport(
+            @RequestParam AssetGroupBy groupBy,
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) String department,
+            @RequestParam(required = false) String status) {
+
+        try {
+            GroupedReportData report = reportService.generateGroupedAssetRegisterReport(
+                    scopeService.getScope(), groupBy, category, department, status);
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("data", report);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "Error generating grouped asset register report: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    /**
+     * Get Detailed Fixed Asset Register Report 
+     */
+    @GetMapping("/asset-register/detailed")
+    public ResponseEntity<Map<String, Object>> detailedAssetRegisterReport(
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) String department,
+            @RequestParam(required = false) String status) {
+
+        try {
+            DetailedReportData report = reportService.generateDetailedAssetRegisterReport(scopeService.getScope(), category, department, status);
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("data", report);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "Error generating detailed asset register report: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    /**
+     * Get Fixed Asset Summary Report
+     */
+    @GetMapping("/asset-register/summary")
+    public ResponseEntity<Map<String, Object>> assetSummaryReport(
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) String department) {
+
+        try {
+            AssetSummaryData report = reportService.generateAssetSummaryReport(scopeService.getScope(), category, department);
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("data", report);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "Error generating asset summary report: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    /**
      * Get Inventory Summary Report
      */
     @GetMapping("/inventory-summary")
@@ -234,4 +348,3 @@ public class ReportController {
         }
     }
 }
-

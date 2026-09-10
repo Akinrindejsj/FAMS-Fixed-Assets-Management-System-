@@ -3,9 +3,19 @@ package com.example.fams.depreciation;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import java.util.Collection;
 import java.util.List;
 
 public interface DepreciationPostingRepository extends JpaRepository<DepreciationPosting, Long> {
+
+    
+    // Latest posting per asset (one row per asset id) for a batch of assets
+    @Query(value = "SELECT DISTINCT ON (dp.asset_id) dp.* FROM depreciation_postings dp " +
+            "WHERE dp.asset_id IN :assetIds ORDER BY dp.asset_id, dp.depreciation_period DESC",
+            nativeQuery = true)
+    List<DepreciationPosting> findLatestByAssetIdIn(@Param("assetIds") Collection<Long> assetIds);
 
     // Find all postings for a specific asset
     List<DepreciationPosting> findByAssetIdOrderByDepreciationPeriodDesc(Long assetId);
@@ -31,4 +41,3 @@ public interface DepreciationPostingRepository extends JpaRepository<Depreciatio
     // Find postings by fiscal year
     List<DepreciationPosting> findByFiscalYearOrderByDepreciationPeriodDescAssetCode(Integer fiscalYear);
 }
-

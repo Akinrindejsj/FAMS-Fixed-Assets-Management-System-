@@ -22,9 +22,9 @@ public class DepreciationService {
     private final DepreciationCalculationService calculationService;
 
     public DepreciationService(DepreciationParametersRepository parametersRepository,
-                              DepreciationPostingRepository postingRepository,
-                              AssetRepository assetRepository,
-                              DepreciationCalculationService calculationService) {
+                               DepreciationPostingRepository postingRepository,
+                               AssetRepository assetRepository,
+                               DepreciationCalculationService calculationService) {
         this.parametersRepository = parametersRepository;
         this.postingRepository = postingRepository;
         this.assetRepository = assetRepository;
@@ -249,6 +249,29 @@ public class DepreciationService {
     @Transactional(readOnly = true)
     public List<DepreciationPosting> getDepreciationHistory(Long assetId) {
         return postingRepository.findByAssetIdOrderByDepreciationPeriodDesc(assetId);
+    }
+
+    /**
+     * All depreciation parameter records (asset-specific or category-wide) that are
+     * active as of today. 
+     */
+    @Transactional(readOnly = true)
+    public List<DepreciationParameters> getAllActiveParameters() {
+        LocalDate today = AppClock.today();
+        return parametersRepository
+                .findByIsActiveTrueAndEffectiveFromDateLessThanEqualAndEffectiveToDateIsNullOrEffectiveToDateGreaterThanEqual(today, today);
+    }
+
+    /**
+     * Latest depreciation posting for each of the given assets, keyed by asset id.
+     */
+    @Transactional(readOnly = true)
+    public java.util.Map<Long, DepreciationPosting> getLatestPostingsForAssets(java.util.Collection<Long> assetIds) {
+        if (assetIds == null || assetIds.isEmpty()) {
+            return java.util.Map.of();
+        }
+        return postingRepository.findLatestByAssetIdIn(assetIds).stream()
+                .collect(java.util.stream.Collectors.toMap(DepreciationPosting::getAssetId, p -> p));
     }
 
     /**
