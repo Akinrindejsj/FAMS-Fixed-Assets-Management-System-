@@ -19,6 +19,7 @@ public record DetailedAssetRow(
         String vendor,
         String branch,
         String department,
+        String CostCenter,
         String custodian,
         BigDecimal accumulatedDepreciation,
         BigDecimal netBookValue,

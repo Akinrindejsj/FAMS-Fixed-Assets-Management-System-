@@ -52,6 +52,22 @@
                         <li><button onclick="loadReport('non-depreciable')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Non-Depreciable Assets</button></li>
                     </ul>
                 </div>
+                <!-- Acquisition & Capitalisation Reports -->
+                <div>
+                    <div class="flex items-center gap-2 mb-2 px-2">
+                        <span class="material-symbols-outlined text-[18px] text-primary">shopping_cart</span>
+                        <h4 class="font-body-medium text-on-surface">Acquisition Reports</h4>
+                    </div>
+                    <ul class="space-y-1">
+                        <li><button onclick="loadReport('asset-acquisition')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Asset Acquisition Report</button></li>
+                        <li><button onclick="loadReport('asset-additions')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Asset Additions Report</button></li>
+                        <li><button onclick="loadReport('acquisition-cost-analysis')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Acquisition Cost Analysis</button></li>
+                        <li><button onclick="loadReport('acquisition-by-supplier')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Acquisition by Supplier</button></li>
+                        <li><button onclick="loadReport('acquisition-by-category')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Acquisition by Category</button></li>
+                        <li><button onclick="loadReport('acquisition-by-department')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Acquisition by Department/Cost Centre</button></li>
+                        <li><button onclick="loadReport('acquisition-trend')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Acquisition Trend</button></li>
+                    </ul>
+                </div>
                 <!-- Financial Reports -->
                 <div>
                     <div class="flex items-center gap-2 mb-2 px-2">
@@ -114,11 +130,12 @@
                     </div>
                 </div>
                 <div class="p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                    <div class="space-y-1.5">
+                    <div id="dateRangeWrapper" class="hidden space-y-1.5 sm:col-span-2">
                         <label class="text-label-small text-secondary uppercase tracking-wide">Date Range</label>
-                        <div class="relative">
-                            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-secondary text-[18px]">calendar_today</span>
-                            <input id="dateRange" type="text" data-input-type="text" value="Jan 01, 2024 - Mar 31, 2024" placeholder="Select date range" class="w-full h-[38px] pl-10 pr-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                        <div class="flex items-center gap-2">
+                            <input id="fromDateFilter" type="date" onchange="reloadCurrentReport()" class="w-full h-[38px] px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                            <span class="text-secondary text-body-default">to</span>
+                            <input id="toDateFilter" type="date" onchange="reloadCurrentReport()" class="w-full h-[38px] px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none">
                         </div>
                     </div>
                     <div class="space-y-1.5">
@@ -155,10 +172,19 @@
                             <option value="CATEGORY">Category</option>
                             <option value="LOCATION">Location</option>
                             <option value="DEPARTMENT">Department</option>
+                            <option value="COST_CENTRE">Cost Centre</option>
                             <option value="CUSTODIAN">Custodian</option>
                             <option value="STATUS">Status</option>
                             <option value="ACQUISITION_MONTH">Acquisition Date</option>
                             <option value="SUPPLIER">Supplier</option>
+                        </select>
+                    </div>
+                    <div id="trendGranularityWrapper" class="hidden space-y-1.5">
+                        <label class="text-label-small text-secondary uppercase tracking-wide">Trend Granularity</label>
+                        <select id="trendGranularityFilter" onchange="reloadCurrentReport()" class="w-full h-[38px] px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                            <option value="MONTH">Monthly</option>
+                            <option value="QUARTER">Quarterly</option>
+                            <option value="YEAR">Annual</option>
                         </select>
                     </div>
                 </div>
@@ -205,6 +231,45 @@
 
                 <!-- Grouped View (Asset Register by X — collapsible groups with subtotals) -->
                 <div id="groupedViewContainer" class="hidden divide-y divide-border-default">
+                </div>
+
+                <!-- Cost Analysis View (Acquisition Cost Analysis — totals + category breakdown) -->
+                <div id="costAnalysisViewContainer" class="hidden">
+                    <div class="px-5 py-4 grid grid-cols-2 sm:grid-cols-4 gap-4 border-b border-border-default">
+                        <div>
+                            <div class="text-label-small text-secondary uppercase tracking-wide">Average Cost</div>
+                            <div id="costAnalysisAverage" class="text-card-header font-card-header text-on-surface">—</div>
+                        </div>
+                        <div>
+                            <div class="text-label-small text-secondary uppercase tracking-wide">Min Cost</div>
+                            <div id="costAnalysisMin" class="text-card-header font-card-header text-on-surface">—</div>
+                        </div>
+                        <div>
+                            <div class="text-label-small text-secondary uppercase tracking-wide">Max Cost</div>
+                            <div id="costAnalysisMax" class="text-card-header font-card-header text-on-surface">—</div>
+                        </div>
+                        <div>
+                            <div class="text-label-small text-secondary uppercase tracking-wide">Assets Acquired</div>
+                            <div id="costAnalysisCount" class="text-card-header font-card-header text-on-surface">—</div>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                            <tr class="bg-surface-canvas border-b border-border-default">
+                                <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Category</th>
+                                <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Asset Count</th>
+                                <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Total Cost</th>
+                            </tr>
+                            </thead>
+                            <tbody id="costAnalysisBreakdownBody" class="divide-y divide-border-default">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Trend View (Asset Acquisition Trend — chronological bar list) -->
+                <div id="trendViewContainer" class="hidden px-5 py-5 space-y-3">
                 </div>
 
                 <!-- Report Data Template -->
@@ -345,6 +410,74 @@
                 rowType: 'register',
                 canExport: true
             },
+            'asset-acquisition': {
+                name: 'Asset Acquisition Report',
+                description: 'Assets purchased or otherwise acquired within a selected reporting period',
+                apiEndpoint: '/api/reports/asset-acquisition',
+                hasFilters: true,
+                hasDateRange: true,
+                rowType: 'register',
+                canExport: false
+            },
+            'asset-additions': {
+                name: 'Asset Additions Report',
+                description: 'New additions to the fixed asset register (by date entered into FAMS)',
+                apiEndpoint: '/api/reports/asset-additions',
+                hasFilters: true,
+                hasDateRange: true,
+                rowType: 'register',
+                canExport: false
+            },
+            'acquisition-cost-analysis': {
+                name: 'Acquisition Cost Analysis',
+                description: 'Analysis of purchase price by category — total, average, min and max cost (total cost only; no cost-component breakdown)',
+                apiEndpoint: '/api/reports/acquisition-cost-analysis',
+                hasFilters: true,
+                hasDateRange: true,
+                rowType: 'costAnalysis',
+                canExport: false
+            },
+            'acquisition-by-supplier': {
+                name: 'Asset Acquisition by Supplier',
+                description: 'Acquisition value and count analysed by vendor within a selected period',
+                apiEndpoint: '/api/reports/asset-register/grouped',
+                hasFilters: true,
+                hasDateRange: true,
+                fixedGroupBy: 'SUPPLIER',
+                rowType: 'grouped',
+                canExport: false
+            },
+            'acquisition-by-category': {
+                name: 'Asset Acquisition by Category',
+                description: 'Capital expenditure analysed by asset category within a selected period',
+                apiEndpoint: '/api/reports/asset-register/grouped',
+                hasFilters: true,
+                hasDateRange: true,
+                fixedGroupBy: 'CATEGORY',
+                rowType: 'grouped',
+                canExport: false
+            },
+            'acquisition-by-department': {
+                name: 'Asset Acquisition by Department/Cost Centre',
+                description: 'Capital expenditure allocated to organisational responsibility centres within a selected period',
+                apiEndpoint: '/api/reports/asset-register/grouped',
+                hasFilters: true,
+                hasDateRange: true,
+                hasGroupBy: true,
+                defaultGroupBy: 'DEPARTMENT',
+                rowType: 'grouped',
+                canExport: false
+            },
+            'acquisition-trend': {
+                name: 'Asset Acquisition Trend',
+                description: 'Monthly, quarterly or annual trend in fixed asset acquisitions',
+                apiEndpoint: '/api/reports/acquisition-trend',
+                hasFilters: true,
+                hasDateRange: true,
+                hasTrendGranularity: true,
+                rowType: 'trend',
+                canExport: false
+            },
             'inventory-summary': {
                 name: 'Inventory Summary',
                 description: 'Summary view of inventory by category and location',
@@ -469,7 +602,14 @@
             document.getElementById('emptyStateContainer').classList.add('hidden');
             document.getElementById('summaryViewContainer').classList.add('hidden');
             document.getElementById('groupedViewContainer').classList.add('hidden');
+            document.getElementById('costAnalysisViewContainer').classList.add('hidden');
+            document.getElementById('trendViewContainer').classList.add('hidden');
             document.getElementById('groupByFilterWrapper').classList.toggle('hidden', !config.hasGroupBy);
+            document.getElementById('dateRangeWrapper').classList.toggle('hidden', !config.hasDateRange);
+            document.getElementById('trendGranularityWrapper').classList.toggle('hidden', !config.hasTrendGranularity);
+            if (config.hasGroupBy && config.defaultGroupBy) {
+                document.getElementById('groupByFilter').value = config.defaultGroupBy;
+            }
 
             // Highlight selected menu item
             document.querySelectorAll('.col-span-12.lg\\:col-span-3 button').forEach(btn => {
@@ -491,8 +631,19 @@
                     if (category && category !== 'All Categories') params.append('category', category);
                     if (department && department !== 'Global Operations') params.append('department', department);
                 }
-                if (config.hasGroupBy) {
+                if (config.fixedGroupBy) {
+                    params.append('groupBy', config.fixedGroupBy);
+                } else if (config.hasGroupBy) {
                     params.append('groupBy', document.getElementById('groupByFilter')?.value || 'CATEGORY');
+                }
+                if (config.hasDateRange) {
+                    const fromDate = document.getElementById('fromDateFilter')?.value;
+                    const toDate = document.getElementById('toDateFilter')?.value;
+                    if (fromDate) params.append('fromDate', fromDate);
+                    if (toDate) params.append('toDate', toDate);
+                }
+                if (config.hasTrendGranularity) {
+                    params.append('granularity', document.getElementById('trendGranularityFilter')?.value || 'MONTH');
                 }
 
                 if (params.toString()) {
@@ -528,6 +679,14 @@
             }
             if (rowType === 'detailed') {
                 renderDetailedReport(reportData);
+                return;
+            }
+            if (rowType === 'costAnalysis') {
+                renderCostAnalysisReport(reportData);
+                return;
+            }
+            if (rowType === 'trend') {
+                renderTrendReport(reportData);
                 return;
             }
             renderRegisterReport(reportData);
@@ -591,7 +750,7 @@
             }
 
             const headers = ['Asset Code', 'Name', 'Category', 'Serial #', 'Manufacturer', 'Model',
-                'Acquisition Date', 'Acquisition Cost', 'Vendor', 'Branch', 'Department', 'Custodian',
+                'Acquisition Date', 'Acquisition Cost', 'Vendor', 'Branch', 'Department', 'Cost Centre', 'Custodian',
                 'Accum. Depr.', 'Net Book Value', 'Warranty Expiry', 'Status'];
             document.getElementById('reportTableHead').innerHTML = `
                 <tr class="bg-surface-canvas border-b border-border-default">
@@ -616,6 +775,7 @@
                     <td class="px-5 py-3 text-body-default text-secondary">${row.vendor ?? ''}</td>
                     <td class="px-5 py-3 text-body-default text-secondary">${row.branch ?? ''}</td>
                     <td class="px-5 py-3 text-body-default text-secondary">${row.department ?? ''}</td>
+                    <td class="px-5 py-3 text-body-default text-secondary">${row.costCentre ?? ''}</td>
                     <td class="px-5 py-3 text-body-default text-secondary">${row.custodian ?? ''}</td>
                     <td class="px-5 py-3 text-body-default text-error">(${formatCurrency(row.accumulatedDepreciation)})</td>
                     <td class="px-5 py-3 text-body-default font-bold text-primary">${formatCurrency(row.netBookValue)}</td>
@@ -719,11 +879,85 @@
             container.classList.remove('hidden');
         }
 
+        // Acquisition Cost Analysis — totals + per-category cost breakdown, no per-asset rows.
+        function renderCostAnalysisReport(reportData) {
+            document.getElementById('costAnalysisAverage').textContent = formatCurrency(reportData.averageCost);
+            document.getElementById('costAnalysisMin').textContent = formatCurrency(reportData.minCost);
+            document.getElementById('costAnalysisMax').textContent = formatCurrency(reportData.maxCost);
+            document.getElementById('costAnalysisCount').textContent = reportData.totalAssets;
+
+            const tbody = document.getElementById('costAnalysisBreakdownBody');
+            tbody.innerHTML = '';
+
+            if (!reportData.byCategory || reportData.byCategory.length === 0) {
+                showEmptyState();
+                return;
+            }
+
+            reportData.byCategory.forEach(cat => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-surface-canvas/50 transition-colors';
+                tr.innerHTML = `
+                    <td class="px-5 py-3 text-body-default font-medium text-on-surface">${cat.category}</td>
+                    <td class="px-5 py-3 text-body-default text-secondary">${cat.assetCount}</td>
+                    <td class="px-5 py-3 text-body-default font-bold text-primary">${formatCurrency(cat.historicalCost)}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('totalValueStat').textContent = formatCurrency(reportData.totalCost);
+            document.getElementById('totalDepreciationStat').textContent = '—';
+            document.getElementById('totalNetBookValueStat').textContent = '—';
+            document.getElementById('reportRecordCount').textContent = `${reportData.totalAssets} assets acquired`;
+
+            document.getElementById('costAnalysisViewContainer').classList.remove('hidden');
+        }
+
+        // Asset Acquisition Trend — chronological bar list (monthly/quarterly/annual).
+        function renderTrendReport(reportData) {
+            const container = document.getElementById('trendViewContainer');
+            container.innerHTML = '';
+
+            if (!reportData.points || reportData.points.length === 0) {
+                showEmptyState();
+                return;
+            }
+
+            const maxCost = Math.max(...reportData.points.map(p => Number(p.totalCost) || 0), 1);
+            const totalCost = reportData.points.reduce((sum, p) => sum + (Number(p.totalCost) || 0), 0);
+            const totalCount = reportData.points.reduce((sum, p) => sum + (Number(p.assetCount) || 0), 0);
+
+            reportData.points.forEach(point => {
+                const pct = Math.max(4, Math.round((Number(point.totalCost) || 0) / maxCost * 100));
+                const row = document.createElement('div');
+                row.className = 'flex items-center gap-4';
+                row.innerHTML = `
+                    <div class="w-24 shrink-0 text-body-default font-medium text-on-surface">${point.period}</div>
+                    <div class="flex-1 bg-surface-canvas rounded-full h-6 overflow-hidden">
+                        <div class="bg-primary h-full rounded-full flex items-center justify-end px-2" style="width: ${pct}%">
+                        </div>
+                    </div>
+                    <div class="w-28 shrink-0 text-right text-body-default text-on-surface">${formatCurrency(point.totalCost)}</div>
+                    <div class="w-20 shrink-0 text-right text-body-default text-secondary">${point.assetCount} assets</div>
+                `;
+                container.appendChild(row);
+            });
+
+            document.getElementById('totalValueStat').textContent = formatCurrency(totalCost);
+            document.getElementById('totalDepreciationStat').textContent = '—';
+            document.getElementById('totalNetBookValueStat').textContent = '—';
+            document.getElementById('reportRecordCount').textContent = `${totalCount} assets across ${reportData.points.length} periods`;
+
+            container.classList.remove('hidden');
+        }
+
         // Show empty state
         function showEmptyState() {
             document.getElementById('reportDataContainer').classList.add('hidden');
             document.getElementById('summaryViewContainer').classList.add('hidden');
             document.getElementById('groupedViewContainer').classList.add('hidden');
+            document.getElementById('costAnalysisViewContainer').classList.add('hidden');
+            document.getElementById('trendViewContainer').classList.add('hidden');
             document.getElementById('emptyStateContainer').classList.remove('hidden');
         }
 

@@ -5,6 +5,7 @@ public enum AssetGroupBy {
     CATEGORY,
     LOCATION,      // Asset.branch
     DEPARTMENT,
+    COST_CENTRE,
     CUSTODIAN,
     STATUS,
     ACQUISITION_MONTH, // Asset.purchaseDate, truncated to yyyy-MM

@@ -196,8 +196,8 @@ public class AssetController {
     @GetMapping("/assets/register/example-csv")
     @ResponseBody
     public org.springframework.http.ResponseEntity<byte[]> downloadExampleCsv() {
-        String header = "name,category,description,serialNumber,manufacturer,model,purchaseDate,purchaseCost,vendor,warrantyExpiry,department,branch,custodian,status\n";
-        String example = "Dell Latitude 5530,IT Equipment,Company laptop,ABC-1234,Dell,Latitude 5530,2024-06-01,350000.00,JustJava Supplies,2025-06-01,IT,Head Office,jdoe,In Stock\n";
+        String header = "name,category,description,serialNumber,manufacturer,model,purchaseDate,purchaseCost,vendor,costCentre,warrantyExpiry,department,branch,custodian,status\n";
+        String example = "Dell Latitude 5530,IT Equipment,Company laptop,ABC-1234,Dell,Latitude 5530,2024-06-01,350000.00,JustJava Supplies,CC-1042,2025-06-01,IT,Head Office,jdoe,In Stock\n";
         String csv = header + example;
         byte[] bytes = csv.getBytes(java.nio.charset.StandardCharsets.UTF_8);
         return org.springframework.http.ResponseEntity.ok()

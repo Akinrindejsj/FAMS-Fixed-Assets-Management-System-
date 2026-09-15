@@ -61,6 +61,14 @@ public class Asset {
     @Column(length = 120)
     private String custodian;
 
+    /**
+     * Accounting cost centre — distinct from department (organisational owner).
+     * Optional: not every deployment tracks cost centres separately from department,
+     * so this is nullable and left unset by existing rows.
+     */
+    @Column(length = 120)
+    private String costCentre;
+
     @Column(nullable = false, length = 40)
     private String status;
 
@@ -214,6 +222,14 @@ public class Asset {
 
     public void setCustodian(String custodian) {
         this.custodian = custodian;
+    }
+
+    public String getCostCentre() {
+        return costCentre;
+    }
+
+    public void setCostCentre(String costCentre) {
+        this.costCentre = costCentre;
     }
 
     public String getStatus() {

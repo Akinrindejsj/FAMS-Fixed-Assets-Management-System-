@@ -47,7 +47,7 @@ public class AssetService {
     /**
      * Bulk create assets from a CSV file. The CSV must contain a header row. Supported headers (case-insensitive):
      * name, category, description, serialNumber, manufacturer, model, purchaseDate (yyyy-MM-dd), purchaseCost,
-     * vendor, warrantyExpiry (yyyy-MM-dd), department, branch, custodian, status
+     * vendor, costCentre, warrantyExpiry (yyyy-MM-dd), department, branch, custodian, status
      *
      * This method is defensive: it attempts to create as many assets as possible and returns a summary of successes
      * and per-line errors.
@@ -135,6 +135,7 @@ public class AssetService {
                     }
 
                     asset.setVendor(row.getOrDefault("vendor", null));
+                    asset.setCostCentre(row.getOrDefault("costcentre", null));
 
                     String warrantyExpiryStr = row.getOrDefault("warrantyexpiry", "");
                     if (!warrantyExpiryStr.isBlank()) {

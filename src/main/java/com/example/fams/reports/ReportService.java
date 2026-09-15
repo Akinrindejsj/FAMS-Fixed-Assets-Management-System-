@@ -182,6 +182,7 @@ public class ReportService {
                 asset.getVendor(),
                 asset.getBranch(),
                 asset.getDepartment(),
+                asset.getCostCentre(),
                 asset.getCustodian(),
                 accumulatedDepreciation,
                 netBookValue,
@@ -264,10 +265,11 @@ public class ReportService {
      * identical report methods; grouping key extraction lives in {@link #groupKeyFor}.
      */
     @Cacheable(cacheNames = "reports",
-            key = "'assetRegisterGrouped|' + #scope.cacheKey() + '|' + #groupBy + '|' + #category + '|' + #department + '|' + #status")
+            key = "'assetRegisterGrouped|' + #scope.cacheKey() + '|' + #groupBy + '|' + #category + '|' + #department + '|' + #status + '|' + #fromDate + '|' + #toDate")
     @Transactional(readOnly = true)
     public GroupedReportData generateGroupedAssetRegisterReport(ReportScope scope, AssetGroupBy groupBy,
-                                                                 String category, String department, String status) {
+                                                                 String category, String department, String status,
+                                                                 LocalDate fromDate, LocalDate toDate) {
         List<Asset> assets = scopedAssets(scope);
         if (hasValue(category, "All Categories")) {
             assets = assets.stream()
@@ -282,6 +284,16 @@ public class ReportService {
         if (status != null && !status.isEmpty()) {
             assets = assets.stream()
                     .filter(a -> a.getStatus() != null && a.getStatus().equalsIgnoreCase(status))
+                    .collect(Collectors.toList());
+        }
+        if (fromDate != null) {
+            assets = assets.stream()
+                    .filter(a -> a.getPurchaseDate() != null && !a.getPurchaseDate().isBefore(fromDate))
+                    .collect(Collectors.toList());
+        }
+        if (toDate != null) {
+            assets = assets.stream()
+                    .filter(a -> a.getPurchaseDate() != null && !a.getPurchaseDate().isAfter(toDate))
                     .collect(Collectors.toList());
         }
 
@@ -325,6 +337,7 @@ public class ReportService {
             case CATEGORY -> orUnspecified(asset.getCategory());
             case LOCATION -> orUnspecified(asset.getBranch());
             case DEPARTMENT -> orUnspecified(asset.getDepartment());
+            case COST_CENTRE -> orUnspecified(asset.getCostCentre());
             case CUSTODIAN -> orUnspecified(asset.getCustodian());
             case STATUS -> orUnspecified(asset.getStatus());
             case SUPPLIER -> orUnspecified(asset.getVendor());
@@ -342,6 +355,7 @@ public class ReportService {
             case CATEGORY -> "Category";
             case LOCATION -> "Location";
             case DEPARTMENT -> "Department";
+            case COST_CENTRE -> "Cost Centre";
             case CUSTODIAN -> "Custodian";
             case STATUS -> "Status";
             case SUPPLIER -> "Supplier";
@@ -446,6 +460,186 @@ public class ReportService {
                 .collect(Collectors.toList());
 
         return finish(report, nonDepreciable);
+    }
+
+    /**
+     * Asset Acquisition Report: assets acquired (by purchaseDate)
+     * within a reporting period.
+     */
+    @Cacheable(cacheNames = "reports",
+            key = "'assetAcquisition|' + #scope.cacheKey() + '|' + #fromDate + '|' + #toDate + '|' + #category + '|' + #department")
+    @Transactional(readOnly = true)
+    public ReportData generateAssetAcquisitionReport(ReportScope scope, LocalDate fromDate, LocalDate toDate,
+                                                       String category, String department) {
+        ReportData report = new ReportData();
+        report.setReportType("assetAcquisition");
+        report.setReportName("Asset Acquisition Report");
+        report.setGeneratedDate(LocalDate.now());
+        report.setCategory(hasValue(category, "All Categories") ? category : null);
+        report.setDepartment(hasValue(department, "Global Operations") ? department : null);
+
+        List<Asset> assets = filterByAcquisitionPeriod(scopedAssets(scope), fromDate, toDate, category, department);
+        return finish(report, assets);
+    }
+
+    /**
+     * Asset Additions Report: assets newly added to the register
+     * within a period.
+     *
+     * <p><b>Interpretation note:</b> the catalogue distinguishes this from 
+     * ("Asset Acquisition Report") without defining how. Read literally — "new
+     * additions to the register" — this filters on {@code createdAt} (when the record
+     * was entered into FAMS), while item 1 filters on {@code purchaseDate} (when it was
+     * actually bought). Those two dates coincide for assets entered promptly but diverge
+     * for backlog/catch-up entries — worth confirming this is the distinction your team
+     * actually wants before relying on it.
+     */
+    @Cacheable(cacheNames = "reports",
+            key = "'assetAdditions|' + #scope.cacheKey() + '|' + #fromDate + '|' + #toDate + '|' + #category + '|' + #department")
+    @Transactional(readOnly = true)
+    public ReportData generateAssetAdditionsReport(ReportScope scope, LocalDate fromDate, LocalDate toDate,
+                                                     String category, String department) {
+        ReportData report = new ReportData();
+        report.setReportType("assetAdditions");
+        report.setReportName("Asset Additions Report");
+        report.setGeneratedDate(LocalDate.now());
+        report.setCategory(hasValue(category, "All Categories") ? category : null);
+        report.setDepartment(hasValue(department, "Global Operations") ? department : null);
+
+        List<Asset> assets = scopedAssets(scope);
+        if (hasValue(category, "All Categories")) {
+            assets = assets.stream()
+                    .filter(a -> a.getCategory() != null && a.getCategory().equalsIgnoreCase(category))
+                    .collect(Collectors.toList());
+        }
+        if (hasValue(department, "Global Operations")) {
+            assets = assets.stream()
+                    .filter(a -> a.getDepartment() != null && a.getDepartment().equalsIgnoreCase(department))
+                    .collect(Collectors.toList());
+        }
+        if (fromDate != null) {
+            assets = assets.stream()
+                    .filter(a -> a.getCreatedAt() != null && !a.getCreatedAt().toLocalDate().isBefore(fromDate))
+                    .collect(Collectors.toList());
+        }
+        if (toDate != null) {
+            assets = assets.stream()
+                    .filter(a -> a.getCreatedAt() != null && !a.getCreatedAt().toLocalDate().isAfter(toDate))
+                    .collect(Collectors.toList());
+        }
+
+        return finish(report, assets);
+    }
+
+    /**
+     * Acquisition Cost Analysis. See {@link AcquisitionCostAnalysisData}
+     * javadoc for the scope caveat (total cost only, no cost-component breakdown).
+     */
+    @Cacheable(cacheNames = "reports",
+            key = "'acquisitionCostAnalysis|' + #scope.cacheKey() + '|' + #fromDate + '|' + #toDate + '|' + #category + '|' + #department")
+    @Transactional(readOnly = true)
+    public AcquisitionCostAnalysisData generateAcquisitionCostAnalysis(ReportScope scope, LocalDate fromDate, LocalDate toDate,
+                                                                        String category, String department) {
+        List<Asset> assets = filterByAcquisitionPeriod(scopedAssets(scope), fromDate, toDate, category, department);
+
+        AcquisitionCostAnalysisData data = new AcquisitionCostAnalysisData();
+        data.setGeneratedDate(LocalDate.now());
+        data.setFromDate(fromDate);
+        data.setToDate(toDate);
+        data.setTotalAssets(assets.size());
+
+        List<BigDecimal> costs = assets.stream()
+                .map(a -> a.getPurchaseCost() == null ? BigDecimal.ZERO : a.getPurchaseCost())
+                .collect(Collectors.toList());
+        BigDecimal total = costs.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+        data.setTotalCost(total);
+        data.setAverageCost(costs.isEmpty() ? BigDecimal.ZERO
+                : total.divide(BigDecimal.valueOf(costs.size()), 2, java.math.RoundingMode.HALF_UP));
+        data.setMinCost(costs.stream().min(BigDecimal::compareTo).orElse(BigDecimal.ZERO));
+        data.setMaxCost(costs.stream().max(BigDecimal::compareTo).orElse(BigDecimal.ZERO));
+
+        Map<String, List<Asset>> byCategory = assets.stream()
+                .collect(Collectors.groupingBy(a -> a.getCategory() == null ? "Uncategorized" : a.getCategory()));
+        List<AssetSummaryData.CategoryBreakdown> breakdown = byCategory.entrySet().stream()
+                .map(e -> {
+                    BigDecimal catCost = e.getValue().stream()
+                            .map(a -> a.getPurchaseCost() == null ? BigDecimal.ZERO : a.getPurchaseCost())
+                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+                    return new AssetSummaryData.CategoryBreakdown(e.getKey(), e.getValue().size(), catCost, BigDecimal.ZERO, BigDecimal.ZERO);
+                })
+                .sorted((a, b) -> a.category().compareToIgnoreCase(b.category()))
+                .collect(Collectors.toList());
+        data.setByCategory(breakdown);
+
+        return data;
+    }
+
+    /**
+     * Asset Acquisition Trend: acquisition count and cost over
+     * time, at monthly/quarterly/annual granularity.
+     */
+    @Cacheable(cacheNames = "reports",
+            key = "'acquisitionTrend|' + #scope.cacheKey() + '|' + #granularity + '|' + #fromDate + '|' + #toDate + '|' + #category + '|' + #department")
+    @Transactional(readOnly = true)
+    public AcquisitionTrendData generateAcquisitionTrendReport(ReportScope scope, TrendGranularity granularity,
+                                                                 LocalDate fromDate, LocalDate toDate,
+                                                                 String category, String department) {
+        List<Asset> assets = filterByAcquisitionPeriod(scopedAssets(scope), fromDate, toDate, category, department)
+                .stream()
+                .filter(a -> a.getPurchaseDate() != null)
+                .collect(Collectors.toList());
+
+        Map<String, List<Asset>> byPeriod = assets.stream()
+                .collect(Collectors.groupingBy(a -> trendPeriodKey(a.getPurchaseDate(), granularity)));
+
+        List<TrendPoint> points = byPeriod.entrySet().stream()
+                .map(e -> new TrendPoint(
+                        e.getKey(),
+                        e.getValue().size(),
+                        e.getValue().stream().map(a -> a.getPurchaseCost() == null ? BigDecimal.ZERO : a.getPurchaseCost())
+                                .reduce(BigDecimal.ZERO, BigDecimal::add)))
+                .sorted((a, b) -> a.period().compareTo(b.period())) // "YYYY-MM"/"YYYY-QN"/"YYYY" all sort correctly as strings
+                .collect(Collectors.toList());
+
+        AcquisitionTrendData data = new AcquisitionTrendData();
+        data.setGeneratedDate(LocalDate.now());
+        data.setGranularity(granularity);
+        data.setPoints(points);
+        return data;
+    }
+
+    private String trendPeriodKey(LocalDate date, TrendGranularity granularity) {
+        return switch (granularity) {
+            case MONTH -> date.getYear() + "-" + String.format("%02d", date.getMonthValue());
+            case QUARTER -> date.getYear() + "-Q" + (((date.getMonthValue() - 1) / 3) + 1);
+            case YEAR -> String.valueOf(date.getYear());
+        };
+    }
+
+    /** Shared acquisition-period + category/department filter */
+    private List<Asset> filterByAcquisitionPeriod(List<Asset> assets, LocalDate fromDate, LocalDate toDate,
+                                                    String category, String department) {
+        if (hasValue(category, "All Categories")) {
+            assets = assets.stream()
+                    .filter(a -> a.getCategory() != null && a.getCategory().equalsIgnoreCase(category))
+                    .collect(Collectors.toList());
+        }
+        if (hasValue(department, "Global Operations")) {
+            assets = assets.stream()
+                    .filter(a -> a.getDepartment() != null && a.getDepartment().equalsIgnoreCase(department))
+                    .collect(Collectors.toList());
+        }
+        if (fromDate != null) {
+            assets = assets.stream()
+                    .filter(a -> a.getPurchaseDate() != null && !a.getPurchaseDate().isBefore(fromDate))
+                    .collect(Collectors.toList());
+        }
+        if (toDate != null) {
+            assets = assets.stream()
+                    .filter(a -> a.getPurchaseDate() != null && !a.getPurchaseDate().isAfter(toDate))
+                    .collect(Collectors.toList());
+        }
+        return assets;
     }
 
     /**
