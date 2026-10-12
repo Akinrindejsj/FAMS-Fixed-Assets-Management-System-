@@ -3,7 +3,7 @@ package com.example.fams.reports;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-/** Section 2, item 13 — a component asset alongside its parent asset's identity. */
+/** A component asset alongside its parent asset's identity. */
 public record ComponentRow(
         String componentCode,
         String componentName,

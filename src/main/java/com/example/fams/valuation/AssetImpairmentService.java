@@ -84,7 +84,7 @@ public class AssetImpairmentService {
 
     /**
      * Bulk cumulative net impairment (losses minus reversals) per asset, used by the Net
-     * Book Value Report (item 1) to avoid one query per asset.
+     * Book Value Report to avoid one query per asset.
      */
     @Transactional(readOnly = true)
     public Map<Long, BigDecimal> getCumulativeImpairmentForAssets(Collection<Long> assetIds) {

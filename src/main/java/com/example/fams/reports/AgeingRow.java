@@ -3,7 +3,7 @@ package com.example.fams.reports;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-/** Section 5, item 8 — asset age (from purchaseDate) alongside its current value. */
+/** Asset age (from purchaseDate) alongside its current value. */
 public record AgeingRow(
         String assetCode,
         String assetName,

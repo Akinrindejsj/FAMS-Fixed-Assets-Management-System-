@@ -25,8 +25,6 @@ public class GLAccountingController {
         this.glAccountingService = glAccountingService;
     }
 
-    // ---- Accounts ----
-
     @GetMapping("/accounts")
     public String accounts(Model model) {
         model.addAttribute("accounts", accountRepository.findAllByOrderByAccountCodeAsc());
@@ -52,8 +50,6 @@ public class GLAccountingController {
         }
         return "redirect:/gl/accounts";
     }
-
-    // ---- Category mappings ----
 
     @GetMapping("/mappings")
     public String mappings(Model model) {
@@ -106,8 +102,6 @@ public class GLAccountingController {
     private GLAccount lookup(Long id) {
         return id == null ? null : accountRepository.findById(id).orElse(null);
     }
-
-    // ---- Journals ----
 
     @GetMapping("/journals")
     public String journals(@RequestParam(required = false) String status, Model model) {

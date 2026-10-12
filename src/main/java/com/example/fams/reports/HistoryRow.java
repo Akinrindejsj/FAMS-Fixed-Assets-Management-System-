@@ -3,7 +3,7 @@ package com.example.fams.reports;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-/** Section 4, item 14 — one historical posting, flattened across all scoped assets. */
+/** One historical posting, flattened across all scoped assets. */
 public record HistoryRow(
         String assetCode,
         String assetName,

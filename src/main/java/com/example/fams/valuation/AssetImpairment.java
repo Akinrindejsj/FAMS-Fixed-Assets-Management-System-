@@ -19,9 +19,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
- * Section 5, items 1 (partial), 12–13 — Impairment Report / History both read from this
- * table (same framing distinction as {@link AssetRevaluation}: a period vs full history).
- * Also feeds the impairment column on the Net Book Value Report (item 1).
+ * Impairment Report / History both read from this table (same framing distinction as
+ * {@link AssetRevaluation}: a period vs full history). Also feeds the impairment column
+ * on the Net Book Value Report.
  *
  * <p>{@code amount} is always a positive magnitude; {@code type} determines direction.
  * {@code carryingAmountBefore} is captured automatically at creation time, same rationale

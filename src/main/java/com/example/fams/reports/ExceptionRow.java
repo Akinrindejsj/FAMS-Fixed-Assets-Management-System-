@@ -1,6 +1,6 @@
 package com.example.fams.reports;
 
-/** Section 4, item 12 — an asset excluded from/failing depreciation, with why. */
+/** An asset excluded from/failing depreciation, with why. */
 public record ExceptionRow(
         String assetCode,
         String assetName,

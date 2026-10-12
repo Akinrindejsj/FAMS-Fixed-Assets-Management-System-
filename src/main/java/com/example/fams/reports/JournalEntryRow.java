@@ -3,7 +3,7 @@ package com.example.fams.reports;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-/** Section 8, items 2, 3, 4, 12 — one journal entry header. */
+/** One journal entry header. */
 public record JournalEntryRow(
         String journalNumber,
         LocalDate date,

@@ -3,7 +3,7 @@ package com.example.fams.reports;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-/** Section 8, items 1, 5, 11 — one journal line, with its parent entry's context. */
+/** One journal line, with its parent entry's context. */
 public record JournalLineRow(
         String journalNumber,
         LocalDate date,

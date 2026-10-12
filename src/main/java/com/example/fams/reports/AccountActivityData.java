@@ -5,12 +5,10 @@ import java.time.LocalDate;
 import java.util.List;
 
 /**
- * Section 8, item 5 — Asset Account Activity: movement on one GL account over a period.
- * Unlike Section 5's Carrying Amount Movement (blocked — no asset-level snapshots exist),
- * this IS computable correctly: the opening balance is the cumulative net of every
- * journal line posted to this account before the period start, which the ledger has
- * always recorded. Accurate from whenever journal generation started; activity from
- * before that point (if any assets/transactions predate GL wiring) won't appear.
+ * Asset Account Activity: movement on one GL account over a period. The opening balance
+ * is the cumulative net of every journal line posted to this account before the period
+ * start. Accurate from whenever journal generation started; activity from before that
+ * point (if any assets/transactions predate GL wiring) won't appear.
  */
 public class AccountActivityData {
     private String accountCode;

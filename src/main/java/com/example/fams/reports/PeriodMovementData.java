@@ -4,11 +4,10 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 /**
- * Section 8, item 13 — Period Movement Report: opening net book value, movement by
- * type, and closing net book value for a period. Computed entirely from journal line
- * history (see class javadoc on {@link AccountActivityData} for why this is reliable in
- * a way Section 5's Carrying Amount Movement Report was not) — accurate from whenever
- * journal generation started, not before.
+ * Period Movement Report: opening net book value, movement by type, and closing net book
+ * value for a period. Computed entirely from journal line history (see
+ * {@link AccountActivityData}) — accurate from whenever journal generation started,
+ * not before.
  */
 public class PeriodMovementData {
     private LocalDate fromDate;

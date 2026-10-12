@@ -3,7 +3,7 @@ package com.example.fams.reports;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-/** Section 5, items 9–11 — one revaluation entry, with asset context for reporting. */
+/** One revaluation entry, with asset context for reporting. */
 public record RevaluationRow(
         LocalDate date,
         String assetCode,

@@ -22,9 +22,6 @@ public class ReportController {
         this.scopeService = scopeService;
     }
 
-    /**
-     * Get Asset Register Report
-     */
     @GetMapping("/asset-register")
     public ResponseEntity<Map<String, Object>> assetRegisterReport(
             @RequestParam(required = false) String category,
@@ -45,9 +42,6 @@ public class ReportController {
         }
     }
 
-    /**
-     * Get Capitalisation Report (Section 3, item 3)
-     */
     @GetMapping("/capitalisation")
     public ResponseEntity<Map<String, Object>> capitalisationReport(
             @RequestParam(required = false) String category,
@@ -68,9 +62,6 @@ public class ReportController {
         }
     }
 
-    /**
-     * Get Assets Awaiting Capitalisation (Section 3, item 4)
-     */
     @GetMapping("/awaiting-capitalisation")
     public ResponseEntity<Map<String, Object>> awaitingCapitalisationReport(
             @RequestParam(required = false) String category,
@@ -89,9 +80,6 @@ public class ReportController {
         }
     }
 
-    /**
-     * Get Asset Acquisition Report (Section 3, item 1)
-     */
     @GetMapping("/asset-acquisition")
     public ResponseEntity<Map<String, Object>> assetAcquisitionReport(
             @RequestParam(required = false) String category,
@@ -112,9 +100,6 @@ public class ReportController {
         }
     }
 
-    /**
-     * Get Asset Additions Report (Section 3, item 2)
-     */
     @GetMapping("/asset-additions")
     public ResponseEntity<Map<String, Object>> assetAdditionsReport(
             @RequestParam(required = false) String category,
@@ -135,9 +120,6 @@ public class ReportController {
         }
     }
 
-    /**
-     * Get Acquisition Cost Analysis (Section 3, item 6)
-     */
     @GetMapping("/acquisition-cost-analysis")
     public ResponseEntity<Map<String, Object>> acquisitionCostAnalysis(
             @RequestParam(required = false) String category,
@@ -158,9 +140,6 @@ public class ReportController {
         }
     }
 
-    /**
-     * Get Asset Acquisition Trend (Section 3, item 10)
-     */
     @GetMapping("/acquisition-trend")
     public ResponseEntity<Map<String, Object>> acquisitionTrend(
             @RequestParam(defaultValue = "MONTH") TrendGranularity granularity,
@@ -182,9 +161,6 @@ public class ReportController {
         }
     }
 
-    /**
-     * Get Fully Depreciated Asset Register (catalogue item 14)
-     */
     @GetMapping("/asset-register/fully-depreciated")
     public ResponseEntity<Map<String, Object>> fullyDepreciatedAssetRegisterReport(
             @RequestParam(required = false) String category,
@@ -204,9 +180,6 @@ public class ReportController {
         }
     }
 
-    /**
-     * Get Non-Depreciable Asset Register (catalogue item 15)
-     */
     @GetMapping("/asset-register/non-depreciable")
     public ResponseEntity<Map<String, Object>> nonDepreciableAssetRegisterReport(
             @RequestParam(required = false) String category,
@@ -227,8 +200,8 @@ public class ReportController {
     }
 
     /**
-     * Get Asset Register grouped by a dimension — covers catalogue items 4–9 plus
-     * acquisition-date and supplier variants (see {@link AssetGroupBy}).
+     * Asset register grouped by a dimension (category, location, department, cost
+     * centre, custodian, status, acquisition month or supplier — see {@link AssetGroupBy}).
      * e.g. GET /api/reports/asset-register/grouped?groupBy=CATEGORY
      */
     @GetMapping("/asset-register/grouped")
@@ -255,9 +228,6 @@ public class ReportController {
         }
     }
 
-    /**
-     * Get Capitalisation Adjustment Report (Section 3, item 5)
-     */
     @GetMapping("/capitalisation-adjustments")
     public ResponseEntity<Map<String, Object>> capitalisationAdjustmentReport(
             @RequestParam(required = false) String category,
@@ -278,9 +248,6 @@ public class ReportController {
         }
     }
 
-    /**
-     * Get Asset Component Register (catalogue item 13)
-     */
     @GetMapping("/asset-components")
     public ResponseEntity<Map<String, Object>> assetComponentRegisterReport(
             @RequestParam(required = false) String category,
@@ -299,9 +266,6 @@ public class ReportController {
         }
     }
 
-    /**
-     * Get Detailed Fixed Asset Register Report (catalogue item 2)
-     */
     @GetMapping("/asset-register/detailed")
     public ResponseEntity<Map<String, Object>> detailedAssetRegisterReport(
             @RequestParam(required = false) String category,
@@ -322,9 +286,6 @@ public class ReportController {
         }
     }
 
-    /**
-     * Get Fixed Asset Summary Report (catalogue item 3)
-     */
     @GetMapping("/asset-register/summary")
     public ResponseEntity<Map<String, Object>> assetSummaryReport(
             @RequestParam(required = false) String category,
@@ -344,9 +305,6 @@ public class ReportController {
         }
     }
 
-    /**
-     * Get Inventory Summary Report
-     */
     @GetMapping("/inventory-summary")
     public ResponseEntity<Map<String, Object>> inventorySummaryReport(
             @RequestParam(required = false) String department) {
@@ -365,9 +323,6 @@ public class ReportController {
         }
     }
 
-    /**
-     * Get Location Audit Report
-     */
     @GetMapping("/location-audit")
     public ResponseEntity<Map<String, Object>> locationAuditReport(
             @RequestParam(required = false) String department) {
@@ -386,9 +341,6 @@ public class ReportController {
         }
     }
 
-    /**
-     * Get Valuation Report
-     */
     @GetMapping("/valuation")
     public ResponseEntity<Map<String, Object>> valuationReport(
             @RequestParam(required = false) String category,
@@ -408,9 +360,6 @@ public class ReportController {
         }
     }
 
-    /**
-     * Get Depreciation Schedule Report
-     */
     @GetMapping("/depreciation-schedule")
     public ResponseEntity<Map<String, Object>> depreciationScheduleReport(
             @RequestParam(required = false) String category,
@@ -431,13 +380,11 @@ public class ReportController {
     }
 
     /**
-     * Get disposal-based reports (Section 7, items 1, 2, 4, 5, 6, 7, 8, 9, 10 — one
-     * endpoint). {@code methods} (comma-separated) restricts to those disposalMethod
-     * values. Note on item 10 (Asset Retirement Report): this system has no distinct
-     * "retirement" concept — the UI maps it to methods=Write-off,Scrap (assets removed
-     * from service without a sale), which is an interpretation, not a documented fact
-     * about this business's disposal process. Confirm with the business before relying
-     * on it for anything formal.
+     * Serves the disposal register, detail, by-period/category, sales, scrapped, proceeds,
+     * gain/loss and retirement reports from one endpoint. {@code methods} (comma-separated)
+     * restricts to those disposalMethod values. The system has no distinct "retirement"
+     * concept, so the Asset Retirement view maps to methods=Write-off,Scrap (assets removed
+     * from service without a sale) — an interpretation to confirm with the business.
      */
     @GetMapping("/asset-disposals")
     public ResponseEntity<Map<String, Object>> disposalReport(
@@ -460,9 +407,6 @@ public class ReportController {
         }
     }
 
-    /**
-     * Get Assets Pending Disposal (Section 7, item 3)
-     */
     @GetMapping("/pending-disposal")
     public ResponseEntity<Map<String, Object>> pendingDisposalReport(
             @RequestParam(required = false) String category,
@@ -481,9 +425,6 @@ public class ReportController {
         }
     }
 
-    /**
-     * Get Disposal Approval History (Section 7, item 11)
-     */
     @GetMapping("/disposal-approval-history")
     public ResponseEntity<Map<String, Object>> disposalApprovalHistoryReport(
             @RequestParam(required = false) String category,
@@ -502,9 +443,6 @@ public class ReportController {
         }
     }
 
-    /**
-     * Get Asset Transfer Report (Section 6, item 1)
-     */
     @GetMapping("/asset-transfers")
     public ResponseEntity<Map<String, Object>> assetTransferReport(
             @RequestParam(required = false) String category,
@@ -526,7 +464,7 @@ public class ReportController {
     }
 
     /**
-     * Get Transfer-In Register (Section 6, item 2). "unit" filters against
+     * Transfers received into a unit. "unit" filters against
      * toDepartment/toBranch/toLocation (see ReportService javadoc).
      */
     @GetMapping("/transfer-in")
@@ -549,9 +487,6 @@ public class ReportController {
         }
     }
 
-    /**
-     * Get Transfer-Out Register (Section 6, item 3)
-     */
     @GetMapping("/transfer-out")
     public ResponseEntity<Map<String, Object>> transferOutRegister(
             @RequestParam(required = false) String category,
@@ -572,9 +507,6 @@ public class ReportController {
         }
     }
 
-    /**
-     * Get Inter-Branch Transfer Report (Section 6, item 4)
-     */
     @GetMapping("/inter-branch-transfers")
     public ResponseEntity<Map<String, Object>> interBranchTransferReport(
             @RequestParam(required = false) String category,
@@ -595,9 +527,6 @@ public class ReportController {
         }
     }
 
-    /**
-     * Get Inter-Department Transfer Report (Section 6, item 5)
-     */
     @GetMapping("/inter-department-transfers")
     public ResponseEntity<Map<String, Object>> interDepartmentTransferReport(
             @RequestParam(required = false) String category,
@@ -617,9 +546,6 @@ public class ReportController {
         }
     }
 
-    /**
-     * Get Asset Assignment Report (Section 6, item 6)
-     */
     @GetMapping("/asset-assignments")
     public ResponseEntity<Map<String, Object>> assetAssignmentReport(
             @RequestParam(required = false) String category,
@@ -638,9 +564,6 @@ public class ReportController {
         }
     }
 
-    /**
-     * Get Unassigned Assets Report (Section 6, item 10)
-     */
     @GetMapping("/unassigned-assets")
     public ResponseEntity<Map<String, Object>> unassignedAssetsReport(
             @RequestParam(required = false) String category,
@@ -659,9 +582,6 @@ public class ReportController {
         }
     }
 
-    /**
-     * Get Asset Assignment History (Section 6, item 8)
-     */
     @GetMapping("/assignment-history")
     public ResponseEntity<Map<String, Object>> assignmentHistoryReport(
             @RequestParam(required = false) String category,
@@ -682,9 +602,6 @@ public class ReportController {
         }
     }
 
-    /**
-     * Get Asset Location History (Section 6, item 9)
-     */
     @GetMapping("/location-history")
     public ResponseEntity<Map<String, Object>> locationHistoryReport(
             @RequestParam(required = false) String category,
@@ -705,9 +622,6 @@ public class ReportController {
         }
     }
 
-    /**
-     * Get Assets Pending Transfer Approval (Section 6, item 11)
-     */
     @GetMapping("/pending-transfer-approval")
     public ResponseEntity<Map<String, Object>> pendingTransferApprovalReport(
             @RequestParam(required = false) String category,
@@ -726,9 +640,6 @@ public class ReportController {
         }
     }
 
-    /**
-     * Get Asset Movement History (Section 6, item 12)
-     */
     @GetMapping("/movement-history")
     public ResponseEntity<Map<String, Object>> movementHistoryReport(
             @RequestParam(required = false) String category,
@@ -749,9 +660,6 @@ public class ReportController {
         }
     }
 
-    /**
-     * Get Net Book Value Report (Section 5, item 1)
-     */
     @GetMapping("/net-book-value")
     public ResponseEntity<Map<String, Object>> netBookValueReport(
             @RequestParam(required = false) String category,
@@ -770,9 +678,6 @@ public class ReportController {
         }
     }
 
-    /**
-     * Get Asset Ageing and Value Report (Section 5, item 8)
-     */
     @GetMapping("/asset-ageing")
     public ResponseEntity<Map<String, Object>> assetAgeingReport(
             @RequestParam(required = false) String category,
@@ -792,7 +697,7 @@ public class ReportController {
     }
 
     /**
-     * Get Revaluation Report / History / Gain-Loss Report (Section 5, items 9-11 — one endpoint)
+     * Revaluation report, history and gain/loss — one endpoint, since all three read the same data.
      */
     @GetMapping("/revaluations")
     public ResponseEntity<Map<String, Object>> revaluationReport(
@@ -815,7 +720,7 @@ public class ReportController {
     }
 
     /**
-     * Get Impairment Report / History (Section 5, items 12-13 — one endpoint)
+     * Impairment report and history — one endpoint.
      */
     @GetMapping("/impairments")
     public ResponseEntity<Map<String, Object>> impairmentReport(
@@ -837,9 +742,6 @@ public class ReportController {
         }
     }
 
-    /**
-     * Get Depreciation Run Report (Section 4, item 11)
-     */
     @GetMapping("/depreciation-runs")
     public ResponseEntity<Map<String, Object>> depreciationRunReport() {
         try {
@@ -856,9 +758,6 @@ public class ReportController {
         }
     }
 
-    /**
-     * Get Accumulated Depreciation Report (Section 4, item 4)
-     */
     @GetMapping("/accumulated-depreciation")
     public ResponseEntity<Map<String, Object>> accumulatedDepreciationReport(
             @RequestParam(required = false) String category,
@@ -877,9 +776,6 @@ public class ReportController {
         }
     }
 
-    /**
-     * Get Monthly Depreciation Report (Section 4, item 2)
-     */
     @GetMapping("/depreciation-monthly")
     public ResponseEntity<Map<String, Object>> monthlyDepreciationReport(@RequestParam String period) {
         try {
@@ -896,9 +792,6 @@ public class ReportController {
         }
     }
 
-    /**
-     * Get Depreciation Expense Report (Section 4, item 3)
-     */
     @GetMapping("/depreciation-expense")
     public ResponseEntity<Map<String, Object>> depreciationExpenseReport(
             @RequestParam(required = false) String category,
@@ -919,9 +812,6 @@ public class ReportController {
         }
     }
 
-    /**
-     * Get Depreciation by Category, for a period (Section 4, item 5)
-     */
     @GetMapping("/depreciation-by-category")
     public ResponseEntity<Map<String, Object>> depreciationByCategoryReport(@RequestParam String period) {
         try {
@@ -938,9 +828,6 @@ public class ReportController {
         }
     }
 
-    /**
-     * Get Depreciation by Department, for a period (Section 4, item 7)
-     */
     @GetMapping("/depreciation-by-department")
     public ResponseEntity<Map<String, Object>> depreciationByDepartmentReport(@RequestParam String period) {
         try {
@@ -957,9 +844,6 @@ public class ReportController {
         }
     }
 
-    /**
-     * Get Depreciation by Cost Centre, for a period (Section 4, item 8)
-     */
     @GetMapping("/depreciation-by-cost-centre")
     public ResponseEntity<Map<String, Object>> depreciationByCostCentreReport(@RequestParam String period) {
         try {
@@ -976,9 +860,6 @@ public class ReportController {
         }
     }
 
-    /**
-     * Get Depreciation by Method (Section 4, item 10)
-     */
     @GetMapping("/depreciation-by-method")
     public ResponseEntity<Map<String, Object>> depreciationByMethodReport(
             @RequestParam(required = false) String category,
@@ -997,9 +878,6 @@ public class ReportController {
         }
     }
 
-    /**
-     * Get Depreciation Exception Report (Section 4, item 12)
-     */
     @GetMapping("/depreciation-exceptions")
     public ResponseEntity<Map<String, Object>> depreciationExceptionReport(
             @RequestParam(required = false) String category,
@@ -1018,9 +896,6 @@ public class ReportController {
         }
     }
 
-    /**
-     * Get Depreciation Adjustment Report (Section 4, item 13)
-     */
     @GetMapping("/depreciation-adjustments")
     public ResponseEntity<Map<String, Object>> depreciationAdjustmentReport(
             @RequestParam(required = false) String category,
@@ -1041,9 +916,6 @@ public class ReportController {
         }
     }
 
-    /**
-     * Get Depreciation History Report, all assets (Section 4, item 14)
-     */
     @GetMapping("/depreciation-history")
     public ResponseEntity<Map<String, Object>> depreciationHistoryReport(
             @RequestParam(required = false) String category,
@@ -1064,9 +936,6 @@ public class ReportController {
         }
     }
 
-    /**
-     * Get Depreciation Projection Report (Section 4, item 15)
-     */
     @GetMapping("/depreciation-projection")
     public ResponseEntity<Map<String, Object>> depreciationProjectionReport(
             @RequestParam(required = false) String category,
@@ -1086,9 +955,6 @@ public class ReportController {
         }
     }
 
-    /**
-     * Get Assets Approaching Full Depreciation (Section 4, item 17)
-     */
     @GetMapping("/approaching-full-depreciation")
     public ResponseEntity<Map<String, Object>> approachingFullDepreciationReport(
             @RequestParam(required = false) String category,
@@ -1108,9 +974,6 @@ public class ReportController {
         }
     }
 
-    /**
-     * Get Purchase Analysis Report
-     */
     @GetMapping("/purchase-analysis")
     public ResponseEntity<Map<String, Object>> purchaseAnalysisReport(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
@@ -1130,9 +993,6 @@ public class ReportController {
         }
     }
 
-    /**
-     * Get Maintenance History Report
-     */
     @GetMapping("/maintenance-history")
     public ResponseEntity<Map<String, Object>> maintenanceHistoryReport(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
@@ -1152,9 +1012,6 @@ public class ReportController {
         }
     }
 
-    /**
-     * Get Warranty Expiry Report
-     */
     @GetMapping("/warranty-expiry")
     public ResponseEntity<Map<String, Object>> warrantyExpiryReport() {
 
@@ -1172,9 +1029,6 @@ public class ReportController {
         }
     }
 
-    /**
-     * Get Missing Assets Report
-     */
     @GetMapping("/missing-assets")
     public ResponseEntity<Map<String, Object>> missingAssetsReport() {
 
@@ -1192,9 +1046,6 @@ public class ReportController {
         }
     }
 
-    /**
-     * Get Disposal Logs Report
-     */
     @GetMapping("/disposal-logs")
     public ResponseEntity<Map<String, Object>> disposalLogsReport() {
 

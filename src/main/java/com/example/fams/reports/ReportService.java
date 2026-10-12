@@ -89,9 +89,6 @@ public class ReportService {
         return value != null && !value.isEmpty() && !value.equals(ignored);
     }
 
-    /**
-     * Generate Asset Register Report - complete list of all assets
-     */
     @Cacheable(cacheNames = "reports",
             key = "'assetRegister|' + #scope.cacheKey() + '|' + #category + '|' + #department + '|' + #status")
     @Transactional(readOnly = true)
@@ -126,7 +123,7 @@ public class ReportService {
     }
 
     /**
-     * Section 3, item 5 — Capitalisation Adjustment Report: subsequent capital
+     * Capitalisation Adjustment Report: subsequent capital
      * additions/improvements recorded against assets (see {@code CapitalAddition}),
      * within a reporting period. Scoped to assets the caller's {@link ReportScope}
      * permits seeing.
@@ -179,7 +176,7 @@ public class ReportService {
     }
 
     /**
-     * Section 2, item 13 — Asset Component Register: assets that are components of a
+     * Asset Component Register: assets that are components of a
      * parent asset (Asset.parentAssetId), shown alongside their parent's identity.
      *
      * <p>Scoping note: only components themselves are checked against the caller's
@@ -236,7 +233,7 @@ public class ReportService {
     }
 
     /**
-     * Catalogue item 2 — Detailed Fixed Asset Register: same scoping/filtering as the
+     * Detailed Fixed Asset Register: same scoping/filtering as the
      * plain register, but expanded to identification, acquisition, location and
      * lifecycle fields.
      */
@@ -325,7 +322,7 @@ public class ReportService {
     }
 
     /**
-     * Catalogue item 3 — Fixed Asset Summary: population count, historical cost,
+     * Fixed Asset Summary: population count, historical cost,
      * accumulated depreciation and NBV, both overall and broken down by category.
      */
     @Cacheable(cacheNames = "reports",
@@ -391,14 +388,14 @@ public class ReportService {
     }
 
     /**
-     * Catalogue items 4–9 (+ acquisition-date, supplier variants) — "Asset Register by X".
+     * "Asset Register by X" reports (category, location, department, cost centre,
+     * custodian, status, acquisition date, supplier).
      * One implementation parameterized by {@link AssetGroupBy} instead of six-plus near-
      * identical report methods; grouping key extraction lives in {@link #groupKeyFor}.
      *
      * <p>{@code fromDate}/{@code toDate} are optional and filter on {@code purchaseDate}
-     * (acquisition date) when present — used by Section 3's "Acquisition by Supplier/
-     * Category/Department" reports (items 7–9 there), which are this same grouping
-     * restricted to a reporting period.
+     * (acquisition date) when present — this is how the Acquisition by Supplier/Category/
+     * Department reports reuse the same grouping for a reporting period.
      */
     @Cacheable(cacheNames = "reports",
             key = "'assetRegisterGrouped|' + #scope.cacheKey() + '|' + #groupBy + '|' + #category + '|' + #department + '|' + #status + '|' + #fromDate + '|' + #toDate")
@@ -500,7 +497,7 @@ public class ReportService {
     }
 
     /**
-     * Catalogue item 14 — Fully Depreciated Asset Register: assets whose latest
+     * Fully Depreciated Asset Register: assets whose latest
      * depreciation posting is flagged fullyDepreciated, but still registered/active
      * (status not Disposed/Retired). Assets never run through depreciation are excluded —
      * "fully depreciated" requires an actual posting saying so.
@@ -547,7 +544,7 @@ public class ReportService {
     }
 
     /**
-     * Catalogue item 15 — Non-Depreciable Asset Register: assets with no resolvable
+     * Non-Depreciable Asset Register: assets with no resolvable
      * depreciation policy (no asset-specific or category-wide {@link DepreciationParameters}
      * active today), mirroring {@link DepreciationService#resolveParameters}. Built as a
      * single bulk lookup rather than one resolveParameters() query per asset.
@@ -599,7 +596,7 @@ public class ReportService {
     }
 
     /**
-     * Section 4, items 2, 3, 5, 7, 8 — period-based depreciation reports (Monthly,
+     * Period-based depreciation reports (Monthly,
      * Expense, By Category, By Department, By Cost Centre), built to respect
      * {@link ReportScope}.
      *
@@ -704,10 +701,10 @@ public class ReportService {
     }
 
     /**
-     * Section 4, item 3 — Depreciation Expense Report: depreciation charge recognized
-     * within a reporting period (date range), as distinct from item 2's single named
-     * period. Sums DepreciationPosting.depreciationCharge for postings whose createdAt
-     * falls in range.
+     * Depreciation Expense Report: depreciation charge recognized
+     * within a reporting period (date range), as distinct from the Monthly Depreciation
+     * Report's single named period. Sums DepreciationPosting.depreciationCharge for
+     * postings whose createdAt falls in range.
      */
     @Cacheable(cacheNames = "reports",
             key = "'depreciationExpense|' + #scope.cacheKey() + '|' + #fromDate + '|' + #toDate + '|' + #category + '|' + #department")
@@ -790,7 +787,7 @@ public class ReportService {
     }
 
     /**
-     * Section 4, item 13 — Depreciation Adjustment Report: manual corrections,
+     * Depreciation Adjustment Report: manual corrections,
      * reversals and recalculations recorded against assets (see
      * {@code DepreciationAdjustment}), scoped to assets the caller's {@link ReportScope}
      * permits seeing.
@@ -832,7 +829,7 @@ public class ReportService {
         return data;
     }
 
-    // ---- Section 6: Transfer and Assignment Reports (items 1-5, 8, 9, 11 share this data) ----
+    // Transfer and assignment reports — several of these share the same transfer data
 
     private List<com.example.fams.lifecycle.AssetLifecycleWorkflow> scopedTransferWorkflows(ReportScope scope, String category) {
         java.util.Set<Long> visibleAssetIds = scopedAssets(scope).stream().map(Asset::getId).collect(Collectors.toSet());
@@ -880,7 +877,7 @@ public class ReportService {
         return data;
     }
 
-    /** Section 6, item 1 — Asset Transfer Report: all transfers, optionally within a period. */
+    /** Asset Transfer Report: all transfers, optionally within a period. */
     @Transactional(readOnly = true)
     public TransferReportData generateAssetTransferReport(ReportScope scope, LocalDate fromDate, LocalDate toDate,
                                                             String category, String department) {
@@ -895,9 +892,9 @@ public class ReportService {
     }
 
     /**
-     * Section 6, item 2 — Transfer-In Register: transfers received into a unit. "unit"
+     * Transfer-In Register: transfers received into a unit. "unit"
      * matches against {@code toDepartment}, {@code toBranch} or {@code toLocation} (any
-     * match counts) — the catalogue doesn't specify which dimension "unit" means, so this
+     * match counts) — the report doesn't define which dimension "unit" means, so this
      * accepts whichever one the caller has data for rather than forcing department only.
      */
     @Transactional(readOnly = true)
@@ -915,7 +912,7 @@ public class ReportService {
         return wrapTransferRows(workflows);
     }
 
-    /** Section 6, item 3 — Transfer-Out Register: same as item 2, mirrored on the "from" side. */
+    /** Transfer-Out Register: same as the Transfer-In Register, mirrored on the "from" side. */
     @Transactional(readOnly = true)
     public TransferReportData generateTransferOutRegister(ReportScope scope, LocalDate fromDate, LocalDate toDate,
                                                             String category, String unit) {
@@ -931,7 +928,7 @@ public class ReportService {
         return wrapTransferRows(workflows);
     }
 
-    /** Section 6, item 4 — Inter-Branch Transfer Report: transfers where the branch actually changed. */
+    /** Inter-Branch Transfer Report: transfers where the branch actually changed. */
     @Transactional(readOnly = true)
     public TransferReportData generateInterBranchTransferReport(ReportScope scope, LocalDate fromDate, LocalDate toDate,
                                                                   String category, String department) {
@@ -948,7 +945,7 @@ public class ReportService {
         return wrapTransferRows(workflows);
     }
 
-    /** Section 6, item 5 — Inter-Department Transfer Report: transfers where the department actually changed. */
+    /** Inter-Department Transfer Report: transfers where the department actually changed. */
     @Transactional(readOnly = true)
     public TransferReportData generateInterDepartmentTransferReport(ReportScope scope, LocalDate fromDate, LocalDate toDate,
                                                                       String category) {
@@ -960,7 +957,7 @@ public class ReportService {
         return wrapTransferRows(workflows);
     }
 
-    /** Section 6, item 6 — Asset Assignment Report: current custodian per asset. */
+    /** Asset Assignment Report: current custodian per asset. */
     @Cacheable(cacheNames = "reports", key = "'assetAssignment|' + #scope.cacheKey() + '|' + #category + '|' + #department")
     @Transactional(readOnly = true)
     public AssignmentReportData generateAssetAssignmentReport(ReportScope scope, String category, String department) {
@@ -981,7 +978,7 @@ public class ReportService {
         return data;
     }
 
-    /** Section 6, item 10 — Unassigned Assets Report: assets with no current custodian. */
+    /** Unassigned Assets Report: assets with no current custodian. */
     @Cacheable(cacheNames = "reports", key = "'unassignedAssets|' + #scope.cacheKey() + '|' + #category + '|' + #department")
     @Transactional(readOnly = true)
     public AssignmentReportData generateUnassignedAssetsReport(ReportScope scope, String category, String department) {
@@ -1002,7 +999,7 @@ public class ReportService {
         return data;
     }
 
-    /** Section 6, item 8 — Asset Assignment History: transfers where the custodian actually changed. */
+    /** Asset Assignment History: transfers where the custodian actually changed. */
     @Transactional(readOnly = true)
     public TransferReportData generateAssignmentHistoryReport(ReportScope scope, LocalDate fromDate, LocalDate toDate,
                                                                 String category, String department) {
@@ -1019,7 +1016,7 @@ public class ReportService {
         return wrapTransferRows(workflows);
     }
 
-    /** Section 6, item 9 — Asset Location History: transfers where branch or location actually changed. */
+    /** Asset Location History: transfers where branch or location actually changed. */
     @Transactional(readOnly = true)
     public TransferReportData generateLocationHistoryReport(ReportScope scope, LocalDate fromDate, LocalDate toDate,
                                                               String category, String department) {
@@ -1037,7 +1034,7 @@ public class ReportService {
         return wrapTransferRows(workflows);
     }
 
-    /** Section 6, item 11 — Assets Pending Transfer Approval. */
+    /** Assets Pending Transfer Approval. */
     @Transactional(readOnly = true)
     public TransferReportData generatePendingTransferApprovalReport(ReportScope scope, String category, String department) {
         List<com.example.fams.lifecycle.AssetLifecycleWorkflow> workflows = scopedTransferWorkflows(scope, category);
@@ -1052,7 +1049,7 @@ public class ReportService {
         return wrapTransferRows(workflows);
     }
 
-    /** Section 6, item 12 — Asset Movement History: full chronological lifecycle event trail. */
+    /** Asset Movement History: full chronological lifecycle event trail. */
     @Transactional(readOnly = true)
     public MovementHistoryReportData generateAssetMovementHistoryReport(ReportScope scope, LocalDate fromDate, LocalDate toDate,
                                                                           String category, String department) {
@@ -1082,7 +1079,7 @@ public class ReportService {
         return data;
     }
 
-    // ---- Section 7: Disposal and Retirement Reports ----
+    // Disposal and retirement reports
 
     private List<com.example.fams.lifecycle.AssetLifecycleWorkflow> scopedDisposalWorkflows(ReportScope scope, String category, String department) {
         java.util.Set<Long> visibleAssetIds = scopedAssets(scope).stream().map(Asset::getId).collect(Collectors.toSet());
@@ -1126,14 +1123,15 @@ public class ReportService {
     }
 
     /**
-     * Section 7, items 1, 2, 4, 5, 6, 7, 8, 9, 10 — one method serves all of these; they
+     * Disposal register, detail, by-period, by-category, sales, scrapped, proceeds,
+     * gain/loss and retirement reports — one method serves all of these; they
      * differ only in which workflows are selected. {@code methods}, when non-empty,
      * restricts to those {@code disposalMethod} values (case-insensitive) — used for
      * Asset Sales ["Sale"], Scrapped Assets ["Scrap"], and Asset Retirement
      * ["Write-off", "Scrap"] (retirement has no distinct concept in this system; see
      * class-level note in ReportController's disposal endpoints for that interpretation).
-     * Items 1/2/4/5/8/9 pass an empty/null {@code methods} list — same data, different
-     * nav framing (register vs detail vs by-period vs by-category vs proceeds vs gain/loss).
+     * The register, detail, by-period, by-category, proceeds and gain/loss reports pass an
+     * empty/null {@code methods} list — same data, different framing.
      */
     @Transactional(readOnly = true)
     public DisposalReportData generateDisposalReport(ReportScope scope, LocalDate fromDate, LocalDate toDate,
@@ -1161,7 +1159,7 @@ public class ReportService {
         return wrapDisposalRows(workflows);
     }
 
-    /** Section 7, item 3 — Assets Pending Disposal: disposal workflows not yet completed. */
+    /** Assets Pending Disposal: disposal workflows not yet completed. */
     @Transactional(readOnly = true)
     public DisposalReportData generatePendingDisposalReport(ReportScope scope, String category, String department) {
         List<com.example.fams.lifecycle.AssetLifecycleWorkflow> workflows = scopedDisposalWorkflows(scope, category, department);
@@ -1172,7 +1170,7 @@ public class ReportService {
         return wrapDisposalRows(workflows);
     }
 
-    /** Section 7, item 11 — Disposal Approval History: approval actions on disposal workflows. */
+    /** Disposal Approval History: approval actions on disposal workflows. */
     @Transactional(readOnly = true)
     public ApprovalHistoryReportData generateDisposalApprovalHistoryReport(ReportScope scope, String category, String department) {
         List<com.example.fams.lifecycle.AssetLifecycleWorkflow> workflows = scopedDisposalWorkflows(scope, category, department);
@@ -1191,7 +1189,7 @@ public class ReportService {
     }
 
     /**
-     * Section 5, item 1 — Net Book Value Report: cost, accumulated depreciation,
+     * Net Book Value Report: cost, accumulated depreciation,
      * cumulative net impairment, and NBV. See {@link NbvRow} javadoc for the scope note
      * on why revaluation isn't folded in here.
      */
@@ -1234,7 +1232,7 @@ public class ReportService {
     }
 
     /**
-     * Section 5, item 8 — Asset Ageing and Value Report: age (from purchaseDate) bucketed
+     * Asset Ageing and Value Report: age (from purchaseDate) bucketed
      * alongside current cost/NBV.
      */
     @Cacheable(cacheNames = "reports",
@@ -1276,7 +1274,7 @@ public class ReportService {
     }
 
     /**
-     * Section 5, items 9–11 — Revaluation Report / History / Gain-Loss Report. One method
+     * Revaluation Report / History / Gain-Loss Report. One method
      * serves all three; they differ only in UI framing, not underlying data — see
      * {@link com.example.fams.valuation.AssetRevaluation} javadoc.
      */
@@ -1318,7 +1316,7 @@ public class ReportService {
     }
 
     /**
-     * Section 5, items 12–13 — Impairment Report / History. One method serves both.
+     * Impairment Report / History. One method serves both.
      */
     @Cacheable(cacheNames = "reports",
             key = "'impairments|' + #scope.cacheKey() + '|' + #fromDate + '|' + #toDate + '|' + #category + '|' + #department")
@@ -1363,12 +1361,12 @@ public class ReportService {
     }
 
     /**
-     * Section 4, item 11 — Depreciation Run Report: history of depreciation batch runs.
+     * Depreciation Run Report: history of depreciation batch runs.
      * Deliberately NOT filtered by {@link ReportScope} — a run touches all assets
      * company-wide by design, so which runs happened is an operational/audit fact about
      * the depreciation process itself, not asset data a department head's visibility
-     * should restrict. If that's wrong for your organization, this is the one report in
-     * Section 4 that would need scope filtering added.
+     * should restrict. If that's wrong for your organization, this is the one depreciation
+     * report that would need scope filtering added.
      */
     @Transactional(readOnly = true)
     public List<com.example.fams.depreciation.DepreciationRun> generateDepreciationRunReport() {
@@ -1376,7 +1374,7 @@ public class ReportService {
     }
 
     /**
-     * Section 4, item 1 — Depreciation Schedule (upgraded from a plain register clone):
+     * Depreciation Schedule:
      * cost, residual value, useful life, method, current charge and carrying amount per
      * asset, using the same bulk parameter-resolution as the Non-Depreciable report so
      * this stays a small, fixed number of queries regardless of asset count.
@@ -1430,9 +1428,9 @@ public class ReportService {
     }
 
     /**
-     * Section 4, item 4 — Accumulated Depreciation Report: current accumulated
+     * Accumulated Depreciation Report: current accumulated
      * depreciation balance per asset (same underlying data as the register, framed as
-     * its own report per the catalogue).
+     * its own report).
      */
     @Cacheable(cacheNames = "reports",
             key = "'accumulatedDepreciation|' + #scope.cacheKey() + '|' + #category + '|' + #department")
@@ -1460,9 +1458,9 @@ public class ReportService {
     }
 
     /**
-     * Section 4, item 10 — Depreciation by Method: assets grouped by their resolved
+     * Depreciation by Method: assets grouped by their resolved
      * depreciation method. Reuses {@link AssetGroup}/{@link GroupedReportData} (same
-     * shape as the Section 2 grouped-by-dimension reports) even though method isn't a
+     * shape as the grouped asset register reports) even though method isn't a
      * plain Asset field — it's resolved via {@link DepreciationService#resolveParametersForAssets}.
      */
     @Cacheable(cacheNames = "reports",
@@ -1516,7 +1514,7 @@ public class ReportService {
     }
 
     /**
-     * Section 4, item 12 — Depreciation Exception Report: assets with no resolvable
+     * Depreciation Exception Report: assets with no resolvable
      * depreciation parameters (same underlying signal as the Non-Depreciable register,
      * but framed here as an exception needing attention rather than an expected state
      * like land — the two reports serve different audiences even though they share logic).
@@ -1552,7 +1550,7 @@ public class ReportService {
     }
 
     /**
-     * Section 4, item 14 — Depreciation History Report (all-assets view): every
+     * Depreciation History Report (all-assets view): every
      * historical posting across scoped assets, optionally within a date range. The
      * per-asset drill-down already exists at {@link DepreciationService#getDepreciationHistory}.
      */
@@ -1597,7 +1595,7 @@ public class ReportService {
     }
 
     /**
-     * Section 4, item 15 — Depreciation Projection Report: forecast of future
+     * Depreciation Projection Report: forecast of future
      * depreciation over a selected horizon (in years). See
      * {@link DepreciationService#projectDepreciation} for the projection method and its
      * documented assumptions.
@@ -1638,10 +1636,10 @@ public class ReportService {
     }
 
     /**
-     * Section 4, item 17 — Assets Approaching Full Depreciation: assets projected to
+     * Assets Approaching Full Depreciation: assets projected to
      * reach full depreciation within {@code thresholdYears}. Reuses the same projection
-     * as item 15 but only to determine whether the horizon is reached, not to report the
-     * full trajectory.
+     * as the Depreciation Projection Report but only to determine whether the horizon is
+     * reached, not to report the full trajectory.
      */
     @Cacheable(cacheNames = "reports",
             key = "'approachingFullDepreciation|' + #scope.cacheKey() + '|' + #thresholdYears + '|' + #category + '|' + #department")
@@ -1676,7 +1674,7 @@ public class ReportService {
                 .filter(a -> {
                     DepreciationPosting posting = latestPostings.get(a.getId());
                     if (posting != null && Boolean.TRUE.equals(posting.getFullyDepreciated())) {
-                        return false; // already fully depreciated — that's item 16, not this
+                        return false; // already fully depreciated — belongs to the Fully Depreciated Assets report
                     }
                     List<DepreciationProjectionPoint> projection = depreciationService.projectDepreciation(
                             a, paramsByAsset.get(a.getId()), posting, thresholdYears);
@@ -1690,7 +1688,7 @@ public class ReportService {
     }
 
     /**
-     * Section 3, item 3 — Capitalisation Report: assets formally capitalised (as
+     * Capitalisation Report: assets formally capitalised (as
      * distinct from merely acquired) within a reporting period, filtered on
      * {@code Asset.capitalisationDate}.
      */
@@ -1733,7 +1731,7 @@ public class ReportService {
     }
 
     /**
-     * Section 3, item 4 — Assets Awaiting Capitalisation: assets acquired and on the
+     * Assets Awaiting Capitalisation: assets acquired and on the
      * register but not yet marked {@code capitalised}.
      */
     @Cacheable(cacheNames = "reports",
@@ -1764,7 +1762,7 @@ public class ReportService {
     }
 
     /**
-     * Section 3, item 1 — Asset Acquisition Report: assets acquired (by purchaseDate)
+     * Asset Acquisition Report: assets acquired (by purchaseDate)
      * within a reporting period.
      */
     @Cacheable(cacheNames = "reports",
@@ -1784,16 +1782,13 @@ public class ReportService {
     }
 
     /**
-     * Section 3, item 2 — Asset Additions Report: assets newly added to the register
+     * Asset Additions Report: assets newly added to the register
      * within a period.
      *
-     * <p><b>Interpretation note:</b> the catalogue distinguishes this from item 1
-     * ("Asset Acquisition Report") without defining how. Read literally — "new
-     * additions to the register" — this filters on {@code createdAt} (when the record
-     * was entered into FAMS), while item 1 filters on {@code purchaseDate} (when it was
-     * actually bought). Those two dates coincide for assets entered promptly but diverge
-     * for backlog/catch-up entries — worth confirming this is the distinction your team
-     * actually wants before relying on it.
+     * <p><b>Interpretation note:</b> this filters on {@code createdAt} (when the record
+     * was entered into FAMS), while the Asset Acquisition Report filters on
+     * {@code purchaseDate} (when it was actually bought). The two coincide for assets
+     * entered promptly but diverge for backlog/catch-up entries.
      */
     @Cacheable(cacheNames = "reports",
             key = "'assetAdditions|' + #scope.cacheKey() + '|' + #fromDate + '|' + #toDate + '|' + #category + '|' + #department")
@@ -1833,7 +1828,7 @@ public class ReportService {
     }
 
     /**
-     * Section 3, item 6 — Acquisition Cost Analysis. See {@link AcquisitionCostAnalysisData}
+     * Acquisition Cost Analysis. See {@link AcquisitionCostAnalysisData}
      * javadoc for the scope caveat (total cost only, no cost-component breakdown).
      */
     @Cacheable(cacheNames = "reports",
@@ -1876,7 +1871,7 @@ public class ReportService {
     }
 
     /**
-     * Section 3, item 10 — Asset Acquisition Trend: acquisition count and cost over
+     * Asset Acquisition Trend: acquisition count and cost over
      * time, at monthly/quarterly/annual granularity.
      */
     @Cacheable(cacheNames = "reports",
@@ -1917,7 +1912,7 @@ public class ReportService {
         };
     }
 
-    /** Shared acquisition-period + category/department filter used by items 1, 6 and 10. */
+    /** Shared acquisition-period + category/department filter (acquisition, cost analysis, trend). */
     private List<Asset> filterByAcquisitionPeriod(List<Asset> assets, LocalDate fromDate, LocalDate toDate,
                                                     String category, String department) {
         if (hasValue(category, "All Categories")) {
@@ -1943,9 +1938,6 @@ public class ReportService {
         return assets;
     }
 
-    /**
-     * Generate Inventory Summary Report - summary by category
-     */
     @Cacheable(cacheNames = "reports", key = "'inventorySummary|' + #scope.cacheKey() + '|' + #department")
     @Transactional(readOnly = true)
     public ReportData generateInventorySummaryReport(ReportScope scope, String department) {
@@ -1964,9 +1956,7 @@ public class ReportService {
         return finish(report, assets);
     }
 
-    /**
-     * Generate Location Audit Report - assets by location/department
-     */
+    /** Assets by location/department. */
     @Cacheable(cacheNames = "reports", key = "'locationAudit|' + #scope.cacheKey() + '|' + #department")
     @Transactional(readOnly = true)
     public ReportData generateLocationAuditReport(ReportScope scope, String department) {
@@ -1985,9 +1975,6 @@ public class ReportService {
         return finish(report, assets);
     }
 
-    /**
-     * Generate Valuation Report - asset values and depreciation
-     */
     @Cacheable(cacheNames = "reports",
             key = "'valuation|' + #scope.cacheKey() + '|' + #category + '|' + #department")
     @Transactional(readOnly = true)
@@ -2013,9 +2000,6 @@ public class ReportService {
         return finish(report, assets);
     }
 
-    /**
-     * Generate Purchase Analysis Report
-     */
     @Cacheable(cacheNames = "reports",
             key = "'purchaseAnalysis|' + #scope.cacheKey() + '|' + #startDate + '|' + #endDate")
     @Transactional(readOnly = true)
@@ -2039,7 +2023,6 @@ public class ReportService {
     }
 
     /**
-     * Generate Maintenance History Report.
      * Applies the requested date range against the asset purchase date (asset-level date
      * available on the report row); defaults to the last month when unspecified.
      */
@@ -2065,9 +2048,6 @@ public class ReportService {
         return finish(report, assets);
     }
 
-    /**
-     * Generate Warranty Expiry Report
-     */
     @Cacheable(cacheNames = "reports", key = "'warrantyExpiry|' + #scope.cacheKey()")
     @Transactional(readOnly = true)
     public ReportData generateWarrantyExpiryReport(ReportScope scope) {
@@ -2082,9 +2062,7 @@ public class ReportService {
         return finish(report, assets);
     }
 
-    /**
-     * Generate Missing Assets Report - assets not in stock/assigned status
-     */
+    /** Assets that are not in stock or assigned status. */
     @Cacheable(cacheNames = "reports", key = "'missingAssets|' + #scope.cacheKey()")
     @Transactional(readOnly = true)
     public ReportData generateMissingAssetsReport(ReportScope scope) {
@@ -2100,9 +2078,6 @@ public class ReportService {
         return finish(report, assets);
     }
 
-    /**
-     * Generate Disposal Logs Report
-     */
     @Cacheable(cacheNames = "reports", key = "'disposalLogs|' + #scope.cacheKey()")
     @Transactional(readOnly = true)
     public ReportData generateDisposalLogsReport(ReportScope scope) {
@@ -2163,9 +2138,6 @@ public class ReportService {
         );
     }
 
-    /**
-     * Calculate totals for a report
-     */
     private void calculateTotals(ReportData report, List<ReportRow> rows) {
         if (rows == null || rows.isEmpty()) {
             report.setEmpty(true);

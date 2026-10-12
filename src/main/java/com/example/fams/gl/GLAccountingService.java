@@ -12,19 +12,17 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Section 8 — generates double-entry journal entries from existing asset transactions
+ * Generates double-entry journal entries from existing asset transactions
  * (acquisition, depreciation runs, capital additions, revaluations, impairments,
  * disposals) and manages their posting workflow.
  *
- * <p>Every generation method here is called from elsewhere in the app right after the
- * underlying transaction is saved (see call sites in AssetService, DepreciationService,
- * CapitalAdditionService, AssetRevaluationService, AssetImpairmentService, and
- * AssetLifecycleService). If account mapping can't be resolved for an asset's category
- * (no category-specific mapping and no global default configured), journal generation is
- * silently skipped rather than blocking the underlying transaction — accounting setup
- * shouldn't be able to prevent someone from recording a real-world event like a
- * disposal. Skipped generations are not currently logged anywhere visible; that's a
- * reasonable follow-up if silent gaps become a problem in practice.
+ * <p>Journal generation is skipped, not failed, when account mapping can't be resolved
+ * for an asset's category (no category-specific mapping and no global default), so
+ * accounting setup can't block someone recording a real-world event. Skipped
+ * generations are not currently logged anywhere visible.
+ *
+ * <p>Currently only {@link #generateForAcquisition} is called from the rest of the
+ * app (AssetService); the other generators are not yet invoked from their transactions.
  */
 @Service
 public class GLAccountingService {
@@ -82,8 +80,6 @@ public class GLAccountingService {
         entry.setJournalNumber(nextJournalNumber());
         return Optional.of(journalEntryRepository.save(entry));
     }
-
-    // ---- Generation: one method per source type ----
 
     @Transactional
     public Optional<JournalEntry> generateForAcquisition(Asset asset) {
@@ -237,8 +233,6 @@ public class GLAccountingService {
         }
         return saveIfValid(entry);
     }
-
-    // ---- Posting workflow ----
 
     @Transactional
     public JournalEntry post(Long journalEntryId, String postedBy) {

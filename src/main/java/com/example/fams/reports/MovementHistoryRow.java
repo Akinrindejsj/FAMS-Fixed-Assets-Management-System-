@@ -2,7 +2,7 @@ package com.example.fams.reports;
 
 import java.time.LocalDateTime;
 
-/** Section 6, item 12 — one chronological lifecycle event for an asset. */
+/** One chronological lifecycle event for an asset. */
 public record MovementHistoryRow(
         String assetCode,
         String assetName,

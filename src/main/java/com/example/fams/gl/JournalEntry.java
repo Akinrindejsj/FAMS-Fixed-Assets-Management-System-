@@ -18,7 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Section 8 — a double-entry journal entry auto-generated from an existing asset
+ * A double-entry journal entry auto-generated from an existing asset
  * transaction (a depreciation run, disposal, capital addition, revaluation, impairment,
  * or initial acquisition). Never hand-created — see {@code GLAccountingService} for the
  * generation logic and {@code GLAccountingService.isBalanced} for the invariant every

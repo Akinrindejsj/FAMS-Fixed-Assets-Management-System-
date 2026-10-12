@@ -11,7 +11,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 /**
- * Section 8 — assigns a real {@link GLAccount} to each {@link GLAccountType} role, for
+ * Assigns a real {@link GLAccount} to each {@link GLAccountType} role, for
  * one asset category. A row with {@code category == null} is the global default,
  * resolved when a category has no specific mapping of its own — same
  * asset-specific-over-category-default-over-global pattern used by

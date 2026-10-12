@@ -17,7 +17,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
- * Section 5, items 9–11 — Revaluation Report / History / Gain-Loss Report all read from
+ * Revaluation Report / History / Gain-Loss Report all read from
  * this same table; they differ only in framing (a period, full history, or a totals
  * summary), not in underlying data.
  *

@@ -3,7 +3,7 @@ package com.example.fams.reports;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-/** Section 3, item 5 — one capital addition/adjustment, with asset context for reporting. */
+/** One capital addition/adjustment, with asset context for reporting. */
 public record CapitalAdjustmentRow(
         LocalDate date,
         String assetCode,

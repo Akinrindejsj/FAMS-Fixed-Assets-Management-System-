@@ -3,7 +3,7 @@ package com.example.fams.reports;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-/** Section 4, item 13 — one recorded depreciation correction/reversal/recalculation. */
+/** One recorded depreciation correction/reversal/recalculation. */
 public record DepreciationAdjustmentRow(
         LocalDate date,
         String assetCode,

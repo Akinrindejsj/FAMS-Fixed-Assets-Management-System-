@@ -11,7 +11,7 @@ import jakarta.persistence.Table;
 
 import java.time.LocalDateTime;
 
-/** Section 8 — a single GL account in the fixed-asset chart of accounts. */
+/** A single GL account in the fixed-asset chart of accounts. */
 @Entity
 @Table(name = "gl_accounts")
 public class GLAccount {

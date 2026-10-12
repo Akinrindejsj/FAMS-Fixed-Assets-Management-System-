@@ -1,6 +1,6 @@
 package com.example.fams.reports;
 
-/** Section 6, items 6 and 10 — current custodian assignment (or lack of one) per asset. */
+/** Current custodian assignment (or lack of one) per asset. */
 public record AssignmentRow(
         String assetCode,
         String assetName,

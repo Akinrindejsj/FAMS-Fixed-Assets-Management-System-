@@ -1,6 +1,6 @@
 package com.example.fams.reports;
 
-/** Granularity for catalogue item 10 — Asset Acquisition Trend. */
+/** Granularity of the Asset Acquisition Trend report. */
 public enum TrendGranularity {
     MONTH,
     QUARTER,

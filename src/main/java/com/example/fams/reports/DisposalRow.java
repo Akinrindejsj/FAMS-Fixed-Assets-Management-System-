@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 /**
- * Section 7, items 1, 2, 4–10 — one disposal workflow entry. Reused across Asset
+ * One disposal workflow entry. Reused across Asset
  * Disposal Register, Disposal Detail, Disposed by Period/Category, Asset Sales,
  * Scrapped Assets, Disposal Proceeds, Gain/Loss on Disposal, and Asset Retirement — they
  * differ only in which workflows are selected (status, disposalMethod, date range), not

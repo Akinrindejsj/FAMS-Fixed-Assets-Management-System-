@@ -18,7 +18,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
- * Section 3, item 5 — Capitalisation Adjustment: a subsequent capital cost added to an
+ * Capitalisation Adjustment: a subsequent capital cost added to an
  * asset after its initial acquisition (an improvement, a component replacement, or any
  * other adjustment to the capitalised cost). Kept separate from {@code Asset.purchaseCost}
  * (the original acquisition cost) so the acquisition and subsequent-addition history can

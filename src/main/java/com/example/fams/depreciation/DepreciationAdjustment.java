@@ -19,7 +19,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
- * Section 4, item 13 — Depreciation Adjustment: a manual correction, reversal, or
+ * Depreciation Adjustment: a manual correction, reversal, or
  * recalculation affecting an asset's depreciation, recorded as its own auditable entry
  * rather than silently mutating a {@link DepreciationPosting}. {@code amount} is the
  * signed delta applied (negative for a reversal that reduces accumulated depreciation).

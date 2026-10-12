@@ -11,7 +11,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
- * Section 4, item 11 — Depreciation Run Report: a persisted record of each depreciation
+ * Depreciation Run Report: a persisted record of each depreciation
  * batch run. Previously {@link DepreciationRunResult} was computed and returned once in
  * the HTTP response of triggering a run, then discarded — there was no way to answer
  * "show me past runs" after the fact. This entity is written alongside the postings
