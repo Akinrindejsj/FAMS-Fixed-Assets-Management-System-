@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html class="light" lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layouts/app}">
+<head>
+    <title>GL Journals | JustJava FAMS</title>
+</head>
+<body>
+<main id="main-content" class="space-y-6 px-4 sm:px-6 lg:px-8" layout:fragment="content">
+    <nav class="flex items-center gap-2 text-secondary font-label-small text-label-small">
+        <a class="hover:text-primary transition-colors" th:href="@{/reports}">Reports</a>
+        <span class="material-symbols-outlined text-[14px]">chevron_right</span>
+        <span class="text-on-surface font-medium">GL Journals</span>
+    </nav>
+
+    <div class="flex gap-2">
+        <a th:href="@{/gl/accounts}" class="px-3 py-1.5 text-secondary rounded-lg text-body-default hover:bg-surface-canvas transition-colors">Accounts</a>
+        <a th:href="@{/gl/mappings}" class="px-3 py-1.5 text-secondary rounded-lg text-body-default hover:bg-surface-canvas transition-colors">Category Mappings</a>
+        <a th:href="@{/gl/journals}" class="px-3 py-1.5 bg-primary/10 text-primary rounded-lg text-body-default font-medium">Journals</a>
+    </div>
+
+    <div th:if="${successMessage}" class="bg-status-success/10 border border-status-success/30 text-status-success rounded-lg px-4 py-3 text-body-default" th:text="${successMessage}"></div>
+    <div th:if="${errorMessage}" class="bg-status-error/10 border border-status-error/30 text-status-error rounded-lg px-4 py-3 text-body-default" th:text="${errorMessage}"></div>
+
+    <div class="flex items-center gap-2">
+        <a th:href="@{/gl/journals}" class="px-3 py-1.5 text-secondary rounded-lg text-body-default hover:bg-surface-canvas transition-colors">All</a>
+        <a th:each="s : ${statuses}" th:href="@{/gl/journals(status=${s})}" class="px-3 py-1.5 text-secondary rounded-lg text-body-default hover:bg-surface-canvas transition-colors" th:text="${s}">UNPOSTED</a>
+    </div>
+
+    <div class="bg-surface-card border border-border-default rounded-xl overflow-hidden card-shadow">
+        <div class="p-5 border-b border-border-default flex items-center justify-between">
+            <h3 class="font-card-header text-card-header text-on-surface">Journal Entries</h3>
+            <span class="px-2.5 py-0.5 bg-surface-container-high text-on-secondary-fixed-variant rounded-full text-badge-label font-badge-label"
+                  th:text="${#lists.size(journals)} + ' entries'">0 entries</span>
+        </div>
+
+        <div th:if="${#lists.isEmpty(journals)}" class="p-12 text-center text-secondary">
+            No journal entries yet. They're generated automatically — try recording a capital addition, revaluation,
+            impairment, or running depreciation, or completing a disposal. Nothing will generate until at least a
+            global default GL account mapping is set.
+        </div>
+
+        <div th:unless="${#lists.isEmpty(journals)}" class="divide-y divide-border-default">
+            <div th:each="j : ${journals}" class="p-5">
+                <div class="flex items-center justify-between flex-wrap gap-3">
+                    <div>
+                        <div class="font-technical-data text-technical-data text-on-surface" th:text="${j.journalNumber}">JE-000001</div>
+                        <div class="text-body-default text-secondary" th:text="${j.description}">Description</div>
+                        <div class="text-label-small text-secondary mt-1" th:text="${j.date} + ' · ' + ${j.sourceType}">2026-01-01 · DISPOSAL</div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="px-2.5 py-0.5 rounded-full text-badge-label font-badge-label"
+                              th:classappend="${j.status.name() == 'POSTED'} ? 'bg-status-success/10 text-status-success' : (${j.status.name() == 'REJECTED'} ? 'bg-status-error/10 text-status-error' : 'bg-status-warning/10 text-status-warning')"
+                              th:text="${j.status}">UNPOSTED</span>
+                        <form th:if="${j.status.name() == 'UNPOSTED'}" th:action="@{/gl/journals/{id}/post(id=${j.id})}" method="post">
+                            <button type="submit" class="px-3 py-1.5 bg-primary text-on-primary rounded-lg text-label-small font-medium hover:opacity-90 transition-all">Post</button>
+                        </form>
+                        <form th:if="${j.status.name() == 'UNPOSTED'}" th:action="@{/gl/journals/{id}/reject(id=${j.id})}" method="post" class="flex items-center gap-2">
+                            <input type="text" name="reason" placeholder="Rejection reason" required class="form-input h-[34px] text-label-small w-40">
+                            <button type="submit" class="px-3 py-1.5 bg-status-error/10 text-status-error rounded-lg text-label-small font-medium hover:bg-status-error/20 transition-all">Reject</button>
+                        </form>
+                    </div>
+                </div>
+                <div class="mt-3 overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-label-small">
+                        <thead>
+                        <tr class="text-secondary uppercase tracking-wider">
+                            <th class="py-1 pr-4">Account</th>
+                            <th class="py-1 pr-4">Asset</th>
+                            <th class="py-1 pr-4 text-right">Debit</th>
+                            <th class="py-1 text-right">Credit</th>
+                        </tr>
+                        </thead>
+                        <tbody class="divide-y divide-border-default">
+                        <tr th:each="l : ${j.lines}">
+                            <td class="py-1.5 pr-4 text-on-surface" th:text="${l.account.accountCode + ' — ' + l.account.accountName}">Account</td>
+                            <td class="py-1.5 pr-4 text-secondary" th:text="${l.asset != null ? l.asset.assetCode : '—'}">—</td>
+                            <td class="py-1.5 pr-4 text-right text-on-surface" th:text="${l.debit.signum() != 0 ? #numbers.formatDecimal(l.debit, 1, 'COMMA', 2, 'POINT') : ''}"></td>
+                            <td class="py-1.5 text-right text-on-surface" th:text="${l.credit.signum() != 0 ? #numbers.formatDecimal(l.credit, 1, 'COMMA', 2, 'POINT') : ''}"></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+</body>
+</html>

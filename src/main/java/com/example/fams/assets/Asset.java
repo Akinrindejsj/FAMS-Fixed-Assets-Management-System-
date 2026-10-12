@@ -69,6 +69,37 @@ public class Asset {
     @Column(length = 120)
     private String costCentre;
 
+    /**
+     * Whether this asset has been formally capitalised (recognized as a depreciable
+     * fixed asset on the books), as distinct from merely having been acquired/purchased.
+     * Kept separate from DepreciationParameters.effectiveFromDate (which drives the
+     * actual depreciation calculation) so capitalisation can be tracked/reported even
+     * for assets that are genuinely non-depreciable once capitalised (e.g. land).
+     */
+    @Column(nullable = false)
+    private boolean capitalised = false;
+
+    private LocalDate capitalisationDate;
+
+    /**
+     * Optional link to a parent asset, for component-level tracking (e.g. a laptop's
+     * battery or a vehicle's engine tracked as its own asset/cost/depreciation record,
+     * rolled up under a parent for reporting). Stored as a plain FK id rather than a
+     * JPA relationship, consistent with how Asset's other own attributes (department,
+     * branch, custodian) are simple denormalized fields rather than entity relations —
+     * real relations in this codebase are reserved for separate tables (see
+     * MaintenanceRecord -> Asset).
+     */
+    private Long parentAssetId;
+
+    /**
+     * Not persisted — used only to accept a human-typed asset code on the create form
+     * and resolve it to {@link #parentAssetId} in AssetService.create(). Kept off the
+     * form's happy path (nullable, optional) since most assets have no parent.
+     */
+    @jakarta.persistence.Transient
+    private String parentAssetCode;
+
     @Column(nullable = false, length = 40)
     private String status;
 
@@ -230,6 +261,38 @@ public class Asset {
 
     public void setCostCentre(String costCentre) {
         this.costCentre = costCentre;
+    }
+
+    public boolean isCapitalised() {
+        return capitalised;
+    }
+
+    public void setCapitalised(boolean capitalised) {
+        this.capitalised = capitalised;
+    }
+
+    public LocalDate getCapitalisationDate() {
+        return capitalisationDate;
+    }
+
+    public void setCapitalisationDate(LocalDate capitalisationDate) {
+        this.capitalisationDate = capitalisationDate;
+    }
+
+    public Long getParentAssetId() {
+        return parentAssetId;
+    }
+
+    public void setParentAssetId(Long parentAssetId) {
+        this.parentAssetId = parentAssetId;
+    }
+
+    public String getParentAssetCode() {
+        return parentAssetCode;
+    }
+
+    public void setParentAssetCode(String parentAssetCode) {
+        this.parentAssetCode = parentAssetCode;
     }
 
     public String getStatus() {

@@ -662,6 +662,20 @@
                                         <input id="costCentre" th:field="*{costCentre}" type="text" placeholder="e.g. CC-1042" class="form-input">
                                     </div>
                                     <div>
+                                        <label for="capitalisationDate" class="block text-xs font-medium text-textMuted mb-1.5">Capitalisation Date <span class="text-textMuted">(optional)</span></label>
+                                        <input id="capitalisationDate" th:field="*{capitalisationDate}" type="date" class="form-input">
+                                    </div>
+                                    <div class="flex items-end pb-2">
+                                        <label class="inline-flex items-center cursor-pointer gap-2">
+                                            <input id="capitalised" th:field="*{capitalised}" type="checkbox" class="rounded text-primary focus:ring-primary border-border-default h-4 w-4">
+                                            <span class="text-xs font-medium text-textMuted">Capitalised</span>
+                                        </label>
+                                    </div>
+                                    <div>
+                                        <label for="parentAssetCode" class="block text-xs font-medium text-textMuted mb-1.5">Parent Asset Code <span class="text-textMuted">(optional — for components)</span></label>
+                                        <input id="parentAssetCode" th:field="*{parentAssetCode}" type="text" placeholder="e.g. FA-000123" class="form-input">
+                                    </div>
+                                    <div>
                                         <label for="warrantyExpiry" class="block text-xs font-medium text-textMuted mb-1.5">Warranty Expiry</label>
                                         <input id="warrantyExpiry" th:field="*{warrantyExpiry}" type="date" class="form-input">
                                     </div>

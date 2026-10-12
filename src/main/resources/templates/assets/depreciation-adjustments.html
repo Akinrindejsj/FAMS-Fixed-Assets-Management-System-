@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html class="light" lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layouts/app}">
+<head>
+    <title>Depreciation Adjustments | JustJava FAMS</title>
+</head>
+<body>
+<main id="main-content" class="space-y-6 px-4 sm:px-6 lg:px-8" layout:fragment="content">
+    <nav class="flex items-center gap-2 text-secondary font-label-small text-label-small">
+        <a class="hover:text-primary transition-colors" th:href="@{/assets}">All Assets</a>
+        <span class="material-symbols-outlined text-[14px]">chevron_right</span>
+        <span class="text-on-surface font-medium">Depreciation Adjustments</span>
+    </nav>
+
+    <div th:if="${successMessage}" class="bg-status-success/10 border border-status-success/30 text-status-success rounded-lg px-4 py-3 text-body-default" th:text="${successMessage}"></div>
+    <div th:if="${errorMessage}" class="bg-status-error/10 border border-status-error/30 text-status-error rounded-lg px-4 py-3 text-body-default" th:text="${errorMessage}"></div>
+
+    <div class="bg-surface-card rounded-xl card-shadow border border-border-default p-5">
+        <h2 class="font-card-header text-card-header text-on-surface mb-1">Record a Depreciation Adjustment</h2>
+        <p class="text-label-small text-secondary mb-4">
+            Log a manual correction, reversal, or recalculation affecting an asset's depreciation, as its own
+            auditable entry rather than silently editing a posting. Use a negative amount for a reversal.
+        </p>
+        <form th:action="@{/depreciation/adjustments}" method="post" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
+            <div>
+                <label for="assetCode" class="block text-xs font-medium text-textMuted mb-1.5">Asset Code</label>
+                <input id="assetCode" name="assetCode" type="text" required placeholder="e.g. FA-000123" class="form-input">
+            </div>
+            <div>
+                <label for="date" class="block text-xs font-medium text-textMuted mb-1.5">Date</label>
+                <input id="date" name="date" type="date" required class="form-input">
+            </div>
+            <div>
+                <label for="period" class="block text-xs font-medium text-textMuted mb-1.5">Period <span class="text-textMuted">(optional)</span></label>
+                <input id="period" name="period" type="text" placeholder="e.g. 2026-03" class="form-input">
+            </div>
+            <div>
+                <label for="type" class="block text-xs font-medium text-textMuted mb-1.5">Type</label>
+                <select id="type" name="type" required class="form-input">
+                    <option th:each="t : ${types}" th:value="${t}" th:text="${t}">CORRECTION</option>
+                </select>
+            </div>
+            <div>
+                <label for="amount" class="block text-xs font-medium text-textMuted mb-1.5">Amount <span class="text-textMuted">(± delta)</span></label>
+                <input id="amount" name="amount" type="number" step="0.01" required class="form-input">
+            </div>
+            <div class="lg:col-span-6">
+                <label for="reason" class="block text-xs font-medium text-textMuted mb-1.5">Reason (required for audit)</label>
+                <textarea id="reason" name="reason" rows="2" required placeholder="Why this adjustment is being made" class="form-input"></textarea>
+            </div>
+            <div class="lg:col-span-6">
+                <button type="submit" class="h-[38px] px-5 bg-primary text-on-primary rounded-lg font-body-medium hover:opacity-90 transition-all">
+                    Record Adjustment
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <div class="bg-surface-card border border-border-default rounded-xl overflow-hidden card-shadow">
+        <div class="p-5 border-b border-border-default flex items-center justify-between gap-3 flex-wrap">
+            <div>
+                <h3 class="font-card-header text-card-header text-on-surface">Recent Depreciation Adjustments</h3>
+                <p class="text-label-small text-secondary mt-1">Most recent first. Feeds the Depreciation Adjustment Report.</p>
+            </div>
+            <span class="px-2.5 py-0.5 bg-surface-container-high text-on-secondary-fixed-variant rounded-full text-badge-label font-badge-label"
+                  th:text="${#lists.size(adjustments)} + ' records'">0 records</span>
+        </div>
+
+        <div th:if="${#lists.isEmpty(adjustments)}" class="p-12 text-center">
+            <div class="w-14 h-14 rounded-2xl bg-surface-variant text-primary mx-auto flex items-center justify-center mb-4">
+                <span class="material-symbols-outlined text-[34px]">rule</span>
+            </div>
+            <h4 class="font-card-header text-card-header text-on-surface mb-1">No adjustments recorded yet</h4>
+            <p class="text-body-default text-secondary">Use the form above to record the first one.</p>
+        </div>
+
+        <div th:unless="${#lists.isEmpty(adjustments)}" class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                <tr class="bg-surface-canvas border-b border-border-default">
+                    <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Date</th>
+                    <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Asset</th>
+                    <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Period</th>
+                    <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Type</th>
+                    <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Amount</th>
+                    <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Reason</th>
+                    <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Recorded By</th>
+                </tr>
+                </thead>
+                <tbody class="divide-y divide-border-default">
+                <tr th:each="a : ${adjustments}" class="hover:bg-surface-canvas/50 transition-colors">
+                    <td class="px-5 py-3 text-body-default text-on-surface" th:text="${a.date}">2026-01-01</td>
+                    <td class="px-5 py-3 font-technical-data text-technical-data text-on-surface" th:text="${a.asset.assetCode + ' — ' + a.asset.name}">FA-000123 — Asset</td>
+                    <td class="px-5 py-3 text-body-default text-secondary" th:text="${a.period}">2026-03</td>
+                    <td class="px-5 py-3 text-body-default text-secondary" th:text="${a.type}">CORRECTION</td>
+                    <td class="px-5 py-3 text-body-default font-bold text-primary" th:text="${#numbers.formatDecimal(a.amount, 1, 'COMMA', 2, 'POINT')}">0.00</td>
+                    <td class="px-5 py-3 text-body-default text-secondary" th:text="${a.reason}">Reason</td>
+                    <td class="px-5 py-3 text-body-default text-secondary" th:text="${a.recordedBy}">user</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+</body>
+</html>

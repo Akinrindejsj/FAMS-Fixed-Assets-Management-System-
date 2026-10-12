@@ -33,13 +33,34 @@ public class ReportService {
     private final AssetRepository assetRepository;
     private final DepreciationService depreciationService;
     private final MaintenanceService maintenanceService;
+    private final com.example.fams.assets.CapitalAdditionService capitalAdditionService;
+    private final com.example.fams.depreciation.DepreciationAdjustmentService depreciationAdjustmentService;
+    private final com.example.fams.valuation.AssetRevaluationService assetRevaluationService;
+    private final com.example.fams.valuation.AssetImpairmentService assetImpairmentService;
+    private final com.example.fams.lifecycle.AssetLifecycleService assetLifecycleService;
+    private final com.example.fams.lifecycle.AssetLifecycleHistoryRepository lifecycleHistoryRepository;
+    private final com.example.fams.lifecycle.AssetLifecycleApprovalActionRepository lifecycleApprovalActionRepository;
 
     public ReportService(AssetRepository assetRepository,
                          DepreciationService depreciationService,
-                         MaintenanceService maintenanceService) {
+                         MaintenanceService maintenanceService,
+                         com.example.fams.assets.CapitalAdditionService capitalAdditionService,
+                         com.example.fams.depreciation.DepreciationAdjustmentService depreciationAdjustmentService,
+                         com.example.fams.valuation.AssetRevaluationService assetRevaluationService,
+                         com.example.fams.valuation.AssetImpairmentService assetImpairmentService,
+                         com.example.fams.lifecycle.AssetLifecycleService assetLifecycleService,
+                         com.example.fams.lifecycle.AssetLifecycleHistoryRepository lifecycleHistoryRepository,
+                         com.example.fams.lifecycle.AssetLifecycleApprovalActionRepository lifecycleApprovalActionRepository) {
         this.assetRepository = assetRepository;
         this.depreciationService = depreciationService;
         this.maintenanceService = maintenanceService;
+        this.capitalAdditionService = capitalAdditionService;
+        this.depreciationAdjustmentService = depreciationAdjustmentService;
+        this.assetRevaluationService = assetRevaluationService;
+        this.assetImpairmentService = assetImpairmentService;
+        this.assetLifecycleService = assetLifecycleService;
+        this.lifecycleHistoryRepository = lifecycleHistoryRepository;
+        this.lifecycleApprovalActionRepository = lifecycleApprovalActionRepository;
     }
 
     /**
@@ -105,7 +126,117 @@ public class ReportService {
     }
 
     /**
-     * Detailed Fixed Asset Register: same scoping/filtering as the
+     * Section 3, item 5 — Capitalisation Adjustment Report: subsequent capital
+     * additions/improvements recorded against assets (see {@code CapitalAddition}),
+     * within a reporting period. Scoped to assets the caller's {@link ReportScope}
+     * permits seeing.
+     */
+    @Cacheable(cacheNames = "reports",
+            key = "'capitalAdjustments|' + #scope.cacheKey() + '|' + #fromDate + '|' + #toDate + '|' + #category + '|' + #department")
+    @Transactional(readOnly = true)
+    public CapitalAdjustmentReportData generateCapitalisationAdjustmentReport(ReportScope scope, LocalDate fromDate, LocalDate toDate,
+                                                                               String category, String department) {
+        java.util.Set<Long> visibleAssetIds = scopedAssets(scope).stream()
+                .map(Asset::getId).collect(Collectors.toSet());
+
+        List<com.example.fams.assets.CapitalAddition> additions = capitalAdditionService.findByDateRange(fromDate, toDate).stream()
+                .filter(a -> visibleAssetIds.contains(a.getAsset().getId()))
+                .collect(Collectors.toList());
+
+        if (hasValue(category, "All Categories")) {
+            additions = additions.stream()
+                    .filter(a -> a.getAsset().getCategory() != null && a.getAsset().getCategory().equalsIgnoreCase(category))
+                    .collect(Collectors.toList());
+        }
+        if (hasValue(department, "Global Operations")) {
+            additions = additions.stream()
+                    .filter(a -> a.getAsset().getDepartment() != null && a.getAsset().getDepartment().equalsIgnoreCase(department))
+                    .collect(Collectors.toList());
+        }
+
+        List<CapitalAdjustmentRow> rows = additions.stream()
+                .map(a -> new CapitalAdjustmentRow(
+                        a.getDate(),
+                        a.getAsset().getAssetCode(),
+                        a.getAsset().getName(),
+                        a.getAsset().getCategory(),
+                        a.getAsset().getDepartment(),
+                        a.getType() == null ? null : a.getType().name(),
+                        a.getAmount(),
+                        a.getDescription(),
+                        a.getRecordedBy()
+                ))
+                .collect(Collectors.toList());
+
+        CapitalAdjustmentReportData data = new CapitalAdjustmentReportData();
+        data.setGeneratedDate(LocalDate.now());
+        data.setFromDate(fromDate);
+        data.setToDate(toDate);
+        data.setRows(rows);
+        data.setTotalAmount(rows.stream().map(CapitalAdjustmentRow::amount)
+                .filter(v -> v != null).reduce(BigDecimal.ZERO, BigDecimal::add));
+        return data;
+    }
+
+    /**
+     * Section 2, item 13 — Asset Component Register: assets that are components of a
+     * parent asset (Asset.parentAssetId), shown alongside their parent's identity.
+     *
+     * <p>Scoping note: only components themselves are checked against the caller's
+     * {@link ReportScope} — a department head sees components in their department even
+     * if the parent happens to sit elsewhere, since the component is the asset actually
+     * assigned/tracked there. The parent's code/name are looked up unscoped purely for
+     * display context, not exposed as a full row.
+     */
+    @Cacheable(cacheNames = "reports",
+            key = "'assetComponents|' + #scope.cacheKey() + '|' + #category + '|' + #department")
+    @Transactional(readOnly = true)
+    public ComponentReportData generateAssetComponentRegisterReport(ReportScope scope, String category, String department) {
+        List<Asset> components = scopedAssets(scope).stream()
+                .filter(a -> a.getParentAssetId() != null)
+                .collect(Collectors.toList());
+        if (hasValue(category, "All Categories")) {
+            components = components.stream()
+                    .filter(a -> a.getCategory() != null && a.getCategory().equalsIgnoreCase(category))
+                    .collect(Collectors.toList());
+        }
+        if (hasValue(department, "Global Operations")) {
+            components = components.stream()
+                    .filter(a -> a.getDepartment() != null && a.getDepartment().equalsIgnoreCase(department))
+                    .collect(Collectors.toList());
+        }
+
+        java.util.Set<Long> parentIds = components.stream()
+                .map(Asset::getParentAssetId).collect(Collectors.toSet());
+        Map<Long, Asset> parentsById = assetRepository.findAllById(parentIds).stream()
+                .collect(Collectors.toMap(Asset::getId, a -> a));
+
+        List<ComponentRow> rows = components.stream()
+                .map(c -> {
+                    Asset parent = parentsById.get(c.getParentAssetId());
+                    return new ComponentRow(
+                            c.getAssetCode(),
+                            c.getName(),
+                            c.getCategory(),
+                            c.getPurchaseDate(),
+                            c.getPurchaseCost(),
+                            c.getStatus(),
+                            parent != null ? parent.getAssetCode() : "Unknown",
+                            parent != null ? parent.getName() : "Unknown (parent asset may have been deleted)"
+                    );
+                })
+                .collect(Collectors.toList());
+
+        ComponentReportData data = new ComponentReportData();
+        data.setGeneratedDate(LocalDate.now());
+        data.setRows(rows);
+        data.setTotalValue(rows.stream().map(ComponentRow::acquisitionCost)
+                .filter(v -> v != null).reduce(BigDecimal.ZERO, BigDecimal::add));
+        return data;
+    }
+
+    /**
+     * Catalogue item 2 — Detailed Fixed Asset Register: same scoping/filtering as the
      * plain register, but expanded to identification, acquisition, location and
      * lifecycle fields.
      */
@@ -194,7 +325,7 @@ public class ReportService {
     }
 
     /**
-     * Fixed Asset Summary: population count, historical cost,
+     * Catalogue item 3 — Fixed Asset Summary: population count, historical cost,
      * accumulated depreciation and NBV, both overall and broken down by category.
      */
     @Cacheable(cacheNames = "reports",
@@ -260,9 +391,14 @@ public class ReportService {
     }
 
     /**
-     * "Asset Register by X".
+     * Catalogue items 4–9 (+ acquisition-date, supplier variants) — "Asset Register by X".
      * One implementation parameterized by {@link AssetGroupBy} instead of six-plus near-
      * identical report methods; grouping key extraction lives in {@link #groupKeyFor}.
+     *
+     * <p>{@code fromDate}/{@code toDate} are optional and filter on {@code purchaseDate}
+     * (acquisition date) when present — used by Section 3's "Acquisition by Supplier/
+     * Category/Department" reports (items 7–9 there), which are this same grouping
+     * restricted to a reporting period.
      */
     @Cacheable(cacheNames = "reports",
             key = "'assetRegisterGrouped|' + #scope.cacheKey() + '|' + #groupBy + '|' + #category + '|' + #department + '|' + #status + '|' + #fromDate + '|' + #toDate")
@@ -364,7 +500,7 @@ public class ReportService {
     }
 
     /**
-     * Fully Depreciated Asset Register: assets whose latest
+     * Catalogue item 14 — Fully Depreciated Asset Register: assets whose latest
      * depreciation posting is flagged fullyDepreciated, but still registered/active
      * (status not Disposed/Retired). Assets never run through depreciation are excluded —
      * "fully depreciated" requires an actual posting saying so.
@@ -411,7 +547,7 @@ public class ReportService {
     }
 
     /**
-     * Non-Depreciable Asset Register: assets with no resolvable
+     * Catalogue item 15 — Non-Depreciable Asset Register: assets with no resolvable
      * depreciation policy (no asset-specific or category-wide {@link DepreciationParameters}
      * active today), mirroring {@link DepreciationService#resolveParameters}. Built as a
      * single bulk lookup rather than one resolveParameters() query per asset.
@@ -463,7 +599,1172 @@ public class ReportService {
     }
 
     /**
-     * Asset Acquisition Report: assets acquired (by purchaseDate)
+     * Section 4, items 2, 3, 5, 7, 8 — period-based depreciation reports (Monthly,
+     * Expense, By Category, By Department, By Cost Centre), built to respect
+     * {@link ReportScope}.
+     *
+     * <p><b>Security note:</b> {@link DepreciationService#getDepreciationReport},
+     * {@code getCategoryReport} and {@code getDepartmentReport} query ALL postings for a
+     * period company-wide with no scope filtering — appropriate for the admin
+     * depreciation module, not for the Reports module where a department head must only
+     * see their own department. So these methods re-aggregate from scratch off a
+     * scope-filtered posting list, rather than reusing those methods' pre-aggregated
+     * totals (which would already be wrong before any filtering could fix them).
+     */
+    private List<DepreciationPosting> scopedPostingsForPeriod(ReportScope scope, String period) {
+        java.util.Set<Long> visibleAssetIds = scopedAssets(scope).stream().map(Asset::getId).collect(Collectors.toSet());
+        return depreciationService.getDepreciationReport(period).getPostings().stream()
+                .filter(p -> visibleAssetIds.contains(p.getAssetId()))
+                .collect(Collectors.toList());
+    }
+
+    @Cacheable(cacheNames = "reports", key = "'monthlyDepreciation|' + #scope.cacheKey() + '|' + #period")
+    @Transactional(readOnly = true)
+    public com.example.fams.depreciation.DepreciationReport generateMonthlyDepreciationReport(ReportScope scope, String period) {
+        List<DepreciationPosting> postings = scopedPostingsForPeriod(scope, period);
+        return buildDepreciationReport(period, postings);
+    }
+
+    @Cacheable(cacheNames = "reports", key = "'depreciationByCategoryPeriod|' + #scope.cacheKey() + '|' + #period")
+    @Transactional(readOnly = true)
+    public List<com.example.fams.depreciation.DepreciationCategoryReport> generateDepreciationByCategoryPeriodReport(ReportScope scope, String period) {
+        List<DepreciationPosting> postings = scopedPostingsForPeriod(scope, period);
+        return postings.stream()
+                .collect(Collectors.groupingBy(DepreciationPosting::getCategory))
+                .entrySet().stream()
+                .map(e -> {
+                    com.example.fams.depreciation.DepreciationCategoryReport r = new com.example.fams.depreciation.DepreciationCategoryReport();
+                    r.setCategory(e.getKey());
+                    populateTotals(r::setPostings, r::setTotalOriginalCost, r::setTotalAccumulatedDepreciation,
+                            r::setTotalDepreciationCharge, r::setTotalBookValue, r::setAssetCount, e.getValue());
+                    return r;
+                })
+                .sorted((a, b) -> a.getCategory().compareToIgnoreCase(b.getCategory()))
+                .collect(Collectors.toList());
+    }
+
+    @Cacheable(cacheNames = "reports", key = "'depreciationByDepartmentPeriod|' + #scope.cacheKey() + '|' + #period")
+    @Transactional(readOnly = true)
+    public List<com.example.fams.depreciation.DepreciationDepartmentReport> generateDepreciationByDepartmentPeriodReport(ReportScope scope, String period) {
+        List<DepreciationPosting> postings = scopedPostingsForPeriod(scope, period);
+        return postings.stream()
+                .collect(Collectors.groupingBy(DepreciationPosting::getDepartment))
+                .entrySet().stream()
+                .map(e -> {
+                    com.example.fams.depreciation.DepreciationDepartmentReport r = new com.example.fams.depreciation.DepreciationDepartmentReport();
+                    r.setDepartment(e.getKey());
+                    populateTotals(r::setPostings, r::setTotalOriginalCost, r::setTotalAccumulatedDepreciation,
+                            r::setTotalDepreciationCharge, r::setTotalBookValue, r::setAssetCount, e.getValue());
+                    return r;
+                })
+                .sorted((a, b) -> a.getDepartment().compareToIgnoreCase(b.getDepartment()))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * By Cost Centre has no equivalent in DepreciationService at all (postings don't
+     * carry cost centre) — grouped here via a join back to Asset.costCentre.
+     */
+    @Cacheable(cacheNames = "reports", key = "'depreciationByCostCentrePeriod|' + #scope.cacheKey() + '|' + #period")
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> generateDepreciationByCostCentrePeriodReport(ReportScope scope, String period) {
+        List<DepreciationPosting> postings = scopedPostingsForPeriod(scope, period);
+        Map<Long, Asset> assetsById = scopedAssets(scope).stream().collect(Collectors.toMap(Asset::getId, a -> a));
+
+        Map<String, List<DepreciationPosting>> byCostCentre = postings.stream()
+                .collect(Collectors.groupingBy(p -> {
+                    Asset a = assetsById.get(p.getAssetId());
+                    String cc = a != null ? a.getCostCentre() : null;
+                    return (cc == null || cc.isBlank()) ? "Unspecified" : cc;
+                }));
+
+        List<Map<String, Object>> result = new java.util.ArrayList<>();
+        byCostCentre.forEach((costCentre, list) -> {
+            java.util.concurrent.atomic.AtomicReference<BigDecimal> cost = new java.util.concurrent.atomic.AtomicReference<>(BigDecimal.ZERO);
+            java.util.concurrent.atomic.AtomicReference<BigDecimal> accum = new java.util.concurrent.atomic.AtomicReference<>(BigDecimal.ZERO);
+            java.util.concurrent.atomic.AtomicReference<BigDecimal> charge = new java.util.concurrent.atomic.AtomicReference<>(BigDecimal.ZERO);
+            java.util.concurrent.atomic.AtomicReference<BigDecimal> book = new java.util.concurrent.atomic.AtomicReference<>(BigDecimal.ZERO);
+            for (DepreciationPosting p : list) {
+                if (p.getAssetCost() != null) cost.set(cost.get().add(p.getAssetCost()));
+                if (p.getClosingAccumulatedDepreciation() != null) accum.set(accum.get().add(p.getClosingAccumulatedDepreciation()));
+                if (p.getDepreciationCharge() != null) charge.set(charge.get().add(p.getDepreciationCharge()));
+                if (p.getBookValue() != null) book.set(book.get().add(p.getBookValue()));
+            }
+            Map<String, Object> row = new java.util.LinkedHashMap<>();
+            row.put("costCentre", costCentre);
+            row.put("assetCount", list.size());
+            row.put("totalOriginalCost", cost.get());
+            row.put("totalAccumulatedDepreciation", accum.get());
+            row.put("totalDepreciationCharge", charge.get());
+            row.put("totalBookValue", book.get());
+            result.add(row);
+        });
+        result.sort((a, b) -> ((String) a.get("costCentre")).compareToIgnoreCase((String) b.get("costCentre")));
+        return result;
+    }
+
+    /**
+     * Section 4, item 3 — Depreciation Expense Report: depreciation charge recognized
+     * within a reporting period (date range), as distinct from item 2's single named
+     * period. Sums DepreciationPosting.depreciationCharge for postings whose createdAt
+     * falls in range.
+     */
+    @Cacheable(cacheNames = "reports",
+            key = "'depreciationExpense|' + #scope.cacheKey() + '|' + #fromDate + '|' + #toDate + '|' + #category + '|' + #department")
+    @Transactional(readOnly = true)
+    public AcquisitionCostAnalysisData generateDepreciationExpenseReport(ReportScope scope, LocalDate fromDate, LocalDate toDate,
+                                                                           String category, String department) {
+        List<Asset> assets = scopedAssets(scope);
+        if (hasValue(category, "All Categories")) {
+            assets = assets.stream().filter(a -> a.getCategory() != null && a.getCategory().equalsIgnoreCase(category)).collect(Collectors.toList());
+        }
+        if (hasValue(department, "Global Operations")) {
+            assets = assets.stream().filter(a -> a.getDepartment() != null && a.getDepartment().equalsIgnoreCase(department)).collect(Collectors.toList());
+        }
+        java.util.Set<Long> ids = assets.stream().map(Asset::getId).collect(Collectors.toSet());
+
+        List<DepreciationPosting> postings = assets.stream()
+                .flatMap(a -> depreciationService.getDepreciationHistory(a.getId()).stream())
+                .filter(p -> {
+                    LocalDate postedOn = p.getCreatedAt() != null ? p.getCreatedAt().toLocalDate() : null;
+                    if (postedOn == null) return true;
+                    if (fromDate != null && postedOn.isBefore(fromDate)) return false;
+                    if (toDate != null && postedOn.isAfter(toDate)) return false;
+                    return true;
+                })
+                .collect(Collectors.toList());
+
+        AcquisitionCostAnalysisData data = new AcquisitionCostAnalysisData(); // reused: total/avg/min/max + category breakdown shape fits directly
+        data.setGeneratedDate(LocalDate.now());
+        data.setFromDate(fromDate);
+        data.setToDate(toDate);
+        data.setTotalAssets((int) postings.stream().map(DepreciationPosting::getAssetId).distinct().count());
+
+        List<BigDecimal> charges = postings.stream()
+                .map(p -> p.getDepreciationCharge() == null ? BigDecimal.ZERO : p.getDepreciationCharge())
+                .collect(Collectors.toList());
+        BigDecimal total = charges.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+        data.setTotalCost(total);
+        data.setAverageCost(charges.isEmpty() ? BigDecimal.ZERO : total.divide(BigDecimal.valueOf(charges.size()), 2, java.math.RoundingMode.HALF_UP));
+        data.setMinCost(charges.stream().min(BigDecimal::compareTo).orElse(BigDecimal.ZERO));
+        data.setMaxCost(charges.stream().max(BigDecimal::compareTo).orElse(BigDecimal.ZERO));
+
+        Map<String, List<DepreciationPosting>> byCategory = postings.stream()
+                .collect(Collectors.groupingBy(p -> p.getCategory() == null ? "Uncategorized" : p.getCategory()));
+        data.setByCategory(byCategory.entrySet().stream()
+                .map(e -> new AssetSummaryData.CategoryBreakdown(e.getKey(), e.getValue().size(),
+                        e.getValue().stream().map(p -> p.getDepreciationCharge() == null ? BigDecimal.ZERO : p.getDepreciationCharge()).reduce(BigDecimal.ZERO, BigDecimal::add),
+                        BigDecimal.ZERO, BigDecimal.ZERO))
+                .sorted((a, b) -> a.category().compareToIgnoreCase(b.category()))
+                .collect(Collectors.toList()));
+
+        return data;
+    }
+
+    private void populateTotals(java.util.function.Consumer<List<DepreciationPosting>> setPostings,
+                                  java.util.function.Consumer<BigDecimal> setCost,
+                                  java.util.function.Consumer<BigDecimal> setAccum,
+                                  java.util.function.Consumer<BigDecimal> setCharge,
+                                  java.util.function.Consumer<BigDecimal> setBook,
+                                  java.util.function.IntConsumer setCount,
+                                  List<DepreciationPosting> postings) {
+        setPostings.accept(postings);
+        setCost.accept(postings.stream().map(p -> p.getAssetCost() == null ? BigDecimal.ZERO : p.getAssetCost()).reduce(BigDecimal.ZERO, BigDecimal::add));
+        setAccum.accept(postings.stream().map(p -> p.getClosingAccumulatedDepreciation() == null ? BigDecimal.ZERO : p.getClosingAccumulatedDepreciation()).reduce(BigDecimal.ZERO, BigDecimal::add));
+        setCharge.accept(postings.stream().map(p -> p.getDepreciationCharge() == null ? BigDecimal.ZERO : p.getDepreciationCharge()).reduce(BigDecimal.ZERO, BigDecimal::add));
+        setBook.accept(postings.stream().map(p -> p.getBookValue() == null ? BigDecimal.ZERO : p.getBookValue()).reduce(BigDecimal.ZERO, BigDecimal::add));
+        setCount.accept((int) postings.stream().map(DepreciationPosting::getAssetId).distinct().count());
+    }
+
+    private com.example.fams.depreciation.DepreciationReport buildDepreciationReport(String period, List<DepreciationPosting> postings) {
+        com.example.fams.depreciation.DepreciationReport report = new com.example.fams.depreciation.DepreciationReport();
+        report.setPeriod(period);
+        report.setPostings(postings);
+        report.setTotalOriginalCost(postings.stream().map(p -> p.getAssetCost() == null ? BigDecimal.ZERO : p.getAssetCost()).reduce(BigDecimal.ZERO, BigDecimal::add));
+        report.setTotalAccumulatedDepreciation(postings.stream().map(p -> p.getClosingAccumulatedDepreciation() == null ? BigDecimal.ZERO : p.getClosingAccumulatedDepreciation()).reduce(BigDecimal.ZERO, BigDecimal::add));
+        report.setTotalDepreciationCharge(postings.stream().map(p -> p.getDepreciationCharge() == null ? BigDecimal.ZERO : p.getDepreciationCharge()).reduce(BigDecimal.ZERO, BigDecimal::add));
+        report.setTotalBookValue(postings.stream().map(p -> p.getBookValue() == null ? BigDecimal.ZERO : p.getBookValue()).reduce(BigDecimal.ZERO, BigDecimal::add));
+        report.setAssetCount((int) postings.stream().map(DepreciationPosting::getAssetId).distinct().count());
+        report.setFullyDepreciatedCount((int) postings.stream().filter(p -> Boolean.TRUE.equals(p.getFullyDepreciated())).count());
+        return report;
+    }
+
+    /**
+     * Section 4, item 13 — Depreciation Adjustment Report: manual corrections,
+     * reversals and recalculations recorded against assets (see
+     * {@code DepreciationAdjustment}), scoped to assets the caller's {@link ReportScope}
+     * permits seeing.
+     */
+    @Cacheable(cacheNames = "reports",
+            key = "'depreciationAdjustments|' + #scope.cacheKey() + '|' + #fromDate + '|' + #toDate + '|' + #category + '|' + #department")
+    @Transactional(readOnly = true)
+    public DepreciationAdjustmentReportData generateDepreciationAdjustmentReport(ReportScope scope, LocalDate fromDate, LocalDate toDate,
+                                                                                   String category, String department) {
+        java.util.Set<Long> visibleAssetIds = scopedAssets(scope).stream().map(Asset::getId).collect(Collectors.toSet());
+
+        List<com.example.fams.depreciation.DepreciationAdjustment> adjustments = depreciationAdjustmentService.findByDateRange(fromDate, toDate).stream()
+                .filter(a -> visibleAssetIds.contains(a.getAsset().getId()))
+                .collect(Collectors.toList());
+
+        if (hasValue(category, "All Categories")) {
+            adjustments = adjustments.stream()
+                    .filter(a -> a.getAsset().getCategory() != null && a.getAsset().getCategory().equalsIgnoreCase(category))
+                    .collect(Collectors.toList());
+        }
+        if (hasValue(department, "Global Operations")) {
+            adjustments = adjustments.stream()
+                    .filter(a -> a.getAsset().getDepartment() != null && a.getAsset().getDepartment().equalsIgnoreCase(department))
+                    .collect(Collectors.toList());
+        }
+
+        List<DepreciationAdjustmentRow> rows = adjustments.stream()
+                .map(a -> new DepreciationAdjustmentRow(
+                        a.getDate(), a.getAsset().getAssetCode(), a.getAsset().getName(),
+                        a.getAsset().getCategory(), a.getAsset().getDepartment(), a.getPeriod(),
+                        a.getType() == null ? null : a.getType().name(), a.getAmount(), a.getReason(), a.getRecordedBy()
+                ))
+                .collect(Collectors.toList());
+
+        DepreciationAdjustmentReportData data = new DepreciationAdjustmentReportData();
+        data.setGeneratedDate(LocalDate.now());
+        data.setRows(rows);
+        data.setTotalAmount(rows.stream().map(DepreciationAdjustmentRow::amount).filter(v -> v != null).reduce(BigDecimal.ZERO, BigDecimal::add));
+        return data;
+    }
+
+    // ---- Section 6: Transfer and Assignment Reports (items 1-5, 8, 9, 11 share this data) ----
+
+    private List<com.example.fams.lifecycle.AssetLifecycleWorkflow> scopedTransferWorkflows(ReportScope scope, String category) {
+        java.util.Set<Long> visibleAssetIds = scopedAssets(scope).stream().map(Asset::getId).collect(Collectors.toSet());
+        List<com.example.fams.lifecycle.AssetLifecycleWorkflow> workflows = assetLifecycleService.findAllWorkflows().stream()
+                .filter(w -> w.getType() == com.example.fams.lifecycle.LifecycleWorkflowType.TRANSFER)
+                .filter(w -> visibleAssetIds.contains(w.getAsset().getId()))
+                .collect(Collectors.toList());
+        if (hasValue(category, "All Categories")) {
+            workflows = workflows.stream()
+                    .filter(w -> w.getAsset().getCategory() != null && w.getAsset().getCategory().equalsIgnoreCase(category))
+                    .collect(Collectors.toList());
+        }
+        return workflows;
+    }
+
+    private List<com.example.fams.lifecycle.AssetLifecycleWorkflow> filterByRequestedDateRange(
+            List<com.example.fams.lifecycle.AssetLifecycleWorkflow> workflows, LocalDate fromDate, LocalDate toDate) {
+        if (fromDate != null) {
+            workflows = workflows.stream()
+                    .filter(w -> w.getRequestedEffectiveDate() != null && !w.getRequestedEffectiveDate().isBefore(fromDate))
+                    .collect(Collectors.toList());
+        }
+        if (toDate != null) {
+            workflows = workflows.stream()
+                    .filter(w -> w.getRequestedEffectiveDate() != null && !w.getRequestedEffectiveDate().isAfter(toDate))
+                    .collect(Collectors.toList());
+        }
+        return workflows;
+    }
+
+    private TransferRow toTransferRow(com.example.fams.lifecycle.AssetLifecycleWorkflow w) {
+        return new TransferRow(
+                w.getRequestedEffectiveDate(), w.getAsset().getAssetCode(), w.getAsset().getName(), w.getAsset().getCategory(),
+                w.getStatus() == null ? null : w.getStatus().name(),
+                w.getFromDepartment(), w.getToDepartment(), w.getFromBranch(), w.getToBranch(),
+                w.getFromLocation(), w.getToLocation(), w.getFromEmployee(), w.getToEmployee(),
+                w.getRequestedBy(), w.getReason()
+        );
+    }
+
+    private TransferReportData wrapTransferRows(List<com.example.fams.lifecycle.AssetLifecycleWorkflow> workflows) {
+        TransferReportData data = new TransferReportData();
+        data.setGeneratedDate(LocalDate.now());
+        data.setRows(workflows.stream().map(this::toTransferRow).collect(Collectors.toList()));
+        return data;
+    }
+
+    /** Section 6, item 1 — Asset Transfer Report: all transfers, optionally within a period. */
+    @Transactional(readOnly = true)
+    public TransferReportData generateAssetTransferReport(ReportScope scope, LocalDate fromDate, LocalDate toDate,
+                                                            String category, String department) {
+        List<com.example.fams.lifecycle.AssetLifecycleWorkflow> workflows = scopedTransferWorkflows(scope, category);
+        if (hasValue(department, "Global Operations")) {
+            workflows = workflows.stream()
+                    .filter(w -> w.getAsset().getDepartment() != null && w.getAsset().getDepartment().equalsIgnoreCase(department))
+                    .collect(Collectors.toList());
+        }
+        workflows = filterByRequestedDateRange(workflows, fromDate, toDate);
+        return wrapTransferRows(workflows);
+    }
+
+    /**
+     * Section 6, item 2 — Transfer-In Register: transfers received into a unit. "unit"
+     * matches against {@code toDepartment}, {@code toBranch} or {@code toLocation} (any
+     * match counts) — the catalogue doesn't specify which dimension "unit" means, so this
+     * accepts whichever one the caller has data for rather than forcing department only.
+     */
+    @Transactional(readOnly = true)
+    public TransferReportData generateTransferInRegister(ReportScope scope, LocalDate fromDate, LocalDate toDate,
+                                                           String category, String unit) {
+        List<com.example.fams.lifecycle.AssetLifecycleWorkflow> workflows = scopedTransferWorkflows(scope, category);
+        workflows = filterByRequestedDateRange(workflows, fromDate, toDate);
+        if (unit != null && !unit.isBlank() && !unit.equalsIgnoreCase("All")) {
+            workflows = workflows.stream()
+                    .filter(w -> unit.equalsIgnoreCase(w.getToDepartment())
+                            || unit.equalsIgnoreCase(w.getToBranch())
+                            || unit.equalsIgnoreCase(w.getToLocation()))
+                    .collect(Collectors.toList());
+        }
+        return wrapTransferRows(workflows);
+    }
+
+    /** Section 6, item 3 — Transfer-Out Register: same as item 2, mirrored on the "from" side. */
+    @Transactional(readOnly = true)
+    public TransferReportData generateTransferOutRegister(ReportScope scope, LocalDate fromDate, LocalDate toDate,
+                                                            String category, String unit) {
+        List<com.example.fams.lifecycle.AssetLifecycleWorkflow> workflows = scopedTransferWorkflows(scope, category);
+        workflows = filterByRequestedDateRange(workflows, fromDate, toDate);
+        if (unit != null && !unit.isBlank() && !unit.equalsIgnoreCase("All")) {
+            workflows = workflows.stream()
+                    .filter(w -> unit.equalsIgnoreCase(w.getFromDepartment())
+                            || unit.equalsIgnoreCase(w.getFromBranch())
+                            || unit.equalsIgnoreCase(w.getFromLocation()))
+                    .collect(Collectors.toList());
+        }
+        return wrapTransferRows(workflows);
+    }
+
+    /** Section 6, item 4 — Inter-Branch Transfer Report: transfers where the branch actually changed. */
+    @Transactional(readOnly = true)
+    public TransferReportData generateInterBranchTransferReport(ReportScope scope, LocalDate fromDate, LocalDate toDate,
+                                                                  String category, String department) {
+        List<com.example.fams.lifecycle.AssetLifecycleWorkflow> workflows = scopedTransferWorkflows(scope, category);
+        if (hasValue(department, "Global Operations")) {
+            workflows = workflows.stream()
+                    .filter(w -> w.getAsset().getDepartment() != null && w.getAsset().getDepartment().equalsIgnoreCase(department))
+                    .collect(Collectors.toList());
+        }
+        workflows = filterByRequestedDateRange(workflows, fromDate, toDate);
+        workflows = workflows.stream()
+                .filter(w -> w.getFromBranch() != null && w.getToBranch() != null && !w.getFromBranch().equalsIgnoreCase(w.getToBranch()))
+                .collect(Collectors.toList());
+        return wrapTransferRows(workflows);
+    }
+
+    /** Section 6, item 5 — Inter-Department Transfer Report: transfers where the department actually changed. */
+    @Transactional(readOnly = true)
+    public TransferReportData generateInterDepartmentTransferReport(ReportScope scope, LocalDate fromDate, LocalDate toDate,
+                                                                      String category) {
+        List<com.example.fams.lifecycle.AssetLifecycleWorkflow> workflows = scopedTransferWorkflows(scope, category);
+        workflows = filterByRequestedDateRange(workflows, fromDate, toDate);
+        workflows = workflows.stream()
+                .filter(w -> w.getFromDepartment() != null && w.getToDepartment() != null && !w.getFromDepartment().equalsIgnoreCase(w.getToDepartment()))
+                .collect(Collectors.toList());
+        return wrapTransferRows(workflows);
+    }
+
+    /** Section 6, item 6 — Asset Assignment Report: current custodian per asset. */
+    @Cacheable(cacheNames = "reports", key = "'assetAssignment|' + #scope.cacheKey() + '|' + #category + '|' + #department")
+    @Transactional(readOnly = true)
+    public AssignmentReportData generateAssetAssignmentReport(ReportScope scope, String category, String department) {
+        List<Asset> assets = scopedAssets(scope);
+        if (hasValue(category, "All Categories")) {
+            assets = assets.stream().filter(a -> a.getCategory() != null && a.getCategory().equalsIgnoreCase(category)).collect(Collectors.toList());
+        }
+        if (hasValue(department, "Global Operations")) {
+            assets = assets.stream().filter(a -> a.getDepartment() != null && a.getDepartment().equalsIgnoreCase(department)).collect(Collectors.toList());
+        }
+        assets = assets.stream().filter(a -> a.getCustodian() != null && !a.getCustodian().isBlank()).collect(Collectors.toList());
+
+        AssignmentReportData data = new AssignmentReportData();
+        data.setGeneratedDate(LocalDate.now());
+        data.setRows(assets.stream()
+                .map(a -> new AssignmentRow(a.getAssetCode(), a.getName(), a.getCategory(), a.getCustodian(), a.getDepartment(), a.getBranch(), a.getStatus()))
+                .collect(Collectors.toList()));
+        return data;
+    }
+
+    /** Section 6, item 10 — Unassigned Assets Report: assets with no current custodian. */
+    @Cacheable(cacheNames = "reports", key = "'unassignedAssets|' + #scope.cacheKey() + '|' + #category + '|' + #department")
+    @Transactional(readOnly = true)
+    public AssignmentReportData generateUnassignedAssetsReport(ReportScope scope, String category, String department) {
+        List<Asset> assets = scopedAssets(scope);
+        if (hasValue(category, "All Categories")) {
+            assets = assets.stream().filter(a -> a.getCategory() != null && a.getCategory().equalsIgnoreCase(category)).collect(Collectors.toList());
+        }
+        if (hasValue(department, "Global Operations")) {
+            assets = assets.stream().filter(a -> a.getDepartment() != null && a.getDepartment().equalsIgnoreCase(department)).collect(Collectors.toList());
+        }
+        assets = assets.stream().filter(a -> a.getCustodian() == null || a.getCustodian().isBlank()).collect(Collectors.toList());
+
+        AssignmentReportData data = new AssignmentReportData();
+        data.setGeneratedDate(LocalDate.now());
+        data.setRows(assets.stream()
+                .map(a -> new AssignmentRow(a.getAssetCode(), a.getName(), a.getCategory(), a.getCustodian(), a.getDepartment(), a.getBranch(), a.getStatus()))
+                .collect(Collectors.toList()));
+        return data;
+    }
+
+    /** Section 6, item 8 — Asset Assignment History: transfers where the custodian actually changed. */
+    @Transactional(readOnly = true)
+    public TransferReportData generateAssignmentHistoryReport(ReportScope scope, LocalDate fromDate, LocalDate toDate,
+                                                                String category, String department) {
+        List<com.example.fams.lifecycle.AssetLifecycleWorkflow> workflows = scopedTransferWorkflows(scope, category);
+        if (hasValue(department, "Global Operations")) {
+            workflows = workflows.stream()
+                    .filter(w -> w.getAsset().getDepartment() != null && w.getAsset().getDepartment().equalsIgnoreCase(department))
+                    .collect(Collectors.toList());
+        }
+        workflows = filterByRequestedDateRange(workflows, fromDate, toDate);
+        workflows = workflows.stream()
+                .filter(w -> !java.util.Objects.equals(w.getFromEmployee(), w.getToEmployee()))
+                .collect(Collectors.toList());
+        return wrapTransferRows(workflows);
+    }
+
+    /** Section 6, item 9 — Asset Location History: transfers where branch or location actually changed. */
+    @Transactional(readOnly = true)
+    public TransferReportData generateLocationHistoryReport(ReportScope scope, LocalDate fromDate, LocalDate toDate,
+                                                              String category, String department) {
+        List<com.example.fams.lifecycle.AssetLifecycleWorkflow> workflows = scopedTransferWorkflows(scope, category);
+        if (hasValue(department, "Global Operations")) {
+            workflows = workflows.stream()
+                    .filter(w -> w.getAsset().getDepartment() != null && w.getAsset().getDepartment().equalsIgnoreCase(department))
+                    .collect(Collectors.toList());
+        }
+        workflows = filterByRequestedDateRange(workflows, fromDate, toDate);
+        workflows = workflows.stream()
+                .filter(w -> !java.util.Objects.equals(w.getFromBranch(), w.getToBranch())
+                        || !java.util.Objects.equals(w.getFromLocation(), w.getToLocation()))
+                .collect(Collectors.toList());
+        return wrapTransferRows(workflows);
+    }
+
+    /** Section 6, item 11 — Assets Pending Transfer Approval. */
+    @Transactional(readOnly = true)
+    public TransferReportData generatePendingTransferApprovalReport(ReportScope scope, String category, String department) {
+        List<com.example.fams.lifecycle.AssetLifecycleWorkflow> workflows = scopedTransferWorkflows(scope, category);
+        if (hasValue(department, "Global Operations")) {
+            workflows = workflows.stream()
+                    .filter(w -> w.getAsset().getDepartment() != null && w.getAsset().getDepartment().equalsIgnoreCase(department))
+                    .collect(Collectors.toList());
+        }
+        workflows = workflows.stream()
+                .filter(w -> w.getStatus() == com.example.fams.lifecycle.LifecycleWorkflowStatus.PENDING_APPROVAL)
+                .collect(Collectors.toList());
+        return wrapTransferRows(workflows);
+    }
+
+    /** Section 6, item 12 — Asset Movement History: full chronological lifecycle event trail. */
+    @Transactional(readOnly = true)
+    public MovementHistoryReportData generateAssetMovementHistoryReport(ReportScope scope, LocalDate fromDate, LocalDate toDate,
+                                                                          String category, String department) {
+        List<Asset> assets = scopedAssets(scope);
+        if (hasValue(category, "All Categories")) {
+            assets = assets.stream().filter(a -> a.getCategory() != null && a.getCategory().equalsIgnoreCase(category)).collect(Collectors.toList());
+        }
+        if (hasValue(department, "Global Operations")) {
+            assets = assets.stream().filter(a -> a.getDepartment() != null && a.getDepartment().equalsIgnoreCase(department)).collect(Collectors.toList());
+        }
+
+        List<com.example.fams.lifecycle.AssetLifecycleHistory> history = lifecycleHistoryRepository.findByAssetInOrderByEventAtDesc(assets);
+        if (fromDate != null) {
+            history = history.stream().filter(h -> h.getEventAt() != null && !h.getEventAt().toLocalDate().isBefore(fromDate)).collect(Collectors.toList());
+        }
+        if (toDate != null) {
+            history = history.stream().filter(h -> h.getEventAt() != null && !h.getEventAt().toLocalDate().isAfter(toDate)).collect(Collectors.toList());
+        }
+
+        MovementHistoryReportData data = new MovementHistoryReportData();
+        data.setGeneratedDate(LocalDate.now());
+        data.setRows(history.stream()
+                .map(h -> new MovementHistoryRow(h.getAsset().getAssetCode(), h.getAsset().getName(),
+                        h.getEventType() == null ? null : h.getEventType().name(), h.getEventAt(), h.getActor(),
+                        h.getTitle(), h.getFromValue(), h.getToValue()))
+                .collect(Collectors.toList()));
+        return data;
+    }
+
+    // ---- Section 7: Disposal and Retirement Reports ----
+
+    private List<com.example.fams.lifecycle.AssetLifecycleWorkflow> scopedDisposalWorkflows(ReportScope scope, String category, String department) {
+        java.util.Set<Long> visibleAssetIds = scopedAssets(scope).stream().map(Asset::getId).collect(Collectors.toSet());
+        List<com.example.fams.lifecycle.AssetLifecycleWorkflow> workflows = assetLifecycleService.findAllWorkflows().stream()
+                .filter(w -> w.getType() == com.example.fams.lifecycle.LifecycleWorkflowType.DISPOSAL)
+                .filter(w -> visibleAssetIds.contains(w.getAsset().getId()))
+                .collect(Collectors.toList());
+        if (hasValue(category, "All Categories")) {
+            workflows = workflows.stream()
+                    .filter(w -> w.getAsset().getCategory() != null && w.getAsset().getCategory().equalsIgnoreCase(category))
+                    .collect(Collectors.toList());
+        }
+        if (hasValue(department, "Global Operations")) {
+            workflows = workflows.stream()
+                    .filter(w -> w.getAsset().getDepartment() != null && w.getAsset().getDepartment().equalsIgnoreCase(department))
+                    .collect(Collectors.toList());
+        }
+        return workflows;
+    }
+
+    private DisposalRow toDisposalRow(com.example.fams.lifecycle.AssetLifecycleWorkflow w) {
+        return new DisposalRow(
+                w.getRequestedEffectiveDate(), w.getAsset().getAssetCode(), w.getAsset().getName(),
+                w.getAsset().getCategory(), w.getAsset().getDepartment(),
+                w.getStatus() == null ? null : w.getStatus().name(), w.getDisposalMethod(),
+                w.getDisposalProceeds(), w.getAccumulatedDepreciation(), w.getNetBookValue(),
+                w.getFinancialImpact(), w.getReason(), w.getRequestedBy()
+        );
+    }
+
+    private DisposalReportData wrapDisposalRows(List<com.example.fams.lifecycle.AssetLifecycleWorkflow> workflows) {
+        List<DisposalRow> rows = workflows.stream().map(this::toDisposalRow).collect(Collectors.toList());
+        DisposalReportData data = new DisposalReportData();
+        data.setGeneratedDate(LocalDate.now());
+        data.setRows(rows);
+        data.setTotalProceeds(rows.stream().map(DisposalRow::disposalProceeds).filter(v -> v != null).reduce(BigDecimal.ZERO, BigDecimal::add));
+        data.setTotalGain(rows.stream().map(DisposalRow::financialImpact).filter(v -> v != null && v.compareTo(BigDecimal.ZERO) > 0).reduce(BigDecimal.ZERO, BigDecimal::add));
+        data.setTotalLoss(rows.stream().map(DisposalRow::financialImpact).filter(v -> v != null && v.compareTo(BigDecimal.ZERO) < 0).reduce(BigDecimal.ZERO, BigDecimal::add));
+        data.setNetGainLoss(rows.stream().map(DisposalRow::financialImpact).filter(v -> v != null).reduce(BigDecimal.ZERO, BigDecimal::add));
+        return data;
+    }
+
+    /**
+     * Section 7, items 1, 2, 4, 5, 6, 7, 8, 9, 10 — one method serves all of these; they
+     * differ only in which workflows are selected. {@code methods}, when non-empty,
+     * restricts to those {@code disposalMethod} values (case-insensitive) — used for
+     * Asset Sales ["Sale"], Scrapped Assets ["Scrap"], and Asset Retirement
+     * ["Write-off", "Scrap"] (retirement has no distinct concept in this system; see
+     * class-level note in ReportController's disposal endpoints for that interpretation).
+     * Items 1/2/4/5/8/9 pass an empty/null {@code methods} list — same data, different
+     * nav framing (register vs detail vs by-period vs by-category vs proceeds vs gain/loss).
+     */
+    @Transactional(readOnly = true)
+    public DisposalReportData generateDisposalReport(ReportScope scope, LocalDate fromDate, LocalDate toDate,
+                                                       String category, String department, List<String> methods) {
+        List<com.example.fams.lifecycle.AssetLifecycleWorkflow> workflows = scopedDisposalWorkflows(scope, category, department);
+        workflows = workflows.stream()
+                .filter(w -> w.getStatus() == com.example.fams.lifecycle.LifecycleWorkflowStatus.COMPLETED)
+                .collect(Collectors.toList());
+        if (fromDate != null) {
+            workflows = workflows.stream()
+                    .filter(w -> w.getRequestedEffectiveDate() != null && !w.getRequestedEffectiveDate().isBefore(fromDate))
+                    .collect(Collectors.toList());
+        }
+        if (toDate != null) {
+            workflows = workflows.stream()
+                    .filter(w -> w.getRequestedEffectiveDate() != null && !w.getRequestedEffectiveDate().isAfter(toDate))
+                    .collect(Collectors.toList());
+        }
+        if (methods != null && !methods.isEmpty()) {
+            java.util.Set<String> methodSet = methods.stream().map(String::toLowerCase).collect(Collectors.toSet());
+            workflows = workflows.stream()
+                    .filter(w -> w.getDisposalMethod() != null && methodSet.contains(w.getDisposalMethod().toLowerCase()))
+                    .collect(Collectors.toList());
+        }
+        return wrapDisposalRows(workflows);
+    }
+
+    /** Section 7, item 3 — Assets Pending Disposal: disposal workflows not yet completed. */
+    @Transactional(readOnly = true)
+    public DisposalReportData generatePendingDisposalReport(ReportScope scope, String category, String department) {
+        List<com.example.fams.lifecycle.AssetLifecycleWorkflow> workflows = scopedDisposalWorkflows(scope, category, department);
+        workflows = workflows.stream()
+                .filter(w -> w.getStatus() == com.example.fams.lifecycle.LifecycleWorkflowStatus.DRAFT
+                        || w.getStatus() == com.example.fams.lifecycle.LifecycleWorkflowStatus.PENDING_APPROVAL)
+                .collect(Collectors.toList());
+        return wrapDisposalRows(workflows);
+    }
+
+    /** Section 7, item 11 — Disposal Approval History: approval actions on disposal workflows. */
+    @Transactional(readOnly = true)
+    public ApprovalHistoryReportData generateDisposalApprovalHistoryReport(ReportScope scope, String category, String department) {
+        List<com.example.fams.lifecycle.AssetLifecycleWorkflow> workflows = scopedDisposalWorkflows(scope, category, department);
+        List<com.example.fams.lifecycle.AssetLifecycleApprovalAction> actions =
+                lifecycleApprovalActionRepository.findByWorkflowInOrderByActionAtAsc(workflows);
+
+        ApprovalHistoryReportData data = new ApprovalHistoryReportData();
+        data.setGeneratedDate(LocalDate.now());
+        data.setRows(actions.stream()
+                .map(a -> new ApprovalHistoryRow(
+                        a.getWorkflow().getAsset().getAssetCode(), a.getWorkflow().getAsset().getName(),
+                        a.getTaskName(), a.getActor(), a.getDecision() == null ? null : a.getDecision().name(),
+                        a.getComment(), a.getActionAt()))
+                .collect(Collectors.toList()));
+        return data;
+    }
+
+    /**
+     * Section 5, item 1 — Net Book Value Report: cost, accumulated depreciation,
+     * cumulative net impairment, and NBV. See {@link NbvRow} javadoc for the scope note
+     * on why revaluation isn't folded in here.
+     */
+    @Cacheable(cacheNames = "reports",
+            key = "'netBookValue|' + #scope.cacheKey() + '|' + #category + '|' + #department")
+    @Transactional(readOnly = true)
+    public NbvReportData generateNetBookValueReport(ReportScope scope, String category, String department) {
+        List<Asset> assets = scopedAssets(scope);
+        if (hasValue(category, "All Categories")) {
+            assets = assets.stream().filter(a -> a.getCategory() != null && a.getCategory().equalsIgnoreCase(category)).collect(Collectors.toList());
+        }
+        if (hasValue(department, "Global Operations")) {
+            assets = assets.stream().filter(a -> a.getDepartment() != null && a.getDepartment().equalsIgnoreCase(department)).collect(Collectors.toList());
+        }
+
+        List<Long> assetIds = assets.stream().map(Asset::getId).collect(Collectors.toList());
+        Map<Long, DepreciationPosting> latestPostings = depreciationService.getLatestPostingsForAssets(assetIds);
+        Map<Long, BigDecimal> cumulativeImpairment = assetImpairmentService.getCumulativeImpairmentForAssets(assetIds);
+
+        List<NbvRow> rows = assets.stream()
+                .map(a -> {
+                    BigDecimal cost = a.getPurchaseCost() == null ? BigDecimal.ZERO : a.getPurchaseCost();
+                    DepreciationPosting posting = latestPostings.get(a.getId());
+                    BigDecimal accumulated = posting != null && posting.getClosingAccumulatedDepreciation() != null
+                            ? posting.getClosingAccumulatedDepreciation() : BigDecimal.ZERO;
+                    BigDecimal impairment = cumulativeImpairment.getOrDefault(a.getId(), BigDecimal.ZERO);
+                    BigDecimal nbv = cost.subtract(accumulated).subtract(impairment);
+                    return new NbvRow(a.getAssetCode(), a.getName(), a.getCategory(), cost, accumulated, impairment, nbv);
+                })
+                .collect(Collectors.toList());
+
+        NbvReportData data = new NbvReportData();
+        data.setGeneratedDate(LocalDate.now());
+        data.setRows(rows);
+        data.setTotalHistoricalCost(rows.stream().map(NbvRow::historicalCost).filter(v -> v != null).reduce(BigDecimal.ZERO, BigDecimal::add));
+        data.setTotalAccumulatedDepreciation(rows.stream().map(NbvRow::accumulatedDepreciation).filter(v -> v != null).reduce(BigDecimal.ZERO, BigDecimal::add));
+        data.setTotalImpairment(rows.stream().map(NbvRow::impairment).filter(v -> v != null).reduce(BigDecimal.ZERO, BigDecimal::add));
+        data.setTotalNetBookValue(rows.stream().map(NbvRow::netBookValue).filter(v -> v != null).reduce(BigDecimal.ZERO, BigDecimal::add));
+        return data;
+    }
+
+    /**
+     * Section 5, item 8 — Asset Ageing and Value Report: age (from purchaseDate) bucketed
+     * alongside current cost/NBV.
+     */
+    @Cacheable(cacheNames = "reports",
+            key = "'assetAgeing|' + #scope.cacheKey() + '|' + #category + '|' + #department")
+    @Transactional(readOnly = true)
+    public AgeingReportData generateAssetAgeingReport(ReportScope scope, String category, String department) {
+        List<Asset> assets = scopedAssets(scope);
+        if (hasValue(category, "All Categories")) {
+            assets = assets.stream().filter(a -> a.getCategory() != null && a.getCategory().equalsIgnoreCase(category)).collect(Collectors.toList());
+        }
+        if (hasValue(department, "Global Operations")) {
+            assets = assets.stream().filter(a -> a.getDepartment() != null && a.getDepartment().equalsIgnoreCase(department)).collect(Collectors.toList());
+        }
+
+        List<Long> assetIds = assets.stream().map(Asset::getId).collect(Collectors.toList());
+        Map<Long, DepreciationPosting> latestPostings = depreciationService.getLatestPostingsForAssets(assetIds);
+
+        List<AgeingRow> rows = assets.stream()
+                .map(a -> {
+                    BigDecimal cost = a.getPurchaseCost() == null ? BigDecimal.ZERO : a.getPurchaseCost();
+                    DepreciationPosting posting = latestPostings.get(a.getId());
+                    BigDecimal nbv = posting != null && posting.getBookValue() != null ? posting.getBookValue() : cost;
+                    int ageYears = a.getPurchaseDate() != null
+                            ? java.time.Period.between(a.getPurchaseDate(), LocalDate.now()).getYears() : 0;
+                    String band = a.getPurchaseDate() == null ? "Unknown"
+                            : ageYears < 1 ? "0-1 years"
+                            : ageYears < 3 ? "1-3 years"
+                            : ageYears < 5 ? "3-5 years"
+                            : "5+ years";
+                    return new AgeingRow(a.getAssetCode(), a.getName(), a.getCategory(), a.getPurchaseDate(), ageYears, band, cost, nbv);
+                })
+                .sorted((a, b) -> b.ageYears() - a.ageYears())
+                .collect(Collectors.toList());
+
+        AgeingReportData data = new AgeingReportData();
+        data.setGeneratedDate(LocalDate.now());
+        data.setRows(rows);
+        return data;
+    }
+
+    /**
+     * Section 5, items 9–11 — Revaluation Report / History / Gain-Loss Report. One method
+     * serves all three; they differ only in UI framing, not underlying data — see
+     * {@link com.example.fams.valuation.AssetRevaluation} javadoc.
+     */
+    @Cacheable(cacheNames = "reports",
+            key = "'revaluations|' + #scope.cacheKey() + '|' + #fromDate + '|' + #toDate + '|' + #category + '|' + #department")
+    @Transactional(readOnly = true)
+    public RevaluationReportData generateRevaluationReport(ReportScope scope, LocalDate fromDate, LocalDate toDate,
+                                                             String category, String department) {
+        java.util.Set<Long> visibleAssetIds = scopedAssets(scope).stream().map(Asset::getId).collect(Collectors.toSet());
+
+        List<com.example.fams.valuation.AssetRevaluation> revaluations = assetRevaluationService.findByDateRange(fromDate, toDate).stream()
+                .filter(r -> visibleAssetIds.contains(r.getAsset().getId()))
+                .collect(Collectors.toList());
+
+        if (hasValue(category, "All Categories")) {
+            revaluations = revaluations.stream()
+                    .filter(r -> r.getAsset().getCategory() != null && r.getAsset().getCategory().equalsIgnoreCase(category))
+                    .collect(Collectors.toList());
+        }
+        if (hasValue(department, "Global Operations")) {
+            revaluations = revaluations.stream()
+                    .filter(r -> r.getAsset().getDepartment() != null && r.getAsset().getDepartment().equalsIgnoreCase(department))
+                    .collect(Collectors.toList());
+        }
+
+        List<RevaluationRow> rows = revaluations.stream()
+                .map(r -> new RevaluationRow(r.getDate(), r.getAsset().getAssetCode(), r.getAsset().getName(),
+                        r.getAsset().getCategory(), r.getAsset().getDepartment(), r.getPreviousCarryingAmount(),
+                        r.getRevaluedAmount(), r.getGainLoss(), r.getReason(), r.getRecordedBy()))
+                .collect(Collectors.toList());
+
+        RevaluationReportData data = new RevaluationReportData();
+        data.setGeneratedDate(LocalDate.now());
+        data.setRows(rows);
+        data.setTotalGain(rows.stream().map(RevaluationRow::gainLoss).filter(v -> v != null && v.compareTo(BigDecimal.ZERO) > 0).reduce(BigDecimal.ZERO, BigDecimal::add));
+        data.setTotalLoss(rows.stream().map(RevaluationRow::gainLoss).filter(v -> v != null && v.compareTo(BigDecimal.ZERO) < 0).reduce(BigDecimal.ZERO, BigDecimal::add));
+        data.setNetMovement(rows.stream().map(RevaluationRow::gainLoss).filter(v -> v != null).reduce(BigDecimal.ZERO, BigDecimal::add));
+        return data;
+    }
+
+    /**
+     * Section 5, items 12–13 — Impairment Report / History. One method serves both.
+     */
+    @Cacheable(cacheNames = "reports",
+            key = "'impairments|' + #scope.cacheKey() + '|' + #fromDate + '|' + #toDate + '|' + #category + '|' + #department")
+    @Transactional(readOnly = true)
+    public ImpairmentReportData generateImpairmentReport(ReportScope scope, LocalDate fromDate, LocalDate toDate,
+                                                           String category, String department) {
+        java.util.Set<Long> visibleAssetIds = scopedAssets(scope).stream().map(Asset::getId).collect(Collectors.toSet());
+
+        List<com.example.fams.valuation.AssetImpairment> impairments = assetImpairmentService.findByDateRange(fromDate, toDate).stream()
+                .filter(i -> visibleAssetIds.contains(i.getAsset().getId()))
+                .collect(Collectors.toList());
+
+        if (hasValue(category, "All Categories")) {
+            impairments = impairments.stream()
+                    .filter(i -> i.getAsset().getCategory() != null && i.getAsset().getCategory().equalsIgnoreCase(category))
+                    .collect(Collectors.toList());
+        }
+        if (hasValue(department, "Global Operations")) {
+            impairments = impairments.stream()
+                    .filter(i -> i.getAsset().getDepartment() != null && i.getAsset().getDepartment().equalsIgnoreCase(department))
+                    .collect(Collectors.toList());
+        }
+
+        List<ImpairmentRow> rows = impairments.stream()
+                .map(i -> new ImpairmentRow(i.getDate(), i.getAsset().getAssetCode(), i.getAsset().getName(),
+                        i.getAsset().getCategory(), i.getAsset().getDepartment(),
+                        i.getType() == null ? null : i.getType().name(), i.getAmount(),
+                        i.getCarryingAmountBefore(), i.getCarryingAmountAfter(), i.getReason(), i.getRecordedBy()))
+                .collect(Collectors.toList());
+
+        ImpairmentReportData data = new ImpairmentReportData();
+        data.setGeneratedDate(LocalDate.now());
+        data.setRows(rows);
+        data.setTotalImpairmentLoss(impairments.stream()
+                .filter(i -> i.getType() == com.example.fams.valuation.ImpairmentType.IMPAIRMENT_LOSS)
+                .map(com.example.fams.valuation.AssetImpairment::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add));
+        data.setTotalReversal(impairments.stream()
+                .filter(i -> i.getType() == com.example.fams.valuation.ImpairmentType.REVERSAL)
+                .map(com.example.fams.valuation.AssetImpairment::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add));
+        data.setNetImpairment(data.getTotalImpairmentLoss().subtract(data.getTotalReversal()));
+        return data;
+    }
+
+    /**
+     * Section 4, item 11 — Depreciation Run Report: history of depreciation batch runs.
+     * Deliberately NOT filtered by {@link ReportScope} — a run touches all assets
+     * company-wide by design, so which runs happened is an operational/audit fact about
+     * the depreciation process itself, not asset data a department head's visibility
+     * should restrict. If that's wrong for your organization, this is the one report in
+     * Section 4 that would need scope filtering added.
+     */
+    @Transactional(readOnly = true)
+    public List<com.example.fams.depreciation.DepreciationRun> generateDepreciationRunReport() {
+        return depreciationService.getRunHistory();
+    }
+
+    /**
+     * Section 4, item 1 — Depreciation Schedule (upgraded from a plain register clone):
+     * cost, residual value, useful life, method, current charge and carrying amount per
+     * asset, using the same bulk parameter-resolution as the Non-Depreciable report so
+     * this stays a small, fixed number of queries regardless of asset count.
+     */
+    @Cacheable(cacheNames = "reports",
+            key = "'depreciationSchedule|' + #scope.cacheKey() + '|' + #category + '|' + #department")
+    @Transactional(readOnly = true)
+    public DepreciationScheduleData generateDepreciationScheduleReport(ReportScope scope, String category, String department) {
+        List<Asset> assets = scopedAssets(scope);
+        if (hasValue(category, "All Categories")) {
+            assets = assets.stream()
+                    .filter(a -> a.getCategory() != null && a.getCategory().equalsIgnoreCase(category))
+                    .collect(Collectors.toList());
+        }
+        if (hasValue(department, "Global Operations")) {
+            assets = assets.stream()
+                    .filter(a -> a.getDepartment() != null && a.getDepartment().equalsIgnoreCase(department))
+                    .collect(Collectors.toList());
+        }
+
+        List<Long> assetIds = assets.stream().map(Asset::getId).collect(Collectors.toList());
+        Map<Long, DepreciationPosting> latestPostings = depreciationService.getLatestPostingsForAssets(assetIds);
+        Map<Long, com.example.fams.depreciation.DepreciationParameters> paramsByAsset = depreciationService.resolveParametersForAssets(assets);
+
+        List<DepreciationScheduleRow> rows = assets.stream()
+                .map(a -> {
+                    com.example.fams.depreciation.DepreciationParameters params = paramsByAsset.get(a.getId());
+                    DepreciationPosting posting = latestPostings.get(a.getId());
+                    BigDecimal cost = a.getPurchaseCost() == null ? BigDecimal.ZERO : a.getPurchaseCost();
+                    BigDecimal accumulated = posting != null && posting.getClosingAccumulatedDepreciation() != null
+                            ? posting.getClosingAccumulatedDepreciation() : BigDecimal.ZERO;
+                    BigDecimal charge = posting != null && posting.getDepreciationCharge() != null
+                            ? posting.getDepreciationCharge() : BigDecimal.ZERO;
+                    BigDecimal carrying = posting != null && posting.getBookValue() != null ? posting.getBookValue() : cost;
+                    return new DepreciationScheduleRow(
+                            a.getAssetCode(), a.getName(), a.getCategory(), cost,
+                            params != null ? params.getResidualValue() : null,
+                            params != null ? params.getUsefulLifeYears() : null,
+                            params != null ? params.getMethod().name() : "Not configured",
+                            charge, accumulated, carrying, a.getStatus());
+                })
+                .collect(Collectors.toList());
+
+        DepreciationScheduleData data = new DepreciationScheduleData();
+        data.setGeneratedDate(LocalDate.now());
+        data.setRows(rows);
+        data.setTotalCost(rows.stream().map(DepreciationScheduleRow::cost).filter(v -> v != null).reduce(BigDecimal.ZERO, BigDecimal::add));
+        data.setTotalAccumulatedDepreciation(rows.stream().map(DepreciationScheduleRow::accumulatedDepreciation).filter(v -> v != null).reduce(BigDecimal.ZERO, BigDecimal::add));
+        data.setTotalCarryingAmount(rows.stream().map(DepreciationScheduleRow::carryingAmount).filter(v -> v != null).reduce(BigDecimal.ZERO, BigDecimal::add));
+        return data;
+    }
+
+    /**
+     * Section 4, item 4 — Accumulated Depreciation Report: current accumulated
+     * depreciation balance per asset (same underlying data as the register, framed as
+     * its own report per the catalogue).
+     */
+    @Cacheable(cacheNames = "reports",
+            key = "'accumulatedDepreciation|' + #scope.cacheKey() + '|' + #category + '|' + #department")
+    @Transactional(readOnly = true)
+    public ReportData generateAccumulatedDepreciationReport(ReportScope scope, String category, String department) {
+        ReportData report = new ReportData();
+        report.setReportType("accumulatedDepreciation");
+        report.setReportName("Accumulated Depreciation Report");
+        report.setGeneratedDate(LocalDate.now());
+        report.setCategory(hasValue(category, "All Categories") ? category : null);
+        report.setDepartment(hasValue(department, "Global Operations") ? department : null);
+
+        List<Asset> assets = scopedAssets(scope);
+        if (hasValue(category, "All Categories")) {
+            assets = assets.stream()
+                    .filter(a -> a.getCategory() != null && a.getCategory().equalsIgnoreCase(category))
+                    .collect(Collectors.toList());
+        }
+        if (hasValue(department, "Global Operations")) {
+            assets = assets.stream()
+                    .filter(a -> a.getDepartment() != null && a.getDepartment().equalsIgnoreCase(department))
+                    .collect(Collectors.toList());
+        }
+        return finish(report, assets);
+    }
+
+    /**
+     * Section 4, item 10 — Depreciation by Method: assets grouped by their resolved
+     * depreciation method. Reuses {@link AssetGroup}/{@link GroupedReportData} (same
+     * shape as the Section 2 grouped-by-dimension reports) even though method isn't a
+     * plain Asset field — it's resolved via {@link DepreciationService#resolveParametersForAssets}.
+     */
+    @Cacheable(cacheNames = "reports",
+            key = "'depreciationByMethod|' + #scope.cacheKey() + '|' + #category + '|' + #department")
+    @Transactional(readOnly = true)
+    public GroupedReportData generateDepreciationByMethodReport(ReportScope scope, String category, String department) {
+        List<Asset> assets = scopedAssets(scope);
+        if (hasValue(category, "All Categories")) {
+            assets = assets.stream()
+                    .filter(a -> a.getCategory() != null && a.getCategory().equalsIgnoreCase(category))
+                    .collect(Collectors.toList());
+        }
+        if (hasValue(department, "Global Operations")) {
+            assets = assets.stream()
+                    .filter(a -> a.getDepartment() != null && a.getDepartment().equalsIgnoreCase(department))
+                    .collect(Collectors.toList());
+        }
+
+        List<Long> assetIds = assets.stream().map(Asset::getId).collect(Collectors.toList());
+        Map<Long, DepreciationPosting> latestPostings = depreciationService.getLatestPostingsForAssets(assetIds);
+        Map<Long, com.example.fams.depreciation.DepreciationParameters> paramsByAsset = depreciationService.resolveParametersForAssets(assets);
+
+        Map<String, List<Asset>> byMethod = assets.stream()
+                .collect(Collectors.groupingBy(a -> {
+                    com.example.fams.depreciation.DepreciationParameters p = paramsByAsset.get(a.getId());
+                    return p != null ? p.getMethod().name() : "Not configured";
+                }, java.util.LinkedHashMap::new, Collectors.toList()));
+
+        List<AssetGroup> groups = byMethod.entrySet().stream()
+                .map(e -> {
+                    List<ReportRow> rows = e.getValue().stream()
+                            .map(a -> assetToReportRow(a, latestPostings.get(a.getId())))
+                            .collect(Collectors.toList());
+                    BigDecimal cost = rows.stream().map(ReportRow::acquisitionCost).filter(v -> v != null).reduce(BigDecimal.ZERO, BigDecimal::add);
+                    BigDecimal dep = rows.stream().map(ReportRow::accumulatedDepreciation).filter(v -> v != null).reduce(BigDecimal.ZERO, BigDecimal::add);
+                    BigDecimal nbv = rows.stream().map(ReportRow::netBookValue).filter(v -> v != null).reduce(BigDecimal.ZERO, BigDecimal::add);
+                    return new AssetGroup(e.getKey(), rows.size(), cost, dep, nbv, rows);
+                })
+                .sorted((a, b) -> a.groupKey().compareToIgnoreCase(b.groupKey()))
+                .collect(Collectors.toList());
+
+        GroupedReportData report = new GroupedReportData();
+        report.setReportName("Depreciation by Method");
+        report.setGeneratedDate(LocalDate.now());
+        report.setGroups(groups);
+        report.setTotalRecords(assets.size());
+        report.setTotalValue(groups.stream().map(AssetGroup::totalCost).reduce(BigDecimal.ZERO, BigDecimal::add));
+        report.setTotalDepreciation(groups.stream().map(AssetGroup::totalAccumulatedDepreciation).reduce(BigDecimal.ZERO, BigDecimal::add));
+        report.setTotalNetBookValue(groups.stream().map(AssetGroup::totalNetBookValue).reduce(BigDecimal.ZERO, BigDecimal::add));
+        return report;
+    }
+
+    /**
+     * Section 4, item 12 — Depreciation Exception Report: assets with no resolvable
+     * depreciation parameters (same underlying signal as the Non-Depreciable register,
+     * but framed here as an exception needing attention rather than an expected state
+     * like land — the two reports serve different audiences even though they share logic).
+     */
+    @Cacheable(cacheNames = "reports",
+            key = "'depreciationExceptions|' + #scope.cacheKey() + '|' + #category + '|' + #department")
+    @Transactional(readOnly = true)
+    public ExceptionReportData generateDepreciationExceptionReport(ReportScope scope, String category, String department) {
+        List<Asset> assets = scopedAssets(scope);
+        if (hasValue(category, "All Categories")) {
+            assets = assets.stream()
+                    .filter(a -> a.getCategory() != null && a.getCategory().equalsIgnoreCase(category))
+                    .collect(Collectors.toList());
+        }
+        if (hasValue(department, "Global Operations")) {
+            assets = assets.stream()
+                    .filter(a -> a.getDepartment() != null && a.getDepartment().equalsIgnoreCase(department))
+                    .collect(Collectors.toList());
+        }
+
+        Map<Long, com.example.fams.depreciation.DepreciationParameters> paramsByAsset = depreciationService.resolveParametersForAssets(assets);
+
+        List<ExceptionRow> rows = assets.stream()
+                .filter(a -> !paramsByAsset.containsKey(a.getId()))
+                .map(a -> new ExceptionRow(a.getAssetCode(), a.getName(), a.getCategory(), a.getDepartment(), a.getStatus(),
+                        "No active depreciation parameters resolved (no asset-specific or category-wide policy configured)"))
+                .collect(Collectors.toList());
+
+        ExceptionReportData data = new ExceptionReportData();
+        data.setGeneratedDate(LocalDate.now());
+        data.setRows(rows);
+        return data;
+    }
+
+    /**
+     * Section 4, item 14 — Depreciation History Report (all-assets view): every
+     * historical posting across scoped assets, optionally within a date range. The
+     * per-asset drill-down already exists at {@link DepreciationService#getDepreciationHistory}.
+     */
+    @Cacheable(cacheNames = "reports",
+            key = "'depreciationHistory|' + #scope.cacheKey() + '|' + #fromDate + '|' + #toDate + '|' + #category + '|' + #department")
+    @Transactional(readOnly = true)
+    public HistoryReportData generateDepreciationHistoryReport(ReportScope scope, LocalDate fromDate, LocalDate toDate,
+                                                                 String category, String department) {
+        List<Asset> assets = scopedAssets(scope);
+        if (hasValue(category, "All Categories")) {
+            assets = assets.stream()
+                    .filter(a -> a.getCategory() != null && a.getCategory().equalsIgnoreCase(category))
+                    .collect(Collectors.toList());
+        }
+        if (hasValue(department, "Global Operations")) {
+            assets = assets.stream()
+                    .filter(a -> a.getDepartment() != null && a.getDepartment().equalsIgnoreCase(department))
+                    .collect(Collectors.toList());
+        }
+
+        List<HistoryRow> rows = assets.stream()
+                .flatMap(a -> depreciationService.getDepreciationHistory(a.getId()).stream())
+                .filter(p -> {
+                    if (fromDate == null && toDate == null) return true;
+                    // depreciationPeriod is a string (e.g. "2026-03"); use createdAt as the
+                    // reliable, always-comparable date for range filtering instead.
+                    LocalDate postedOn = p.getCreatedAt() != null ? p.getCreatedAt().toLocalDate() : null;
+                    if (postedOn == null) return true;
+                    if (fromDate != null && postedOn.isBefore(fromDate)) return false;
+                    if (toDate != null && postedOn.isAfter(toDate)) return false;
+                    return true;
+                })
+                .map(p -> new HistoryRow(p.getAssetCode(), p.getAssetName(), p.getDepreciationPeriod(),
+                        p.getDepreciationCharge(), p.getClosingAccumulatedDepreciation(), p.getBookValue(),
+                        Boolean.TRUE.equals(p.getFullyDepreciated())))
+                .collect(Collectors.toList());
+
+        HistoryReportData data = new HistoryReportData();
+        data.setGeneratedDate(LocalDate.now());
+        data.setRows(rows);
+        return data;
+    }
+
+    /**
+     * Section 4, item 15 — Depreciation Projection Report: forecast of future
+     * depreciation over a selected horizon (in years). See
+     * {@link DepreciationService#projectDepreciation} for the projection method and its
+     * documented assumptions.
+     */
+    @Cacheable(cacheNames = "reports",
+            key = "'depreciationProjection|' + #scope.cacheKey() + '|' + #horizonYears + '|' + #category + '|' + #department")
+    @Transactional(readOnly = true)
+    public ProjectionReportData generateDepreciationProjectionReport(ReportScope scope, int horizonYears,
+                                                                       String category, String department) {
+        List<Asset> assets = scopedAssets(scope);
+        if (hasValue(category, "All Categories")) {
+            assets = assets.stream()
+                    .filter(a -> a.getCategory() != null && a.getCategory().equalsIgnoreCase(category))
+                    .collect(Collectors.toList());
+        }
+        if (hasValue(department, "Global Operations")) {
+            assets = assets.stream()
+                    .filter(a -> a.getDepartment() != null && a.getDepartment().equalsIgnoreCase(department))
+                    .collect(Collectors.toList());
+        }
+
+        List<Long> assetIds = assets.stream().map(Asset::getId).collect(Collectors.toList());
+        Map<Long, DepreciationPosting> latestPostings = depreciationService.getLatestPostingsForAssets(assetIds);
+        Map<Long, com.example.fams.depreciation.DepreciationParameters> paramsByAsset = depreciationService.resolveParametersForAssets(assets);
+
+        List<ProjectionAssetRow> assetRows = assets.stream()
+                .filter(a -> paramsByAsset.containsKey(a.getId()))
+                .map(a -> new ProjectionAssetRow(a.getAssetCode(), a.getName(), a.getCategory(),
+                        depreciationService.projectDepreciation(a, paramsByAsset.get(a.getId()), latestPostings.get(a.getId()), horizonYears)))
+                .filter(row -> !row.points().isEmpty())
+                .collect(Collectors.toList());
+
+        ProjectionReportData data = new ProjectionReportData();
+        data.setGeneratedDate(LocalDate.now());
+        data.setHorizonYears(horizonYears);
+        data.setAssets(assetRows);
+        return data;
+    }
+
+    /**
+     * Section 4, item 17 — Assets Approaching Full Depreciation: assets projected to
+     * reach full depreciation within {@code thresholdYears}. Reuses the same projection
+     * as item 15 but only to determine whether the horizon is reached, not to report the
+     * full trajectory.
+     */
+    @Cacheable(cacheNames = "reports",
+            key = "'approachingFullDepreciation|' + #scope.cacheKey() + '|' + #thresholdYears + '|' + #category + '|' + #department")
+    @Transactional(readOnly = true)
+    public ReportData generateApproachingFullDepreciationReport(ReportScope scope, int thresholdYears,
+                                                                  String category, String department) {
+        ReportData report = new ReportData();
+        report.setReportType("approachingFullDepreciation");
+        report.setReportName("Assets Approaching Full Depreciation");
+        report.setGeneratedDate(LocalDate.now());
+        report.setCategory(hasValue(category, "All Categories") ? category : null);
+        report.setDepartment(hasValue(department, "Global Operations") ? department : null);
+
+        List<Asset> assets = scopedAssets(scope);
+        if (hasValue(category, "All Categories")) {
+            assets = assets.stream()
+                    .filter(a -> a.getCategory() != null && a.getCategory().equalsIgnoreCase(category))
+                    .collect(Collectors.toList());
+        }
+        if (hasValue(department, "Global Operations")) {
+            assets = assets.stream()
+                    .filter(a -> a.getDepartment() != null && a.getDepartment().equalsIgnoreCase(department))
+                    .collect(Collectors.toList());
+        }
+
+        List<Long> assetIds = assets.stream().map(Asset::getId).collect(Collectors.toList());
+        Map<Long, DepreciationPosting> latestPostings = depreciationService.getLatestPostingsForAssets(assetIds);
+        Map<Long, com.example.fams.depreciation.DepreciationParameters> paramsByAsset = depreciationService.resolveParametersForAssets(assets);
+
+        List<Asset> approaching = assets.stream()
+                .filter(a -> paramsByAsset.containsKey(a.getId()))
+                .filter(a -> {
+                    DepreciationPosting posting = latestPostings.get(a.getId());
+                    if (posting != null && Boolean.TRUE.equals(posting.getFullyDepreciated())) {
+                        return false; // already fully depreciated — that's item 16, not this
+                    }
+                    List<DepreciationProjectionPoint> projection = depreciationService.projectDepreciation(
+                            a, paramsByAsset.get(a.getId()), posting, thresholdYears);
+                    // Reaches full depreciation within the horizon if the projection stopped
+                    // early (fewer points than the horizon) — see projectDepreciation's loop.
+                    return !projection.isEmpty() && projection.size() < thresholdYears;
+                })
+                .collect(Collectors.toList());
+
+        return finish(report, approaching);
+    }
+
+    /**
+     * Section 3, item 3 — Capitalisation Report: assets formally capitalised (as
+     * distinct from merely acquired) within a reporting period, filtered on
+     * {@code Asset.capitalisationDate}.
+     */
+    @Cacheable(cacheNames = "reports",
+            key = "'capitalisation|' + #scope.cacheKey() + '|' + #fromDate + '|' + #toDate + '|' + #category + '|' + #department")
+    @Transactional(readOnly = true)
+    public ReportData generateCapitalisationReport(ReportScope scope, LocalDate fromDate, LocalDate toDate,
+                                                     String category, String department) {
+        ReportData report = new ReportData();
+        report.setReportType("capitalisation");
+        report.setReportName("Capitalisation Report");
+        report.setGeneratedDate(LocalDate.now());
+        report.setCategory(hasValue(category, "All Categories") ? category : null);
+        report.setDepartment(hasValue(department, "Global Operations") ? department : null);
+
+        List<Asset> assets = scopedAssets(scope);
+        if (hasValue(category, "All Categories")) {
+            assets = assets.stream()
+                    .filter(a -> a.getCategory() != null && a.getCategory().equalsIgnoreCase(category))
+                    .collect(Collectors.toList());
+        }
+        if (hasValue(department, "Global Operations")) {
+            assets = assets.stream()
+                    .filter(a -> a.getDepartment() != null && a.getDepartment().equalsIgnoreCase(department))
+                    .collect(Collectors.toList());
+        }
+        assets = assets.stream().filter(Asset::isCapitalised).collect(Collectors.toList());
+        if (fromDate != null) {
+            assets = assets.stream()
+                    .filter(a -> a.getCapitalisationDate() != null && !a.getCapitalisationDate().isBefore(fromDate))
+                    .collect(Collectors.toList());
+        }
+        if (toDate != null) {
+            assets = assets.stream()
+                    .filter(a -> a.getCapitalisationDate() != null && !a.getCapitalisationDate().isAfter(toDate))
+                    .collect(Collectors.toList());
+        }
+
+        return finish(report, assets);
+    }
+
+    /**
+     * Section 3, item 4 — Assets Awaiting Capitalisation: assets acquired and on the
+     * register but not yet marked {@code capitalised}.
+     */
+    @Cacheable(cacheNames = "reports",
+            key = "'awaitingCapitalisation|' + #scope.cacheKey() + '|' + #category + '|' + #department")
+    @Transactional(readOnly = true)
+    public ReportData generateAwaitingCapitalisationReport(ReportScope scope, String category, String department) {
+        ReportData report = new ReportData();
+        report.setReportType("awaitingCapitalisation");
+        report.setReportName("Assets Awaiting Capitalisation");
+        report.setGeneratedDate(LocalDate.now());
+        report.setCategory(hasValue(category, "All Categories") ? category : null);
+        report.setDepartment(hasValue(department, "Global Operations") ? department : null);
+
+        List<Asset> assets = scopedAssets(scope);
+        if (hasValue(category, "All Categories")) {
+            assets = assets.stream()
+                    .filter(a -> a.getCategory() != null && a.getCategory().equalsIgnoreCase(category))
+                    .collect(Collectors.toList());
+        }
+        if (hasValue(department, "Global Operations")) {
+            assets = assets.stream()
+                    .filter(a -> a.getDepartment() != null && a.getDepartment().equalsIgnoreCase(department))
+                    .collect(Collectors.toList());
+        }
+        assets = assets.stream().filter(a -> !a.isCapitalised()).collect(Collectors.toList());
+
+        return finish(report, assets);
+    }
+
+    /**
+     * Section 3, item 1 — Asset Acquisition Report: assets acquired (by purchaseDate)
      * within a reporting period.
      */
     @Cacheable(cacheNames = "reports",
@@ -483,10 +1784,10 @@ public class ReportService {
     }
 
     /**
-     * Asset Additions Report: assets newly added to the register
+     * Section 3, item 2 — Asset Additions Report: assets newly added to the register
      * within a period.
      *
-     * <p><b>Interpretation note:</b> the catalogue distinguishes this from 
+     * <p><b>Interpretation note:</b> the catalogue distinguishes this from item 1
      * ("Asset Acquisition Report") without defining how. Read literally — "new
      * additions to the register" — this filters on {@code createdAt} (when the record
      * was entered into FAMS), while item 1 filters on {@code purchaseDate} (when it was
@@ -532,7 +1833,7 @@ public class ReportService {
     }
 
     /**
-     * Acquisition Cost Analysis. See {@link AcquisitionCostAnalysisData}
+     * Section 3, item 6 — Acquisition Cost Analysis. See {@link AcquisitionCostAnalysisData}
      * javadoc for the scope caveat (total cost only, no cost-component breakdown).
      */
     @Cacheable(cacheNames = "reports",
@@ -575,7 +1876,7 @@ public class ReportService {
     }
 
     /**
-     * Asset Acquisition Trend: acquisition count and cost over
+     * Section 3, item 10 — Asset Acquisition Trend: acquisition count and cost over
      * time, at monthly/quarterly/annual granularity.
      */
     @Cacheable(cacheNames = "reports",
@@ -616,7 +1917,7 @@ public class ReportService {
         };
     }
 
-    /** Shared acquisition-period + category/department filter */
+    /** Shared acquisition-period + category/department filter used by items 1, 6 and 10. */
     private List<Asset> filterByAcquisitionPeriod(List<Asset> assets, LocalDate fromDate, LocalDate toDate,
                                                     String category, String department) {
         if (hasValue(category, "All Categories")) {
@@ -694,34 +1995,6 @@ public class ReportService {
         ReportData report = new ReportData();
         report.setReportType("valuationReport");
         report.setReportName("Asset Valuation Report");
-        report.setGeneratedDate(LocalDate.now());
-        report.setCategory(category);
-        report.setDepartment(department);
-
-        List<Asset> assets = scopedAssets(scope);
-        if (hasValue(category, "All Categories")) {
-            assets = assets.stream()
-                    .filter(a -> a.getCategory() != null && a.getCategory().equalsIgnoreCase(category))
-                    .collect(Collectors.toList());
-        }
-        if (hasValue(department, "Global Operations")) {
-            assets = assets.stream()
-                    .filter(a -> a.getDepartment() != null && a.getDepartment().equalsIgnoreCase(department))
-                    .collect(Collectors.toList());
-        }
-        return finish(report, assets);
-    }
-
-    /**
-     * Generate Depreciation Schedule Report
-     */
-    @Cacheable(cacheNames = "reports",
-            key = "'depreciationSchedule|' + #scope.cacheKey() + '|' + #category + '|' + #department")
-    @Transactional(readOnly = true)
-    public ReportData generateDepreciationScheduleReport(ReportScope scope, String category, String department) {
-        ReportData report = new ReportData();
-        report.setReportType("depreciationSchedule");
-        report.setReportName("Depreciation Schedule");
         report.setGeneratedDate(LocalDate.now());
         report.setCategory(category);
         report.setDepartment(department);

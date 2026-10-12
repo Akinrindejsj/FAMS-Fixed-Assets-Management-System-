@@ -50,6 +50,7 @@
                         <li><button onclick="loadReport('location-audit')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Location Audit</button></li>
                         <li><button onclick="loadReport('fully-depreciated')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Fully Depreciated Assets</button></li>
                         <li><button onclick="loadReport('non-depreciable')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Non-Depreciable Assets</button></li>
+                        <li><button onclick="loadReport('asset-components')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Asset Component Register</button></li>
                     </ul>
                 </div>
                 <!-- Acquisition & Capitalisation Reports -->
@@ -61,11 +62,105 @@
                     <ul class="space-y-1">
                         <li><button onclick="loadReport('asset-acquisition')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Asset Acquisition Report</button></li>
                         <li><button onclick="loadReport('asset-additions')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Asset Additions Report</button></li>
+                        <li><button onclick="loadReport('capitalisation')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Capitalisation Report</button></li>
+                        <li><button onclick="loadReport('awaiting-capitalisation')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Assets Awaiting Capitalisation</button></li>
                         <li><button onclick="loadReport('acquisition-cost-analysis')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Acquisition Cost Analysis</button></li>
                         <li><button onclick="loadReport('acquisition-by-supplier')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Acquisition by Supplier</button></li>
                         <li><button onclick="loadReport('acquisition-by-category')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Acquisition by Category</button></li>
                         <li><button onclick="loadReport('acquisition-by-department')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Acquisition by Department/Cost Centre</button></li>
                         <li><button onclick="loadReport('acquisition-trend')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Acquisition Trend</button></li>
+                        <li><button onclick="loadReport('capitalisation-adjustments')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Capitalisation Adjustment Report</button></li>
+                        <li><a th:href="@{/assets/capital-additions}" class="w-full block text-left px-3 py-1.5 text-body-default text-primary rounded-lg hover:bg-surface-canvas transition-colors">+ Record Capital Addition</a></li>
+                    </ul>
+                </div>
+                <!-- Depreciation Reports -->
+                <div>
+                    <div class="flex items-center gap-2 mb-2 px-2">
+                        <span class="material-symbols-outlined text-[18px] text-primary">trending_down</span>
+                        <h4 class="font-body-medium text-on-surface">Depreciation Reports</h4>
+                    </div>
+                    <ul class="space-y-1">
+                        <li><button onclick="loadReport('depreciation-monthly')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Monthly Depreciation Report</button></li>
+                        <li><button onclick="loadReport('depreciation-runs')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Depreciation Run Report</button></li>
+                        <li><button onclick="loadReport('depreciation-expense')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Depreciation Expense Report</button></li>
+                        <li><button onclick="loadReport('accumulated-depreciation')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Accumulated Depreciation Report</button></li>
+                        <li><button onclick="loadReport('depreciation-by-category')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Depreciation by Category</button></li>
+                        <li><button onclick="loadReport('depreciation-by-location')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Depreciation by Location</button></li>
+                        <li><button onclick="loadReport('depreciation-by-department')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Depreciation by Department</button></li>
+                        <li><button onclick="loadReport('depreciation-by-cost-centre')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Depreciation by Cost Centre</button></li>
+                        <li><button onclick="loadReport('depreciation-by-method')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Depreciation by Method</button></li>
+                        <li><button onclick="loadReport('depreciation-exceptions')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Depreciation Exception Report</button></li>
+                        <li><button onclick="loadReport('depreciation-history')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Depreciation History Report</button></li>
+                        <li><button onclick="loadReport('depreciation-projection')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Depreciation Projection Report</button></li>
+                        <li><button onclick="loadReport('fully-depreciated')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Fully Depreciated Assets</button></li>
+                        <li><button onclick="loadReport('approaching-full-depreciation')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Assets Approaching Full Depreciation</button></li>
+                        <li><button onclick="loadReport('depreciation-adjustments')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Depreciation Adjustment Report</button></li>
+                        <li><a th:href="@{/depreciation/adjustments}" class="w-full block text-left px-3 py-1.5 text-body-default text-primary rounded-lg hover:bg-surface-canvas transition-colors">+ Record Depreciation Adjustment</a></li>
+                    </ul>
+                </div>
+                <!-- Valuation Reports -->
+                <div>
+                    <div class="flex items-center gap-2 mb-2 px-2">
+                        <span class="material-symbols-outlined text-[18px] text-primary">savings</span>
+                        <h4 class="font-body-medium text-on-surface">Valuation Reports</h4>
+                    </div>
+                    <ul class="space-y-1">
+                        <li><button onclick="loadReport('net-book-value')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Net Book Value Report</button></li>
+                        <li><button onclick="loadReport('cost-vs-accum-dep')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Cost vs Accumulated Depreciation</button></li>
+                        <li><button onclick="loadReport('valuation-summary')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Asset Valuation Summary</button></li>
+                        <li><button onclick="loadReport('nbv-by-category')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">NBV by Category</button></li>
+                        <li><button onclick="loadReport('nbv-by-location')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">NBV by Location</button></li>
+                        <li><button onclick="loadReport('nbv-by-department')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">NBV by Department</button></li>
+                        <li><button onclick="loadReport('nbv-by-cost-centre')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">NBV by Cost Centre</button></li>
+                        <li><button onclick="loadReport('asset-ageing')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Asset Ageing and Value Report</button></li>
+                        <li><button onclick="loadReport('revaluation-report')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Revaluation Report</button></li>
+                        <li><button onclick="loadReport('revaluation-history')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Revaluation History</button></li>
+                        <li><button onclick="loadReport('revaluation-gain-loss')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Revaluation Gain/Loss Report</button></li>
+                        <li><a th:href="@{/assets/revaluations}" class="w-full block text-left px-3 py-1.5 text-body-default text-primary rounded-lg hover:bg-surface-canvas transition-colors">+ Record Revaluation</a></li>
+                        <li><button onclick="loadReport('impairment-report')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Impairment Report</button></li>
+                        <li><button onclick="loadReport('impairment-history')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Impairment History</button></li>
+                        <li><a th:href="@{/assets/impairments}" class="w-full block text-left px-3 py-1.5 text-body-default text-primary rounded-lg hover:bg-surface-canvas transition-colors">+ Record Impairment</a></li>
+                    </ul>
+                </div>
+                <!-- Transfer & Assignment Reports -->
+                <div>
+                    <div class="flex items-center gap-2 mb-2 px-2">
+                        <span class="material-symbols-outlined text-[18px] text-primary">swap_horiz</span>
+                        <h4 class="font-body-medium text-on-surface">Transfer &amp; Assignment Reports</h4>
+                    </div>
+                    <ul class="space-y-1">
+                        <li><button onclick="loadReport('asset-transfers')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Asset Transfer Report</button></li>
+                        <li><button onclick="loadReport('transfer-in')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Transfer-In Register</button></li>
+                        <li><button onclick="loadReport('transfer-out')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Transfer-Out Register</button></li>
+                        <li><button onclick="loadReport('inter-branch-transfers')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Inter-Branch Transfer Report</button></li>
+                        <li><button onclick="loadReport('inter-department-transfers')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Inter-Department Transfer Report</button></li>
+                        <li><button onclick="loadReport('asset-assignments')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Asset Assignment Report</button></li>
+                        <li><button onclick="loadReport('asset-custodian')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Asset Custodian Report</button></li>
+                        <li><button onclick="loadReport('assignment-history')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Asset Assignment History</button></li>
+                        <li><button onclick="loadReport('location-history')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Asset Location History</button></li>
+                        <li><button onclick="loadReport('unassigned-assets')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Unassigned Assets Report</button></li>
+                        <li><button onclick="loadReport('pending-transfer-approval')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Assets Pending Transfer Approval</button></li>
+                        <li><button onclick="loadReport('movement-history')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Asset Movement History</button></li>
+                    </ul>
+                </div>
+                <!-- Disposal & Retirement Reports -->
+                <div>
+                    <div class="flex items-center gap-2 mb-2 px-2">
+                        <span class="material-symbols-outlined text-[18px] text-primary">delete_sweep</span>
+                        <h4 class="font-body-medium text-on-surface">Disposal &amp; Retirement Reports</h4>
+                    </div>
+                    <ul class="space-y-1">
+                        <li><button onclick="loadReport('disposal-register')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Asset Disposal Register</button></li>
+                        <li><button onclick="loadReport('disposal-detail')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Asset Disposal Detail Report</button></li>
+                        <li><button onclick="loadReport('pending-disposal')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Assets Pending Disposal</button></li>
+                        <li><button onclick="loadReport('disposed-by-period')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Disposed Assets by Period</button></li>
+                        <li><button onclick="loadReport('disposed-by-category')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Disposed Assets by Category</button></li>
+                        <li><button onclick="loadReport('asset-sales')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Asset Sales Report</button></li>
+                        <li><button onclick="loadReport('scrapped-assets')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Scrapped Assets Report</button></li>
+                        <li><button onclick="loadReport('disposal-proceeds')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Disposal Proceeds Report</button></li>
+                        <li><button onclick="loadReport('disposal-gain-loss')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Gain/Loss on Disposal Report</button></li>
+                        <li><button onclick="loadReport('asset-retirement')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Asset Retirement Report</button></li>
+                        <li><button onclick="loadReport('disposal-approval-history')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Disposal Approval History</button></li>
                     </ul>
                 </div>
                 <!-- Financial Reports -->
@@ -187,6 +282,18 @@
                             <option value="YEAR">Annual</option>
                         </select>
                     </div>
+                    <div id="periodFilterWrapper" class="hidden space-y-1.5">
+                        <label class="text-label-small text-secondary uppercase tracking-wide">Period</label>
+                        <input id="periodFilter" type="text" placeholder="e.g. 2026-03" onchange="reloadCurrentReport()" class="w-full h-[38px] px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                    </div>
+                    <div id="horizonYearsWrapper" class="hidden space-y-1.5">
+                        <label class="text-label-small text-secondary uppercase tracking-wide">Horizon (years)</label>
+                        <input id="horizonYearsFilter" type="number" min="1" max="20" value="5" onchange="reloadCurrentReport()" class="w-full h-[38px] px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                    </div>
+                    <div id="thresholdYearsWrapper" class="hidden space-y-1.5">
+                        <label class="text-label-small text-secondary uppercase tracking-wide">Within (years)</label>
+                        <input id="thresholdYearsFilter" type="number" min="1" max="10" value="1" onchange="reloadCurrentReport()" class="w-full h-[38px] px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                    </div>
                 </div>
             </div>
 
@@ -270,6 +377,366 @@
 
                 <!-- Trend View (Asset Acquisition Trend — chronological bar list) -->
                 <div id="trendViewContainer" class="hidden px-5 py-5 space-y-3">
+                </div>
+
+                <!-- Component View (Asset Component Register — component + parent identity) -->
+                <div id="componentViewContainer" class="hidden overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                        <tr class="bg-surface-canvas border-b border-border-default">
+                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Component Code</th>
+                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Component Name</th>
+                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Category</th>
+                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Acquisition Cost</th>
+                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Status</th>
+                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Parent Asset</th>
+                        </tr>
+                        </thead>
+                        <tbody id="componentBreakdownBody" class="divide-y divide-border-default">
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Adjustment View (Capitalisation Adjustment Report) -->
+                <div id="adjustmentViewContainer" class="hidden overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                        <tr class="bg-surface-canvas border-b border-border-default">
+                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Date</th>
+                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Asset</th>
+                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Category</th>
+                            <th id="adjustmentPeriodHeader" class="hidden px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Period</th>
+                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Type</th>
+                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Amount</th>
+                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Description</th>
+                        </tr>
+                        </thead>
+                        <tbody id="adjustmentBreakdownBody" class="divide-y divide-border-default">
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Schedule View (Depreciation Schedule — method/useful life/residual per asset) -->
+                <div id="scheduleViewContainer" class="hidden overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                        <tr class="bg-surface-canvas border-b border-border-default">
+                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Asset</th>
+                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Cost</th>
+                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Residual</th>
+                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Useful Life</th>
+                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Method</th>
+                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Charge</th>
+                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Accum. Depr.</th>
+                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Carrying Amount</th>
+                        </tr>
+                        </thead>
+                        <tbody id="scheduleBody" class="divide-y divide-border-default"></tbody>
+                    </table>
+                </div>
+
+                <!-- Exception View (Depreciation Exception Report) -->
+                <div id="exceptionViewContainer" class="hidden overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                        <tr class="bg-surface-canvas border-b border-border-default">
+                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Asset</th>
+                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Category</th>
+                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Department</th>
+                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Status</th>
+                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Reason</th>
+                        </tr>
+                        </thead>
+                        <tbody id="exceptionBody" class="divide-y divide-border-default"></tbody>
+                    </table>
+                </div>
+
+                <!-- History View (Depreciation History Report — every posting, all assets) -->
+                <div id="historyViewContainer" class="hidden overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                        <tr class="bg-surface-canvas border-b border-border-default">
+                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Asset</th>
+                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Period</th>
+                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Charge</th>
+                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Accum. Depr.</th>
+                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Book Value</th>
+                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Fully Depr.?</th>
+                        </tr>
+                        </thead>
+                        <tbody id="historyBody" class="divide-y divide-border-default"></tbody>
+                    </table>
+                </div>
+
+                <!-- Projection View (Depreciation Projection Report — per-asset future years) -->
+                <div id="projectionViewContainer" class="hidden divide-y divide-border-default"></div>
+
+                <!-- Period Single View (Monthly Depreciation Report — one period's postings + totals) -->
+                <div id="periodSingleViewContainer" class="hidden">
+                    <div class="px-5 py-4 grid grid-cols-2 sm:grid-cols-4 gap-4 border-b border-border-default">
+                        <div>
+                            <div class="text-label-small text-secondary uppercase tracking-wide">Assets</div>
+                            <div id="periodSingleAssetCount" class="text-card-header font-card-header text-on-surface">—</div>
+                        </div>
+                        <div>
+                            <div class="text-label-small text-secondary uppercase tracking-wide">Fully Depreciated</div>
+                            <div id="periodSingleFullyDepCount" class="text-card-header font-card-header text-on-surface">—</div>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                            <tr class="bg-surface-canvas border-b border-border-default">
+                                <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Asset</th>
+                                <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Charge</th>
+                                <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Accum. Depr.</th>
+                                <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Book Value</th>
+                            </tr>
+                            </thead>
+                            <tbody id="periodSingleBody" class="divide-y divide-border-default"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Period Group View (Depreciation by Category/Department/Cost Centre, for a period) -->
+                <div id="periodGroupViewContainer" class="hidden overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                        <tr class="bg-surface-canvas border-b border-border-default">
+                            <th id="periodGroupLabelHeader" class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Group</th>
+                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Assets</th>
+                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Charge</th>
+                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Accum. Depr.</th>
+                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Book Value</th>
+                        </tr>
+                        </thead>
+                        <tbody id="periodGroupBody" class="divide-y divide-border-default"></tbody>
+                    </table>
+                </div>
+
+                <!-- Runs View (Depreciation Run Report — history of batch runs) -->
+                <div id="runsViewContainer" class="hidden overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                        <tr class="bg-surface-canvas border-b border-border-default">
+                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Triggered At</th>
+                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Period</th>
+                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Triggered By</th>
+                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Status</th>
+                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Succeeded</th>
+                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Failed</th>
+                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Failure Detail</th>
+                        </tr>
+                        </thead>
+                        <tbody id="runsBody" class="divide-y divide-border-default"></tbody>
+                    </table>
+                </div>
+
+                <!-- NBV View (Net Book Value Report) -->
+                <div id="nbvViewContainer" class="hidden overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                        <tr class="bg-surface-canvas border-b border-border-default">
+                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Asset</th>
+                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Historical Cost</th>
+                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Accum. Depr.</th>
+                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Impairment</th>
+                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Net Book Value</th>
+                        </tr>
+                        </thead>
+                        <tbody id="nbvBody" class="divide-y divide-border-default"></tbody>
+                    </table>
+                </div>
+
+                <!-- Ageing View (Asset Ageing and Value Report) -->
+                <div id="ageingViewContainer" class="hidden overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                        <tr class="bg-surface-canvas border-b border-border-default">
+                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Asset</th>
+                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Purchase Date</th>
+                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Age</th>
+                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Cost</th>
+                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Net Book Value</th>
+                        </tr>
+                        </thead>
+                        <tbody id="ageingBody" class="divide-y divide-border-default"></tbody>
+                    </table>
+                </div>
+
+                <!-- Revaluation View -->
+                <div id="revaluationViewContainer" class="hidden">
+                    <div class="px-5 py-4 grid grid-cols-2 sm:grid-cols-3 gap-4 border-b border-border-default">
+                        <div>
+                            <div class="text-label-small text-secondary uppercase tracking-wide">Total Gains</div>
+                            <div id="revaluationTotalGain" class="text-card-header font-card-header text-status-success">—</div>
+                        </div>
+                        <div>
+                            <div class="text-label-small text-secondary uppercase tracking-wide">Total Losses</div>
+                            <div id="revaluationTotalLoss" class="text-card-header font-card-header text-status-error">—</div>
+                        </div>
+                        <div>
+                            <div class="text-label-small text-secondary uppercase tracking-wide">Net Movement</div>
+                            <div id="revaluationNetMovement" class="text-card-header font-card-header text-on-surface">—</div>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                            <tr class="bg-surface-canvas border-b border-border-default">
+                                <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Date</th>
+                                <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Asset</th>
+                                <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Previous</th>
+                                <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Revalued</th>
+                                <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Gain/Loss</th>
+                                <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Reason</th>
+                            </tr>
+                            </thead>
+                            <tbody id="revaluationBody" class="divide-y divide-border-default"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Impairment View -->
+                <div id="impairmentViewContainer" class="hidden">
+                    <div class="px-5 py-4 grid grid-cols-2 sm:grid-cols-3 gap-4 border-b border-border-default">
+                        <div>
+                            <div class="text-label-small text-secondary uppercase tracking-wide">Total Impairment Loss</div>
+                            <div id="impairmentTotalLoss" class="text-card-header font-card-header text-status-error">—</div>
+                        </div>
+                        <div>
+                            <div class="text-label-small text-secondary uppercase tracking-wide">Total Reversals</div>
+                            <div id="impairmentTotalReversal" class="text-card-header font-card-header text-status-success">—</div>
+                        </div>
+                        <div>
+                            <div class="text-label-small text-secondary uppercase tracking-wide">Net Impairment</div>
+                            <div id="impairmentNetTotal" class="text-card-header font-card-header text-on-surface">—</div>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                            <tr class="bg-surface-canvas border-b border-border-default">
+                                <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Date</th>
+                                <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Asset</th>
+                                <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Type</th>
+                                <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Amount</th>
+                                <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Before</th>
+                                <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">After</th>
+                                <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Reason</th>
+                            </tr>
+                            </thead>
+                            <tbody id="impairmentBody" class="divide-y divide-border-default"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Transfer View (Asset Transfer Report and related — items 1-5, 8, 9, 11) -->
+                <div id="transferViewContainer" class="hidden overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                        <tr class="bg-surface-canvas border-b border-border-default">
+                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Date</th>
+                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Asset</th>
+                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Status</th>
+                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">From</th>
+                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">To</th>
+                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Custodian Change</th>
+                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Requested By</th>
+                        </tr>
+                        </thead>
+                        <tbody id="transferBody" class="divide-y divide-border-default"></tbody>
+                    </table>
+                </div>
+
+                <!-- Assignment View (Asset Assignment Report, Unassigned Assets) -->
+                <div id="assignmentViewContainer" class="hidden overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                        <tr class="bg-surface-canvas border-b border-border-default">
+                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Asset</th>
+                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Category</th>
+                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Custodian</th>
+                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Department</th>
+                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Branch</th>
+                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Status</th>
+                        </tr>
+                        </thead>
+                        <tbody id="assignmentBody" class="divide-y divide-border-default"></tbody>
+                    </table>
+                </div>
+
+                <!-- Movement History View (Asset Movement History — all lifecycle events) -->
+                <div id="movementHistoryViewContainer" class="hidden overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                        <tr class="bg-surface-canvas border-b border-border-default">
+                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">When</th>
+                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Asset</th>
+                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Event</th>
+                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Title</th>
+                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Change</th>
+                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Actor</th>
+                        </tr>
+                        </thead>
+                        <tbody id="movementHistoryBody" class="divide-y divide-border-default"></tbody>
+                    </table>
+                </div>
+
+                <!-- Disposal View (Disposal Register/Detail/by Period/Category/Sales/Scrap/Proceeds/Gain-Loss/Retirement) -->
+                <div id="disposalViewContainer" class="hidden">
+                    <div class="px-5 py-4 grid grid-cols-2 sm:grid-cols-4 gap-4 border-b border-border-default">
+                        <div>
+                            <div class="text-label-small text-secondary uppercase tracking-wide">Total Proceeds</div>
+                            <div id="disposalTotalProceeds" class="text-card-header font-card-header text-on-surface">—</div>
+                        </div>
+                        <div>
+                            <div class="text-label-small text-secondary uppercase tracking-wide">Total Gain</div>
+                            <div id="disposalTotalGain" class="text-card-header font-card-header text-status-success">—</div>
+                        </div>
+                        <div>
+                            <div class="text-label-small text-secondary uppercase tracking-wide">Total Loss</div>
+                            <div id="disposalTotalLoss" class="text-card-header font-card-header text-status-error">—</div>
+                        </div>
+                        <div>
+                            <div class="text-label-small text-secondary uppercase tracking-wide">Net Gain/Loss</div>
+                            <div id="disposalNetGainLoss" class="text-card-header font-card-header text-on-surface">—</div>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                            <tr class="bg-surface-canvas border-b border-border-default">
+                                <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Date</th>
+                                <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Asset</th>
+                                <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Method</th>
+                                <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Status</th>
+                                <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Proceeds</th>
+                                <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">NBV at Disposal</th>
+                                <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Gain/Loss</th>
+                                <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Reason</th>
+                            </tr>
+                            </thead>
+                            <tbody id="disposalBody" class="divide-y divide-border-default"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Approval History View (Disposal Approval History) -->
+                <div id="approvalHistoryViewContainer" class="hidden overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                        <tr class="bg-surface-canvas border-b border-border-default">
+                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">When</th>
+                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Asset</th>
+                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Task</th>
+                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Actor</th>
+                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Decision</th>
+                            <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Comment</th>
+                        </tr>
+                        </thead>
+                        <tbody id="approvalHistoryBody" class="divide-y divide-border-default"></tbody>
+                    </table>
                 </div>
 
                 <!-- Report Data Template -->
@@ -410,6 +877,14 @@
                 rowType: 'register',
                 canExport: true
             },
+            'asset-components': {
+                name: 'Asset Component Register',
+                description: 'Components tracked as their own assets, shown alongside their parent asset',
+                apiEndpoint: '/api/reports/asset-components',
+                hasFilters: true,
+                rowType: 'component',
+                canExport: false
+            },
             'asset-acquisition': {
                 name: 'Asset Acquisition Report',
                 description: 'Assets purchased or otherwise acquired within a selected reporting period',
@@ -417,7 +892,7 @@
                 hasFilters: true,
                 hasDateRange: true,
                 rowType: 'register',
-                canExport: false
+                canExport: true
             },
             'asset-additions': {
                 name: 'Asset Additions Report',
@@ -426,7 +901,24 @@
                 hasFilters: true,
                 hasDateRange: true,
                 rowType: 'register',
-                canExport: false
+                canExport: true
+            },
+            'capitalisation': {
+                name: 'Capitalisation Report',
+                description: 'Assets formally capitalised within a selected reporting period',
+                apiEndpoint: '/api/reports/capitalisation',
+                hasFilters: true,
+                hasDateRange: true,
+                rowType: 'register',
+                canExport: true
+            },
+            'awaiting-capitalisation': {
+                name: 'Assets Awaiting Capitalisation',
+                description: 'Assets on the register that have not yet been marked as capitalised',
+                apiEndpoint: '/api/reports/awaiting-capitalisation',
+                hasFilters: true,
+                rowType: 'register',
+                canExport: true
             },
             'acquisition-cost-analysis': {
                 name: 'Acquisition Cost Analysis',
@@ -478,6 +970,15 @@
                 rowType: 'trend',
                 canExport: false
             },
+            'capitalisation-adjustments': {
+                name: 'Capitalisation Adjustment Report',
+                description: 'Subsequent capital additions, improvements and adjustments recorded against assets after acquisition',
+                apiEndpoint: '/api/reports/capitalisation-adjustments',
+                hasFilters: true,
+                hasDateRange: true,
+                rowType: 'adjustment',
+                canExport: false
+            },
             'inventory-summary': {
                 name: 'Inventory Summary',
                 description: 'Summary view of inventory by category and location',
@@ -504,17 +1005,457 @@
             },
             'depreciation-schedule': {
                 name: 'Depreciation Schedule',
-                description: 'Asset depreciation schedule and analysis',
+                description: 'Cost, residual value, useful life, method and carrying amount per asset',
                 apiEndpoint: '/api/reports/depreciation-schedule',
+                hasFilters: true,
+                rowType: 'schedule',
+                canExport: false
+            },
+            'accumulated-depreciation': {
+                name: 'Accumulated Depreciation Report',
+                description: 'Current accumulated depreciation balance per asset',
+                apiEndpoint: '/api/reports/accumulated-depreciation',
                 hasFilters: true,
                 rowType: 'register',
                 canExport: true
+            },
+            'depreciation-monthly': {
+                name: 'Monthly Depreciation Report',
+                description: 'Postings and totals for a specific depreciation period',
+                apiEndpoint: '/api/reports/depreciation-monthly',
+                hasPeriod: true,
+                rowType: 'periodSingle',
+                canExport: false
+            },
+            'depreciation-runs': {
+                name: 'Depreciation Run Report',
+                description: 'History of depreciation batch runs — when, by whom, and how many assets succeeded or failed',
+                apiEndpoint: '/api/reports/depreciation-runs',
+                rowType: 'runs',
+                canExport: false
+            },
+            'net-book-value': {
+                name: 'Net Book Value Report',
+                description: 'Historical cost, accumulated depreciation, impairment and current net book value',
+                apiEndpoint: '/api/reports/net-book-value',
+                hasFilters: true,
+                rowType: 'nbv',
+                canExport: false
+            },
+            'cost-vs-accum-dep': {
+                name: 'Asset Cost vs Accumulated Depreciation',
+                description: 'Original cost compared against accumulated depreciation per asset',
+                apiEndpoint: '/api/reports/valuation',
+                hasFilters: true,
+                rowType: 'register',
+                canExport: true
+            },
+            'valuation-summary': {
+                name: 'Asset Valuation Summary',
+                description: 'High-level summary of asset value, by category',
+                apiEndpoint: '/api/reports/asset-register/summary',
+                hasFilters: true,
+                rowType: 'summary',
+                canExport: false
+            },
+            'nbv-by-category': {
+                name: 'NBV by Category',
+                description: 'Net book value grouped by category',
+                apiEndpoint: '/api/reports/asset-register/grouped',
+                hasFilters: true,
+                fixedGroupBy: 'CATEGORY',
+                rowType: 'grouped',
+                canExport: false
+            },
+            'nbv-by-location': {
+                name: 'NBV by Location',
+                description: 'Net book value grouped by location',
+                apiEndpoint: '/api/reports/asset-register/grouped',
+                hasFilters: true,
+                fixedGroupBy: 'LOCATION',
+                rowType: 'grouped',
+                canExport: false
+            },
+            'nbv-by-department': {
+                name: 'NBV by Department',
+                description: 'Net book value grouped by department',
+                apiEndpoint: '/api/reports/asset-register/grouped',
+                hasFilters: true,
+                fixedGroupBy: 'DEPARTMENT',
+                rowType: 'grouped',
+                canExport: false
+            },
+            'nbv-by-cost-centre': {
+                name: 'NBV by Cost Centre',
+                description: 'Net book value grouped by cost centre',
+                apiEndpoint: '/api/reports/asset-register/grouped',
+                hasFilters: true,
+                fixedGroupBy: 'COST_CENTRE',
+                rowType: 'grouped',
+                canExport: false
+            },
+            'asset-ageing': {
+                name: 'Asset Ageing and Value Report',
+                description: 'Asset age since acquisition, bucketed, alongside current cost and net book value',
+                apiEndpoint: '/api/reports/asset-ageing',
+                hasFilters: true,
+                rowType: 'ageing',
+                canExport: false
+            },
+            'revaluation-report': {
+                name: 'Revaluation Report',
+                description: 'Asset revaluations recorded within a selected reporting period',
+                apiEndpoint: '/api/reports/revaluations',
+                hasFilters: true,
+                hasDateRange: true,
+                rowType: 'revaluation',
+                canExport: false
+            },
+            'revaluation-history': {
+                name: 'Revaluation History',
+                description: 'Full chronological history of asset revaluations',
+                apiEndpoint: '/api/reports/revaluations',
+                hasFilters: true,
+                hasDateRange: true,
+                rowType: 'revaluation',
+                canExport: false
+            },
+            'revaluation-gain-loss': {
+                name: 'Revaluation Gain/Loss Report',
+                description: 'Accounting gain or loss recognized from asset revaluations within a period',
+                apiEndpoint: '/api/reports/revaluations',
+                hasFilters: true,
+                hasDateRange: true,
+                rowType: 'revaluation',
+                canExport: false
+            },
+            'impairment-report': {
+                name: 'Impairment Report',
+                description: 'Impairment losses and reversals recorded within a selected reporting period',
+                apiEndpoint: '/api/reports/impairments',
+                hasFilters: true,
+                hasDateRange: true,
+                rowType: 'impairment',
+                canExport: false
+            },
+            'impairment-history': {
+                name: 'Impairment History',
+                description: 'Full chronological history of asset impairments and reversals',
+                apiEndpoint: '/api/reports/impairments',
+                hasFilters: true,
+                hasDateRange: true,
+                rowType: 'impairment',
+                canExport: false
+            },
+            'asset-transfers': {
+                name: 'Asset Transfer Report',
+                description: 'Assets transferred between locations, departments, cost centres or custodians',
+                apiEndpoint: '/api/reports/asset-transfers',
+                hasFilters: true,
+                hasDateRange: true,
+                rowType: 'transfer',
+                canExport: false
+            },
+            'transfer-in': {
+                name: 'Transfer-In Register',
+                description: 'Assets received into a location or organisational unit (matched against department, branch or location)',
+                apiEndpoint: '/api/reports/transfer-in',
+                hasFilters: true,
+                hasDateRange: true,
+                departmentParamName: 'unit',
+                rowType: 'transfer',
+                canExport: false
+            },
+            'transfer-out': {
+                name: 'Transfer-Out Register',
+                description: 'Assets transferred out of a location or organisational unit (matched against department, branch or location)',
+                apiEndpoint: '/api/reports/transfer-out',
+                hasFilters: true,
+                hasDateRange: true,
+                departmentParamName: 'unit',
+                rowType: 'transfer',
+                canExport: false
+            },
+            'inter-branch-transfers': {
+                name: 'Inter-Branch Transfer Report',
+                description: 'Transfers between branches/sites',
+                apiEndpoint: '/api/reports/inter-branch-transfers',
+                hasFilters: true,
+                hasDateRange: true,
+                rowType: 'transfer',
+                canExport: false
+            },
+            'inter-department-transfers': {
+                name: 'Inter-Department Transfer Report',
+                description: 'Transfers between departments',
+                apiEndpoint: '/api/reports/inter-department-transfers',
+                hasFilters: true,
+                hideDepartmentFilter: true,
+                hasDateRange: true,
+                rowType: 'transfer',
+                canExport: false
+            },
+            'asset-assignments': {
+                name: 'Asset Assignment Report',
+                description: 'Current assignment of assets to custodians',
+                apiEndpoint: '/api/reports/asset-assignments',
+                hasFilters: true,
+                rowType: 'assignment',
+                canExport: false
+            },
+            'asset-custodian': {
+                name: 'Asset Custodian Report',
+                description: 'Assets under the responsibility of each custodian',
+                apiEndpoint: '/api/reports/asset-register/grouped',
+                hasFilters: true,
+                fixedGroupBy: 'CUSTODIAN',
+                rowType: 'grouped',
+                canExport: false
+            },
+            'assignment-history': {
+                name: 'Asset Assignment History',
+                description: 'Historical custodian assignments — transfers where the custodian changed',
+                apiEndpoint: '/api/reports/assignment-history',
+                hasFilters: true,
+                hasDateRange: true,
+                rowType: 'transfer',
+                canExport: false
+            },
+            'location-history': {
+                name: 'Asset Location History',
+                description: 'Historical physical location of assets — transfers where branch or location changed',
+                apiEndpoint: '/api/reports/location-history',
+                hasFilters: true,
+                hasDateRange: true,
+                rowType: 'transfer',
+                canExport: false
+            },
+            'unassigned-assets': {
+                name: 'Unassigned Assets Report',
+                description: 'Assets without a current custodian',
+                apiEndpoint: '/api/reports/unassigned-assets',
+                hasFilters: true,
+                rowType: 'assignment',
+                canExport: false
+            },
+            'pending-transfer-approval': {
+                name: 'Assets Pending Transfer Approval',
+                description: 'Transfer requests awaiting workflow approval',
+                apiEndpoint: '/api/reports/pending-transfer-approval',
+                hasFilters: true,
+                rowType: 'transfer',
+                canExport: false
+            },
+            'movement-history': {
+                name: 'Asset Movement History',
+                description: 'Chronological movement trail for each asset (all lifecycle events)',
+                apiEndpoint: '/api/reports/movement-history',
+                hasFilters: true,
+                hasDateRange: true,
+                rowType: 'movementHistory',
+                canExport: false
+            },
+            'disposal-register': {
+                name: 'Asset Disposal Register',
+                description: 'Register of all disposed assets',
+                apiEndpoint: '/api/reports/asset-disposals',
+                hasFilters: true,
+                hasDateRange: true,
+                rowType: 'disposal',
+                canExport: false
+            },
+            'disposal-detail': {
+                name: 'Asset Disposal Detail Report',
+                description: 'Detailed disposal information including method, proceeds and accounting impact',
+                apiEndpoint: '/api/reports/asset-disposals',
+                hasFilters: true,
+                hasDateRange: true,
+                rowType: 'disposal',
+                canExport: false
+            },
+            'pending-disposal': {
+                name: 'Assets Pending Disposal',
+                description: 'Assets proposed for disposal but not yet completed',
+                apiEndpoint: '/api/reports/pending-disposal',
+                hasFilters: true,
+                rowType: 'disposal',
+                canExport: false
+            },
+            'disposed-by-period': {
+                name: 'Disposed Assets by Period',
+                description: 'Assets disposed during a selected period',
+                apiEndpoint: '/api/reports/asset-disposals',
+                hasFilters: true,
+                hasDateRange: true,
+                rowType: 'disposal',
+                canExport: false
+            },
+            'disposed-by-category': {
+                name: 'Disposed Assets by Category',
+                description: 'Disposals analysed by asset category — use the Category filter to narrow',
+                apiEndpoint: '/api/reports/asset-disposals',
+                hasFilters: true,
+                hasDateRange: true,
+                rowType: 'disposal',
+                canExport: false
+            },
+            'asset-sales': {
+                name: 'Asset Sales Report',
+                description: 'Assets disposed through sale',
+                apiEndpoint: '/api/reports/asset-disposals',
+                hasFilters: true,
+                hasDateRange: true,
+                fixedMethods: ['Sale'],
+                rowType: 'disposal',
+                canExport: false
+            },
+            'scrapped-assets': {
+                name: 'Scrapped Assets Report',
+                description: 'Assets written off or scrapped',
+                apiEndpoint: '/api/reports/asset-disposals',
+                hasFilters: true,
+                hasDateRange: true,
+                fixedMethods: ['Scrap'],
+                rowType: 'disposal',
+                canExport: false
+            },
+            'disposal-proceeds': {
+                name: 'Disposal Proceeds Report',
+                description: 'Cash or other consideration received from asset disposals',
+                apiEndpoint: '/api/reports/asset-disposals',
+                hasFilters: true,
+                hasDateRange: true,
+                rowType: 'disposal',
+                canExport: false
+            },
+            'disposal-gain-loss': {
+                name: 'Gain/Loss on Disposal Report',
+                description: 'Disposal proceeds compared with carrying amount to determine accounting gain or loss',
+                apiEndpoint: '/api/reports/asset-disposals',
+                hasFilters: true,
+                hasDateRange: true,
+                rowType: 'disposal',
+                canExport: false
+            },
+            'asset-retirement': {
+                name: 'Asset Retirement Report',
+                description: 'Assets removed from service without a sale (Write-off/Scrap) — this system has no distinct "retirement" status, so this is an interpretation; confirm it matches your process',
+                apiEndpoint: '/api/reports/asset-disposals',
+                hasFilters: true,
+                hasDateRange: true,
+                fixedMethods: ['Write-off', 'Scrap'],
+                rowType: 'disposal',
+                canExport: false
+            },
+            'disposal-approval-history': {
+                name: 'Disposal Approval History',
+                description: 'Workflow and approval history for asset disposals',
+                apiEndpoint: '/api/reports/disposal-approval-history',
+                hasFilters: true,
+                rowType: 'approvalHistory',
+                canExport: false
+            },
+            'depreciation-expense': {
+                name: 'Depreciation Expense Report',
+                description: 'Depreciation charge recognized within a selected reporting period',
+                apiEndpoint: '/api/reports/depreciation-expense',
+                hasFilters: true,
+                hasDateRange: true,
+                rowType: 'costAnalysis',
+                canExport: false
+            },
+            'depreciation-by-category': {
+                name: 'Depreciation by Category',
+                description: 'Depreciation expense and accumulated depreciation by category, for a period',
+                apiEndpoint: '/api/reports/depreciation-by-category',
+                hasPeriod: true,
+                rowType: 'periodCategory',
+                canExport: false
+            },
+            'depreciation-by-location': {
+                name: 'Depreciation by Location',
+                description: 'Current depreciation position grouped by location',
+                apiEndpoint: '/api/reports/asset-register/grouped',
+                hasFilters: true,
+                fixedGroupBy: 'LOCATION',
+                rowType: 'grouped',
+                canExport: false
+            },
+            'depreciation-by-department': {
+                name: 'Depreciation by Department',
+                description: 'Depreciation expense and accumulated depreciation by department, for a period',
+                apiEndpoint: '/api/reports/depreciation-by-department',
+                hasPeriod: true,
+                rowType: 'periodDepartment',
+                canExport: false
+            },
+            'depreciation-by-cost-centre': {
+                name: 'Depreciation by Cost Centre',
+                description: 'Depreciation expense and accumulated depreciation by cost centre, for a period',
+                apiEndpoint: '/api/reports/depreciation-by-cost-centre',
+                hasPeriod: true,
+                rowType: 'periodCostCentre',
+                canExport: false
+            },
+            'depreciation-by-method': {
+                name: 'Depreciation by Method',
+                description: 'Assets grouped by their resolved depreciation method',
+                apiEndpoint: '/api/reports/depreciation-by-method',
+                hasFilters: true,
+                rowType: 'grouped',
+                canExport: false
+            },
+            'depreciation-exceptions': {
+                name: 'Depreciation Exception Report',
+                description: 'Assets with no resolvable depreciation policy configured',
+                apiEndpoint: '/api/reports/depreciation-exceptions',
+                hasFilters: true,
+                rowType: 'exception',
+                canExport: false
+            },
+            'depreciation-history': {
+                name: 'Depreciation History Report',
+                description: 'Every historical depreciation posting across assets, optionally within a date range',
+                apiEndpoint: '/api/reports/depreciation-history',
+                hasFilters: true,
+                hasDateRange: true,
+                rowType: 'history',
+                canExport: false
+            },
+            'depreciation-projection': {
+                name: 'Depreciation Projection Report',
+                description: 'Forecast of future depreciation over a selected horizon',
+                apiEndpoint: '/api/reports/depreciation-projection',
+                hasFilters: true,
+                hasHorizonYears: true,
+                rowType: 'projection',
+                canExport: false
+            },
+            'approaching-full-depreciation': {
+                name: 'Assets Approaching Full Depreciation',
+                description: 'Assets projected to reach full depreciation within a selected number of years',
+                apiEndpoint: '/api/reports/approaching-full-depreciation',
+                hasFilters: true,
+                hasThresholdYears: true,
+                rowType: 'register',
+                canExport: true
+            },
+            'depreciation-adjustments': {
+                name: 'Depreciation Adjustment Report',
+                description: 'Manual corrections, reversals and recalculations recorded against assets',
+                apiEndpoint: '/api/reports/depreciation-adjustments',
+                hasFilters: true,
+                hasDateRange: true,
+                rowType: 'adjustment',
+                adjustmentKind: 'depreciation',
+                canExport: false
             },
             'purchase-analysis': {
                 name: 'Purchase Analysis',
                 description: 'Analysis of asset purchases by date range',
                 apiEndpoint: '/api/reports/purchase-analysis',
                 hasFilters: true,
+                hasDateRange: true,
                 rowType: 'register',
                 canExport: true
             },
@@ -523,6 +1464,7 @@
                 description: 'Complete maintenance and service records',
                 apiEndpoint: '/api/reports/maintenance-history',
                 hasFilters: false,
+                hasDateRange: true,
                 rowType: 'register',
                 canExport: true
             },
@@ -604,9 +1546,32 @@
             document.getElementById('groupedViewContainer').classList.add('hidden');
             document.getElementById('costAnalysisViewContainer').classList.add('hidden');
             document.getElementById('trendViewContainer').classList.add('hidden');
+            document.getElementById('componentViewContainer').classList.add('hidden');
+            document.getElementById('adjustmentViewContainer').classList.add('hidden');
+            document.getElementById('scheduleViewContainer').classList.add('hidden');
+            document.getElementById('exceptionViewContainer').classList.add('hidden');
+            document.getElementById('historyViewContainer').classList.add('hidden');
+            document.getElementById('projectionViewContainer').classList.add('hidden');
+            document.getElementById('periodSingleViewContainer').classList.add('hidden');
+            document.getElementById('periodGroupViewContainer').classList.add('hidden');
+            document.getElementById('runsViewContainer').classList.add('hidden');
+            document.getElementById('nbvViewContainer').classList.add('hidden');
+            document.getElementById('ageingViewContainer').classList.add('hidden');
+            document.getElementById('revaluationViewContainer').classList.add('hidden');
+            document.getElementById('impairmentViewContainer').classList.add('hidden');
+            document.getElementById('transferViewContainer').classList.add('hidden');
+            document.getElementById('assignmentViewContainer').classList.add('hidden');
+            document.getElementById('movementHistoryViewContainer').classList.add('hidden');
+            document.getElementById('disposalViewContainer').classList.add('hidden');
+            document.getElementById('approvalHistoryViewContainer').classList.add('hidden');
             document.getElementById('groupByFilterWrapper').classList.toggle('hidden', !config.hasGroupBy);
             document.getElementById('dateRangeWrapper').classList.toggle('hidden', !config.hasDateRange);
             document.getElementById('trendGranularityWrapper').classList.toggle('hidden', !config.hasTrendGranularity);
+            document.getElementById('periodFilterWrapper').classList.toggle('hidden', !config.hasPeriod);
+            document.getElementById('horizonYearsWrapper').classList.toggle('hidden', !config.hasHorizonYears);
+            document.getElementById('thresholdYearsWrapper').classList.toggle('hidden', !config.hasThresholdYears);
+            document.getElementById('categoryFilter').closest('div').classList.toggle('hidden', !config.hasFilters);
+            document.getElementById('departmentFilter').closest('div').classList.toggle('hidden', !config.hasFilters || !!config.hideDepartmentFilter);
             if (config.hasGroupBy && config.defaultGroupBy) {
                 document.getElementById('groupByFilter').value = config.defaultGroupBy;
             }
@@ -629,21 +1594,35 @@
                     const department = document.getElementById('departmentFilter')?.value;
 
                     if (category && category !== 'All Categories') params.append('category', category);
-                    if (department && department !== 'Global Operations') params.append('department', department);
+                    if (!config.hideDepartmentFilter && department && department !== 'Global Operations') {
+                        params.append(config.departmentParamName || 'department', department);
+                    }
                 }
                 if (config.fixedGroupBy) {
                     params.append('groupBy', config.fixedGroupBy);
                 } else if (config.hasGroupBy) {
                     params.append('groupBy', document.getElementById('groupByFilter')?.value || 'CATEGORY');
                 }
+                if (config.fixedMethods) {
+                    params.append('methods', config.fixedMethods.join(','));
+                }
                 if (config.hasDateRange) {
                     const fromDate = document.getElementById('fromDateFilter')?.value;
                     const toDate = document.getElementById('toDateFilter')?.value;
-                    if (fromDate) params.append('fromDate', fromDate);
-                    if (toDate) params.append('toDate', toDate);
+                    if (fromDate) params.append('startDate', fromDate);
+                    if (toDate) params.append('endDate', toDate);
                 }
                 if (config.hasTrendGranularity) {
                     params.append('granularity', document.getElementById('trendGranularityFilter')?.value || 'MONTH');
+                }
+                if (config.hasPeriod) {
+                    params.append('period', document.getElementById('periodFilter')?.value || '');
+                }
+                if (config.hasHorizonYears) {
+                    params.append('horizonYears', document.getElementById('horizonYearsFilter')?.value || '5');
+                }
+                if (config.hasThresholdYears) {
+                    params.append('thresholdYears', document.getElementById('thresholdYearsFilter')?.value || '1');
                 }
 
                 if (params.toString()) {
@@ -655,7 +1634,7 @@
 
                 const result = await response.json();
                 if (result.success && result.data) {
-                    displayReport(result.data, config.rowType);
+                    displayReport(result.data, config);
                 } else {
                     showError('Failed to load report: ' + (result.message || 'Unknown error'));
                 }
@@ -668,7 +1647,8 @@
         }
 
         // Dispatch to the right renderer for the report's data shape.
-        function displayReport(reportData, rowType) {
+        function displayReport(reportData, config) {
+            const rowType = config.rowType;
             if (rowType === 'summary') {
                 renderSummaryReport(reportData);
                 return;
@@ -687,6 +1667,86 @@
             }
             if (rowType === 'trend') {
                 renderTrendReport(reportData);
+                return;
+            }
+            if (rowType === 'component') {
+                renderComponentReport(reportData);
+                return;
+            }
+            if (rowType === 'adjustment') {
+                renderAdjustmentReport(reportData, config.adjustmentKind || 'capital');
+                return;
+            }
+            if (rowType === 'schedule') {
+                renderScheduleReport(reportData);
+                return;
+            }
+            if (rowType === 'exception') {
+                renderExceptionReport(reportData);
+                return;
+            }
+            if (rowType === 'history') {
+                renderHistoryReport(reportData);
+                return;
+            }
+            if (rowType === 'projection') {
+                renderProjectionReport(reportData);
+                return;
+            }
+            if (rowType === 'periodSingle') {
+                renderPeriodSingleReport(reportData);
+                return;
+            }
+            if (rowType === 'periodCategory') {
+                renderPeriodGroupReport(reportData, 'category');
+                return;
+            }
+            if (rowType === 'periodDepartment') {
+                renderPeriodGroupReport(reportData, 'department');
+                return;
+            }
+            if (rowType === 'periodCostCentre') {
+                renderPeriodGroupReport(reportData, 'costCentre');
+                return;
+            }
+            if (rowType === 'runs') {
+                renderRunsReport(reportData);
+                return;
+            }
+            if (rowType === 'nbv') {
+                renderNbvReport(reportData);
+                return;
+            }
+            if (rowType === 'ageing') {
+                renderAgeingReport(reportData);
+                return;
+            }
+            if (rowType === 'revaluation') {
+                renderRevaluationReport(reportData);
+                return;
+            }
+            if (rowType === 'impairment') {
+                renderImpairmentReport(reportData);
+                return;
+            }
+            if (rowType === 'transfer') {
+                renderTransferReport(reportData);
+                return;
+            }
+            if (rowType === 'assignment') {
+                renderAssignmentReport(reportData);
+                return;
+            }
+            if (rowType === 'movementHistory') {
+                renderMovementHistoryReport(reportData);
+                return;
+            }
+            if (rowType === 'disposal') {
+                renderDisposalReport(reportData);
+                return;
+            }
+            if (rowType === 'approvalHistory') {
+                renderApprovalHistoryReport(reportData);
                 return;
             }
             renderRegisterReport(reportData);
@@ -951,6 +2011,645 @@
             container.classList.remove('hidden');
         }
 
+        // Depreciation Schedule — method/useful life/residual/charge per asset.
+        function renderScheduleReport(reportData) {
+            const tbody = document.getElementById('scheduleBody');
+            tbody.innerHTML = '';
+
+            if (reportData.empty || !reportData.rows || reportData.rows.length === 0) {
+                showEmptyState();
+                return;
+            }
+
+            reportData.rows.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-surface-canvas/50 transition-colors';
+                tr.innerHTML = `
+                    <td class="px-5 py-3 font-technical-data text-technical-data text-on-surface">${row.assetCode ?? ''} — ${row.assetName ?? ''}</td>
+                    <td class="px-5 py-3 text-body-default text-on-surface">${formatCurrency(row.cost)}</td>
+                    <td class="px-5 py-3 text-body-default text-secondary">${row.residualValue != null ? formatCurrency(row.residualValue) : '—'}</td>
+                    <td class="px-5 py-3 text-body-default text-secondary">${row.usefulLifeYears ?? '—'}</td>
+                    <td class="px-5 py-3 text-body-default text-secondary">${row.method ?? ''}</td>
+                    <td class="px-5 py-3 text-body-default text-secondary">${formatCurrency(row.depreciationCharge)}</td>
+                    <td class="px-5 py-3 text-body-default text-error">(${formatCurrency(row.accumulatedDepreciation)})</td>
+                    <td class="px-5 py-3 text-body-default font-bold text-primary">${formatCurrency(row.carryingAmount)}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('totalValueStat').textContent = formatCurrency(reportData.totalCost);
+            document.getElementById('totalDepreciationStat').textContent = formatCurrency(reportData.totalAccumulatedDepreciation);
+            document.getElementById('totalNetBookValueStat').textContent = formatCurrency(reportData.totalCarryingAmount);
+            document.getElementById('reportRecordCount').textContent = `Showing ${reportData.totalRecords} records`;
+
+            document.getElementById('scheduleViewContainer').classList.remove('hidden');
+        }
+
+        // Depreciation Exception Report — assets with no resolvable depreciation policy.
+        function renderExceptionReport(reportData) {
+            const tbody = document.getElementById('exceptionBody');
+            tbody.innerHTML = '';
+
+            if (reportData.empty || !reportData.rows || reportData.rows.length === 0) {
+                showEmptyState();
+                return;
+            }
+
+            reportData.rows.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-surface-canvas/50 transition-colors';
+                tr.innerHTML = `
+                    <td class="px-5 py-3 font-technical-data text-technical-data text-on-surface">${row.assetCode ?? ''} — ${row.assetName ?? ''}</td>
+                    <td class="px-5 py-3 text-body-default text-secondary">${row.category ?? ''}</td>
+                    <td class="px-5 py-3 text-body-default text-secondary">${row.department ?? ''}</td>
+                    <td class="px-5 py-3">${getStatusBadge(row.status)}</td>
+                    <td class="px-5 py-3 text-body-default text-error">${row.reason ?? ''}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('totalValueStat').textContent = '—';
+            document.getElementById('totalDepreciationStat').textContent = '—';
+            document.getElementById('totalNetBookValueStat').textContent = '—';
+            document.getElementById('reportRecordCount').textContent = `${reportData.totalRecords} assets flagged`;
+
+            document.getElementById('exceptionViewContainer').classList.remove('hidden');
+        }
+
+        // Depreciation History Report — every posting, flattened across all scoped assets.
+        function renderHistoryReport(reportData) {
+            const tbody = document.getElementById('historyBody');
+            tbody.innerHTML = '';
+
+            if (reportData.empty || !reportData.rows || reportData.rows.length === 0) {
+                showEmptyState();
+                return;
+            }
+
+            reportData.rows.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-surface-canvas/50 transition-colors';
+                tr.innerHTML = `
+                    <td class="px-5 py-3 font-technical-data text-technical-data text-on-surface">${row.assetCode ?? ''} — ${row.assetName ?? ''}</td>
+                    <td class="px-5 py-3 text-body-default text-secondary">${row.period ?? ''}</td>
+                    <td class="px-5 py-3 text-body-default text-on-surface">${formatCurrency(row.depreciationCharge)}</td>
+                    <td class="px-5 py-3 text-body-default text-error">(${formatCurrency(row.closingAccumulatedDepreciation)})</td>
+                    <td class="px-5 py-3 text-body-default font-bold text-primary">${formatCurrency(row.bookValue)}</td>
+                    <td class="px-5 py-3 text-body-default text-secondary">${row.fullyDepreciated ? 'Yes' : 'No'}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('totalValueStat').textContent = '—';
+            document.getElementById('totalDepreciationStat').textContent = '—';
+            document.getElementById('totalNetBookValueStat').textContent = '—';
+            document.getElementById('reportRecordCount').textContent = `Showing ${reportData.totalRecords} postings`;
+
+            document.getElementById('historyViewContainer').classList.remove('hidden');
+        }
+
+        // Depreciation Projection Report — per-asset future years, collapsible like the grouped view.
+        function renderProjectionReport(reportData) {
+            const container = document.getElementById('projectionViewContainer');
+            container.innerHTML = '';
+
+            if (reportData.empty || !reportData.assets || reportData.assets.length === 0) {
+                showEmptyState();
+                return;
+            }
+
+            reportData.assets.forEach((asset, i) => {
+                const rowsId = `projection-${i}`;
+                const wrapper = document.createElement('div');
+                wrapper.innerHTML = `
+                    <button onclick="document.getElementById('${rowsId}').classList.toggle('hidden')"
+                            class="w-full flex justify-between items-center px-5 py-3 bg-surface-canvas hover:bg-surface-canvas/70 transition-colors text-left">
+                        <span class="font-body-medium text-on-surface">${asset.assetCode} — ${asset.assetName} <span class="text-secondary font-normal">(${asset.category ?? ''})</span></span>
+                        <span class="text-secondary text-body-default">${asset.points.length}-year projection</span>
+                    </button>
+                    <div id="${rowsId}" class="hidden overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                            <tr class="bg-surface-canvas/50 border-b border-border-default">
+                                <th class="px-5 py-2 pl-10 text-label-small font-label-small text-secondary uppercase tracking-wider">Year</th>
+                                <th class="px-5 py-2 text-label-small font-label-small text-secondary uppercase tracking-wider">Projected Charge</th>
+                                <th class="px-5 py-2 text-label-small font-label-small text-secondary uppercase tracking-wider">Projected Accum. Depr.</th>
+                                <th class="px-5 py-2 text-label-small font-label-small text-secondary uppercase tracking-wider">Projected Book Value</th>
+                            </tr>
+                            </thead>
+                            <tbody class="divide-y divide-border-default">
+                                ${asset.points.map(p => `
+                                    <tr class="hover:bg-surface-canvas/50 transition-colors">
+                                        <td class="px-5 py-2 pl-10 text-body-default text-on-surface">${p.year}</td>
+                                        <td class="px-5 py-2 text-body-default text-on-surface">${formatCurrency(p.projectedCharge)}</td>
+                                        <td class="px-5 py-2 text-body-default text-error">(${formatCurrency(p.projectedAccumulatedDepreciation)})</td>
+                                        <td class="px-5 py-2 text-body-default font-bold text-primary">${formatCurrency(p.projectedBookValue)}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+                container.appendChild(wrapper);
+            });
+
+            document.getElementById('totalValueStat').textContent = '—';
+            document.getElementById('totalDepreciationStat').textContent = '—';
+            document.getElementById('totalNetBookValueStat').textContent = '—';
+            document.getElementById('reportRecordCount').textContent = `${reportData.assets.length} assets, ${reportData.horizonYears}-year horizon`;
+
+            container.classList.remove('hidden');
+        }
+
+        // Monthly Depreciation Report — one period's postings + totals.
+        function renderPeriodSingleReport(reportData) {
+            const tbody = document.getElementById('periodSingleBody');
+            tbody.innerHTML = '';
+
+            if (!reportData.postings || reportData.postings.length === 0) {
+                showEmptyState();
+                return;
+            }
+
+            reportData.postings.forEach(p => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-surface-canvas/50 transition-colors';
+                tr.innerHTML = `
+                    <td class="px-5 py-3 font-technical-data text-technical-data text-on-surface">${p.assetCode ?? ''} — ${p.assetName ?? ''}</td>
+                    <td class="px-5 py-3 text-body-default text-on-surface">${formatCurrency(p.depreciationCharge)}</td>
+                    <td class="px-5 py-3 text-body-default text-error">(${formatCurrency(p.closingAccumulatedDepreciation)})</td>
+                    <td class="px-5 py-3 text-body-default font-bold text-primary">${formatCurrency(p.bookValue)}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('periodSingleAssetCount').textContent = reportData.assetCount;
+            document.getElementById('periodSingleFullyDepCount').textContent = reportData.fullyDepreciatedCount;
+            document.getElementById('totalValueStat').textContent = formatCurrency(reportData.totalOriginalCost);
+            document.getElementById('totalDepreciationStat').textContent = formatCurrency(reportData.totalAccumulatedDepreciation);
+            document.getElementById('totalNetBookValueStat').textContent = formatCurrency(reportData.totalBookValue);
+            document.getElementById('reportRecordCount').textContent = `Period ${reportData.period} — ${reportData.assetCount} assets`;
+
+            document.getElementById('periodSingleViewContainer').classList.remove('hidden');
+        }
+
+        // Transfer-based reports (items 1-5, 8, 9, 11) — same renderer, many nav entries.
+        function renderTransferReport(reportData) {
+            const tbody = document.getElementById('transferBody');
+            tbody.innerHTML = '';
+
+            if (reportData.empty || !reportData.rows || reportData.rows.length === 0) {
+                showEmptyState();
+                return;
+            }
+
+            reportData.rows.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-surface-canvas/50 transition-colors';
+                const from = [row.fromDepartment, row.fromBranch, row.fromLocation].filter(Boolean).join(' / ') || '—';
+                const to = [row.toDepartment, row.toBranch, row.toLocation].filter(Boolean).join(' / ') || '—';
+                const custodianChange = (row.fromEmployee || row.toEmployee)
+                    ? `${row.fromEmployee ?? '—'} → ${row.toEmployee ?? '—'}` : '—';
+                tr.innerHTML = `
+                    <td class="px-5 py-3 text-body-default text-on-surface">${row.requestedDate ?? ''}</td>
+                    <td class="px-5 py-3 font-technical-data text-technical-data text-on-surface">${row.assetCode ?? ''} — ${row.assetName ?? ''}</td>
+                    <td class="px-5 py-3">${getStatusBadge(row.status)}</td>
+                    <td class="px-5 py-3 text-body-default text-secondary">${from}</td>
+                    <td class="px-5 py-3 text-body-default text-secondary">${to}</td>
+                    <td class="px-5 py-3 text-body-default text-secondary">${custodianChange}</td>
+                    <td class="px-5 py-3 text-body-default text-secondary">${row.requestedBy ?? ''}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('totalValueStat').textContent = '—';
+            document.getElementById('totalDepreciationStat').textContent = '—';
+            document.getElementById('totalNetBookValueStat').textContent = '—';
+            document.getElementById('reportRecordCount').textContent = `Showing ${reportData.totalRecords} transfers`;
+
+            document.getElementById('transferViewContainer').classList.remove('hidden');
+        }
+
+        // Asset Assignment Report / Unassigned Assets Report — same renderer.
+        function renderAssignmentReport(reportData) {
+            const tbody = document.getElementById('assignmentBody');
+            tbody.innerHTML = '';
+
+            if (reportData.empty || !reportData.rows || reportData.rows.length === 0) {
+                showEmptyState();
+                return;
+            }
+
+            reportData.rows.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-surface-canvas/50 transition-colors';
+                tr.innerHTML = `
+                    <td class="px-5 py-3 font-technical-data text-technical-data text-on-surface">${row.assetCode ?? ''} — ${row.assetName ?? ''}</td>
+                    <td class="px-5 py-3 text-body-default text-secondary">${row.category ?? ''}</td>
+                    <td class="px-5 py-3 text-body-default text-on-surface">${row.custodian ?? '—'}</td>
+                    <td class="px-5 py-3 text-body-default text-secondary">${row.department ?? ''}</td>
+                    <td class="px-5 py-3 text-body-default text-secondary">${row.branch ?? ''}</td>
+                    <td class="px-5 py-3">${getStatusBadge(row.status)}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('totalValueStat').textContent = '—';
+            document.getElementById('totalDepreciationStat').textContent = '—';
+            document.getElementById('totalNetBookValueStat').textContent = '—';
+            document.getElementById('reportRecordCount').textContent = `Showing ${reportData.totalRecords} assets`;
+
+            document.getElementById('assignmentViewContainer').classList.remove('hidden');
+        }
+
+        // Asset Movement History — full lifecycle event trail.
+        function renderMovementHistoryReport(reportData) {
+            const tbody = document.getElementById('movementHistoryBody');
+            tbody.innerHTML = '';
+
+            if (reportData.empty || !reportData.rows || reportData.rows.length === 0) {
+                showEmptyState();
+                return;
+            }
+
+            reportData.rows.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-surface-canvas/50 transition-colors';
+                const change = (row.fromValue || row.toValue) ? `${row.fromValue ?? '—'} → ${row.toValue ?? '—'}` : '—';
+                tr.innerHTML = `
+                    <td class="px-5 py-3 text-body-default text-on-surface">${row.eventAt ?? ''}</td>
+                    <td class="px-5 py-3 font-technical-data text-technical-data text-on-surface">${row.assetCode ?? ''} — ${row.assetName ?? ''}</td>
+                    <td class="px-5 py-3 text-body-default text-secondary">${row.eventType ?? ''}</td>
+                    <td class="px-5 py-3 text-body-default text-on-surface">${row.title ?? ''}</td>
+                    <td class="px-5 py-3 text-body-default text-secondary">${change}</td>
+                    <td class="px-5 py-3 text-body-default text-secondary">${row.actor ?? ''}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('totalValueStat').textContent = '—';
+            document.getElementById('totalDepreciationStat').textContent = '—';
+            document.getElementById('totalNetBookValueStat').textContent = '—';
+            document.getElementById('reportRecordCount').textContent = `Showing ${reportData.totalRecords} events`;
+
+            document.getElementById('movementHistoryViewContainer').classList.remove('hidden');
+        }
+
+        // Disposal-based reports (items 1,2,4-10) — same renderer, many nav entries.
+        function renderDisposalReport(reportData) {
+            const tbody = document.getElementById('disposalBody');
+            tbody.innerHTML = '';
+
+            if (reportData.empty || !reportData.rows || reportData.rows.length === 0) {
+                showEmptyState();
+                return;
+            }
+
+            reportData.rows.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-surface-canvas/50 transition-colors';
+                const glClass = row.financialImpact != null && Number(row.financialImpact) >= 0 ? 'text-status-success' : 'text-status-error';
+                tr.innerHTML = `
+                    <td class="px-5 py-3 text-body-default text-on-surface">${row.date ?? ''}</td>
+                    <td class="px-5 py-3 font-technical-data text-technical-data text-on-surface">${row.assetCode ?? ''} — ${row.assetName ?? ''}</td>
+                    <td class="px-5 py-3 text-body-default text-secondary">${row.disposalMethod ?? ''}</td>
+                    <td class="px-5 py-3">${getStatusBadge(row.status)}</td>
+                    <td class="px-5 py-3 text-body-default text-on-surface">${formatCurrency(row.disposalProceeds)}</td>
+                    <td class="px-5 py-3 text-body-default text-secondary">${formatCurrency(row.netBookValue)}</td>
+                    <td class="px-5 py-3 text-body-default font-bold ${glClass}">${row.financialImpact != null ? formatCurrency(row.financialImpact) : '—'}</td>
+                    <td class="px-5 py-3 text-body-default text-secondary">${row.reason ?? ''}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('disposalTotalProceeds').textContent = formatCurrency(reportData.totalProceeds);
+            document.getElementById('disposalTotalGain').textContent = formatCurrency(reportData.totalGain);
+            document.getElementById('disposalTotalLoss').textContent = formatCurrency(reportData.totalLoss);
+            document.getElementById('disposalNetGainLoss').textContent = formatCurrency(reportData.netGainLoss);
+            document.getElementById('totalValueStat').textContent = formatCurrency(reportData.totalProceeds);
+            document.getElementById('totalDepreciationStat').textContent = '—';
+            document.getElementById('totalNetBookValueStat').textContent = formatCurrency(reportData.netGainLoss);
+            document.getElementById('reportRecordCount').textContent = `Showing ${reportData.totalRecords} disposals`;
+
+            document.getElementById('disposalViewContainer').classList.remove('hidden');
+        }
+
+        // Disposal Approval History.
+        function renderApprovalHistoryReport(reportData) {
+            const tbody = document.getElementById('approvalHistoryBody');
+            tbody.innerHTML = '';
+
+            if (reportData.empty || !reportData.rows || reportData.rows.length === 0) {
+                showEmptyState();
+                return;
+            }
+
+            reportData.rows.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-surface-canvas/50 transition-colors';
+                const decisionClass = row.decision === 'REJECTED' ? 'text-status-error' : row.decision === 'APPROVED' ? 'text-status-success' : 'text-secondary';
+                tr.innerHTML = `
+                    <td class="px-5 py-3 text-body-default text-on-surface">${row.actionAt ?? ''}</td>
+                    <td class="px-5 py-3 font-technical-data text-technical-data text-on-surface">${row.assetCode ?? ''} — ${row.assetName ?? ''}</td>
+                    <td class="px-5 py-3 text-body-default text-secondary">${row.taskName ?? ''}</td>
+                    <td class="px-5 py-3 text-body-default text-secondary">${row.actor ?? ''}</td>
+                    <td class="px-5 py-3 text-body-default font-medium ${decisionClass}">${row.decision ?? ''}</td>
+                    <td class="px-5 py-3 text-body-default text-secondary">${row.comment ?? ''}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('totalValueStat').textContent = '—';
+            document.getElementById('totalDepreciationStat').textContent = '—';
+            document.getElementById('totalNetBookValueStat').textContent = '—';
+            document.getElementById('reportRecordCount').textContent = `Showing ${reportData.totalRecords} approval actions`;
+
+            document.getElementById('approvalHistoryViewContainer').classList.remove('hidden');
+        }
+
+        // Net Book Value Report — cost, accumulated depreciation, impairment, NBV.
+        function renderNbvReport(reportData) {
+            const tbody = document.getElementById('nbvBody');
+            tbody.innerHTML = '';
+
+            if (reportData.empty || !reportData.rows || reportData.rows.length === 0) {
+                showEmptyState();
+                return;
+            }
+
+            reportData.rows.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-surface-canvas/50 transition-colors';
+                tr.innerHTML = `
+                    <td class="px-5 py-3 font-technical-data text-technical-data text-on-surface">${row.assetCode ?? ''} — ${row.assetName ?? ''}</td>
+                    <td class="px-5 py-3 text-body-default text-on-surface">${formatCurrency(row.historicalCost)}</td>
+                    <td class="px-5 py-3 text-body-default text-error">(${formatCurrency(row.accumulatedDepreciation)})</td>
+                    <td class="px-5 py-3 text-body-default text-error">${row.impairment && row.impairment != 0 ? '(' + formatCurrency(row.impairment) + ')' : formatCurrency(0)}</td>
+                    <td class="px-5 py-3 text-body-default font-bold text-primary">${formatCurrency(row.netBookValue)}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('totalValueStat').textContent = formatCurrency(reportData.totalHistoricalCost);
+            document.getElementById('totalDepreciationStat').textContent = formatCurrency(reportData.totalAccumulatedDepreciation);
+            document.getElementById('totalNetBookValueStat').textContent = formatCurrency(reportData.totalNetBookValue);
+            document.getElementById('reportRecordCount').textContent = `Showing ${reportData.totalRecords} records`;
+
+            document.getElementById('nbvViewContainer').classList.remove('hidden');
+        }
+
+        // Asset Ageing and Value Report.
+        function renderAgeingReport(reportData) {
+            const tbody = document.getElementById('ageingBody');
+            tbody.innerHTML = '';
+
+            if (reportData.empty || !reportData.rows || reportData.rows.length === 0) {
+                showEmptyState();
+                return;
+            }
+
+            reportData.rows.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-surface-canvas/50 transition-colors';
+                tr.innerHTML = `
+                    <td class="px-5 py-3 font-technical-data text-technical-data text-on-surface">${row.assetCode ?? ''} — ${row.assetName ?? ''}</td>
+                    <td class="px-5 py-3 text-body-default text-secondary">${row.purchaseDate ?? ''}</td>
+                    <td class="px-5 py-3 text-body-default text-secondary">${row.ageBand ?? ''} (${row.ageYears ?? 0}y)</td>
+                    <td class="px-5 py-3 text-body-default text-on-surface">${formatCurrency(row.cost)}</td>
+                    <td class="px-5 py-3 text-body-default font-bold text-primary">${formatCurrency(row.netBookValue)}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('totalValueStat').textContent = '—';
+            document.getElementById('totalDepreciationStat').textContent = '—';
+            document.getElementById('totalNetBookValueStat').textContent = '—';
+            document.getElementById('reportRecordCount').textContent = `Showing ${reportData.totalRecords} records`;
+
+            document.getElementById('ageingViewContainer').classList.remove('hidden');
+        }
+
+        // Revaluation Report / History / Gain-Loss Report — same renderer, three nav entries.
+        function renderRevaluationReport(reportData) {
+            const tbody = document.getElementById('revaluationBody');
+            tbody.innerHTML = '';
+
+            if (reportData.empty || !reportData.rows || reportData.rows.length === 0) {
+                showEmptyState();
+                return;
+            }
+
+            reportData.rows.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-surface-canvas/50 transition-colors';
+                const glClass = Number(row.gainLoss) >= 0 ? 'text-status-success' : 'text-status-error';
+                tr.innerHTML = `
+                    <td class="px-5 py-3 text-body-default text-on-surface">${row.date ?? ''}</td>
+                    <td class="px-5 py-3 font-technical-data text-technical-data text-on-surface">${row.assetCode ?? ''} — ${row.assetName ?? ''}</td>
+                    <td class="px-5 py-3 text-body-default text-secondary">${formatCurrency(row.previousCarryingAmount)}</td>
+                    <td class="px-5 py-3 text-body-default text-on-surface">${formatCurrency(row.revaluedAmount)}</td>
+                    <td class="px-5 py-3 text-body-default font-bold ${glClass}">${formatCurrency(row.gainLoss)}</td>
+                    <td class="px-5 py-3 text-body-default text-secondary">${row.reason ?? ''}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('revaluationTotalGain').textContent = formatCurrency(reportData.totalGain);
+            document.getElementById('revaluationTotalLoss').textContent = formatCurrency(reportData.totalLoss);
+            document.getElementById('revaluationNetMovement').textContent = formatCurrency(reportData.netMovement);
+            document.getElementById('totalValueStat').textContent = formatCurrency(reportData.netMovement);
+            document.getElementById('totalDepreciationStat').textContent = '—';
+            document.getElementById('totalNetBookValueStat').textContent = '—';
+            document.getElementById('reportRecordCount').textContent = `Showing ${reportData.totalRecords} revaluations`;
+
+            document.getElementById('revaluationViewContainer').classList.remove('hidden');
+        }
+
+        // Impairment Report / History — same renderer, two nav entries.
+        function renderImpairmentReport(reportData) {
+            const tbody = document.getElementById('impairmentBody');
+            tbody.innerHTML = '';
+
+            if (reportData.empty || !reportData.rows || reportData.rows.length === 0) {
+                showEmptyState();
+                return;
+            }
+
+            reportData.rows.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-surface-canvas/50 transition-colors';
+                const typeClass = row.type === 'REVERSAL' ? 'text-status-success' : 'text-status-error';
+                tr.innerHTML = `
+                    <td class="px-5 py-3 text-body-default text-on-surface">${row.date ?? ''}</td>
+                    <td class="px-5 py-3 font-technical-data text-technical-data text-on-surface">${row.assetCode ?? ''} — ${row.assetName ?? ''}</td>
+                    <td class="px-5 py-3 text-body-default font-medium ${typeClass}">${row.type ?? ''}</td>
+                    <td class="px-5 py-3 text-body-default font-bold ${typeClass}">${formatCurrency(row.amount)}</td>
+                    <td class="px-5 py-3 text-body-default text-secondary">${formatCurrency(row.carryingAmountBefore)}</td>
+                    <td class="px-5 py-3 text-body-default text-on-surface">${formatCurrency(row.carryingAmountAfter)}</td>
+                    <td class="px-5 py-3 text-body-default text-secondary">${row.reason ?? ''}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('impairmentTotalLoss').textContent = formatCurrency(reportData.totalImpairmentLoss);
+            document.getElementById('impairmentTotalReversal').textContent = formatCurrency(reportData.totalReversal);
+            document.getElementById('impairmentNetTotal').textContent = formatCurrency(reportData.netImpairment);
+            document.getElementById('totalValueStat').textContent = '—';
+            document.getElementById('totalDepreciationStat').textContent = formatCurrency(reportData.netImpairment);
+            document.getElementById('totalNetBookValueStat').textContent = '—';
+            document.getElementById('reportRecordCount').textContent = `Showing ${reportData.totalRecords} entries`;
+
+            document.getElementById('impairmentViewContainer').classList.remove('hidden');
+        }
+
+        // Depreciation Run Report — history of batch runs, newest first.
+        function renderRunsReport(reportData) {
+            const tbody = document.getElementById('runsBody');
+            tbody.innerHTML = '';
+
+            const runs = Array.isArray(reportData) ? reportData : [];
+            if (runs.length === 0) {
+                showEmptyState();
+                return;
+            }
+
+            runs.forEach(run => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-surface-canvas/50 transition-colors';
+                const statusColor = run.status === 'COMPLETED' ? 'text-status-success'
+                    : run.status === 'FAILED' ? 'text-status-error' : 'text-status-warning';
+                tr.innerHTML = `
+                    <td class="px-5 py-3 text-body-default text-on-surface">${run.triggeredAt ?? ''}</td>
+                    <td class="px-5 py-3 text-body-default text-secondary">${run.period ?? ''}</td>
+                    <td class="px-5 py-3 text-body-default text-secondary">${run.triggeredBy ?? ''}</td>
+                    <td class="px-5 py-3 text-body-default font-medium ${statusColor}">${run.status ?? ''}</td>
+                    <td class="px-5 py-3 text-body-default text-secondary">${run.successCount ?? 0}</td>
+                    <td class="px-5 py-3 text-body-default text-secondary">${run.failureCount ?? 0}</td>
+                    <td class="px-5 py-3 text-body-default text-secondary text-label-small">${run.failedAssetDetails ?? run.errorMessage ?? ''}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('totalValueStat').textContent = '—';
+            document.getElementById('totalDepreciationStat').textContent = '—';
+            document.getElementById('totalNetBookValueStat').textContent = '—';
+            document.getElementById('reportRecordCount').textContent = `${runs.length} runs`;
+
+            document.getElementById('runsViewContainer').classList.remove('hidden');
+        }
+
+        // Depreciation by Category/Department/Cost Centre, for a period — same shape, different key name.
+        function renderPeriodGroupReport(reportData, dimension) {
+            const labels = { category: 'Category', department: 'Department', costCentre: 'Cost Centre' };
+            document.getElementById('periodGroupLabelHeader').textContent = labels[dimension] || 'Group';
+
+            const tbody = document.getElementById('periodGroupBody');
+            tbody.innerHTML = '';
+
+            const groups = Array.isArray(reportData) ? reportData : [];
+            if (groups.length === 0) {
+                showEmptyState();
+                return;
+            }
+
+            let totalCharge = 0, totalAccum = 0, totalBook = 0, totalAssets = 0;
+            groups.forEach(g => {
+                const label = g[dimension] ?? g.category ?? g.department ?? g.costCentre ?? '';
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-surface-canvas/50 transition-colors';
+                tr.innerHTML = `
+                    <td class="px-5 py-3 text-body-default font-medium text-on-surface">${label}</td>
+                    <td class="px-5 py-3 text-body-default text-secondary">${g.assetCount ?? 0}</td>
+                    <td class="px-5 py-3 text-body-default text-on-surface">${formatCurrency(g.totalDepreciationCharge)}</td>
+                    <td class="px-5 py-3 text-body-default text-error">(${formatCurrency(g.totalAccumulatedDepreciation)})</td>
+                    <td class="px-5 py-3 text-body-default font-bold text-primary">${formatCurrency(g.totalBookValue)}</td>
+                `;
+                tbody.appendChild(tr);
+                totalCharge += Number(g.totalDepreciationCharge) || 0;
+                totalAccum += Number(g.totalAccumulatedDepreciation) || 0;
+                totalBook += Number(g.totalBookValue) || 0;
+                totalAssets += Number(g.assetCount) || 0;
+            });
+
+            document.getElementById('totalValueStat').textContent = formatCurrency(totalCharge);
+            document.getElementById('totalDepreciationStat').textContent = formatCurrency(totalAccum);
+            document.getElementById('totalNetBookValueStat').textContent = formatCurrency(totalBook);
+            document.getElementById('reportRecordCount').textContent = `${totalAssets} assets across ${groups.length} groups`;
+
+            document.getElementById('periodGroupViewContainer').classList.remove('hidden');
+        }
+
+        // Capitalisation Adjustment Report and Depreciation Adjustment Report — same shape,
+        // shown side by side; depreciation adjustments add a Period column and use `reason`
+        // instead of `description`.
+        function renderAdjustmentReport(reportData, kind) {
+            const isDepreciation = kind === 'depreciation';
+            document.getElementById('adjustmentPeriodHeader').classList.toggle('hidden', !isDepreciation);
+
+            const tbody = document.getElementById('adjustmentBreakdownBody');
+            tbody.innerHTML = '';
+
+            if (reportData.empty || !reportData.rows || reportData.rows.length === 0) {
+                showEmptyState();
+                return;
+            }
+
+            reportData.rows.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-surface-canvas/50 transition-colors';
+                const periodCell = isDepreciation ? `<td class="px-5 py-3 text-body-default text-secondary">${row.period ?? ''}</td>` : '';
+                tr.innerHTML = `
+                    <td class="px-5 py-3 text-body-default text-on-surface">${row.date ?? ''}</td>
+                    <td class="px-5 py-3 font-technical-data text-technical-data text-on-surface">${row.assetCode ?? ''} — ${row.assetName ?? ''}</td>
+                    <td class="px-5 py-3 text-body-default text-secondary">${row.category ?? ''}</td>
+                    ${periodCell}
+                    <td class="px-5 py-3 text-body-default text-secondary">${row.type ?? ''}</td>
+                    <td class="px-5 py-3 text-body-default font-bold text-primary">${formatCurrency(row.amount)}</td>
+                    <td class="px-5 py-3 text-body-default text-secondary">${row.description ?? row.reason ?? ''}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('totalValueStat').textContent = formatCurrency(reportData.totalAmount);
+            document.getElementById('totalDepreciationStat').textContent = '—';
+            document.getElementById('totalNetBookValueStat').textContent = '—';
+            document.getElementById('reportRecordCount').textContent = `Showing ${reportData.totalRecords} adjustments`;
+
+            document.getElementById('adjustmentViewContainer').classList.remove('hidden');
+        }
+
+        // Asset Component Register — component rows alongside their parent asset identity.
+        function renderComponentReport(reportData) {
+            const tbody = document.getElementById('componentBreakdownBody');
+            tbody.innerHTML = '';
+
+            if (reportData.empty || !reportData.rows || reportData.rows.length === 0) {
+                showEmptyState();
+                return;
+            }
+
+            reportData.rows.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-surface-canvas/50 transition-colors';
+                tr.innerHTML = `
+                    <td class="px-5 py-3 font-technical-data text-technical-data text-on-surface">${row.componentCode ?? ''}</td>
+                    <td class="px-5 py-3 text-body-default font-medium text-on-surface">${row.componentName ?? ''}</td>
+                    <td class="px-5 py-3 text-body-default text-secondary">${row.category ?? ''}</td>
+                    <td class="px-5 py-3 text-body-default text-on-surface">${formatCurrency(row.acquisitionCost)}</td>
+                    <td class="px-5 py-3">${getStatusBadge(row.status)}</td>
+                    <td class="px-5 py-3 text-body-default text-secondary">${row.parentAssetCode ?? ''} — ${row.parentAssetName ?? ''}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('totalValueStat').textContent = formatCurrency(reportData.totalValue);
+            document.getElementById('totalDepreciationStat').textContent = '—';
+            document.getElementById('totalNetBookValueStat').textContent = '—';
+            document.getElementById('reportRecordCount').textContent = `Showing ${reportData.totalRecords} components`;
+
+            document.getElementById('componentViewContainer').classList.remove('hidden');
+        }
+
         // Show empty state
         function showEmptyState() {
             document.getElementById('reportDataContainer').classList.add('hidden');
@@ -958,6 +2657,24 @@
             document.getElementById('groupedViewContainer').classList.add('hidden');
             document.getElementById('costAnalysisViewContainer').classList.add('hidden');
             document.getElementById('trendViewContainer').classList.add('hidden');
+            document.getElementById('componentViewContainer').classList.add('hidden');
+            document.getElementById('adjustmentViewContainer').classList.add('hidden');
+            document.getElementById('scheduleViewContainer').classList.add('hidden');
+            document.getElementById('exceptionViewContainer').classList.add('hidden');
+            document.getElementById('historyViewContainer').classList.add('hidden');
+            document.getElementById('projectionViewContainer').classList.add('hidden');
+            document.getElementById('periodSingleViewContainer').classList.add('hidden');
+            document.getElementById('periodGroupViewContainer').classList.add('hidden');
+            document.getElementById('runsViewContainer').classList.add('hidden');
+            document.getElementById('nbvViewContainer').classList.add('hidden');
+            document.getElementById('ageingViewContainer').classList.add('hidden');
+            document.getElementById('revaluationViewContainer').classList.add('hidden');
+            document.getElementById('impairmentViewContainer').classList.add('hidden');
+            document.getElementById('transferViewContainer').classList.add('hidden');
+            document.getElementById('assignmentViewContainer').classList.add('hidden');
+            document.getElementById('movementHistoryViewContainer').classList.add('hidden');
+            document.getElementById('disposalViewContainer').classList.add('hidden');
+            document.getElementById('approvalHistoryViewContainer').classList.add('hidden');
             document.getElementById('emptyStateContainer').classList.remove('hidden');
         }
 
@@ -995,6 +2712,12 @@
                 const department = document.getElementById('departmentFilter')?.value;
                 if (category && category !== 'All Categories') params.append('category', category);
                 if (department && department !== 'Global Operations') params.append('department', department);
+            }
+            if (config.hasDateRange) {
+                const fromDate = document.getElementById('fromDateFilter')?.value;
+                const toDate = document.getElementById('toDateFilter')?.value;
+                if (fromDate) params.append('startDate', fromDate);
+                if (toDate) params.append('endDate', toDate);
             }
 
             return `/api/reports/${currentReport}/export?${params.toString()}`;

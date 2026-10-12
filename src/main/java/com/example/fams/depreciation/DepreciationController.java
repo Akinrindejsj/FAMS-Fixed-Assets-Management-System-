@@ -220,7 +220,10 @@ public class DepreciationController {
                 return badRequest(dateCheck.getErrorMessage());
             }
 
-            DepreciationRunResult result = depreciationService.runDepreciation(depreciationPeriod, periodEndDate);
+            String triggeredBy = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication() != null
+                    ? org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName()
+                    : "Unknown";
+            DepreciationRunResult result = depreciationService.runDepreciation(depreciationPeriod, periodEndDate, triggeredBy);
 
             Map<String, Object> response = new HashMap<>();
             boolean fullySucceeded = "COMPLETED".equals(result.getStatus());

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html class="light" lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layouts/app}">
+<head>
+    <title>GL Accounts | JustJava FAMS</title>
+</head>
+<body>
+<main id="main-content" class="space-y-6 px-4 sm:px-6 lg:px-8" layout:fragment="content">
+    <nav class="flex items-center gap-2 text-secondary font-label-small text-label-small">
+        <a class="hover:text-primary transition-colors" th:href="@{/reports}">Reports</a>
+        <span class="material-symbols-outlined text-[14px]">chevron_right</span>
+        <span class="text-on-surface font-medium">GL Accounts</span>
+    </nav>
+
+    <div class="flex gap-2">
+        <a th:href="@{/gl/accounts}" class="px-3 py-1.5 bg-primary/10 text-primary rounded-lg text-body-default font-medium">Accounts</a>
+        <a th:href="@{/gl/mappings}" class="px-3 py-1.5 text-secondary rounded-lg text-body-default hover:bg-surface-canvas transition-colors">Category Mappings</a>
+        <a th:href="@{/gl/journals}" class="px-3 py-1.5 text-secondary rounded-lg text-body-default hover:bg-surface-canvas transition-colors">Journals</a>
+    </div>
+
+    <div th:if="${successMessage}" class="bg-status-success/10 border border-status-success/30 text-status-success rounded-lg px-4 py-3 text-body-default" th:text="${successMessage}"></div>
+    <div th:if="${errorMessage}" class="bg-status-error/10 border border-status-error/30 text-status-error rounded-lg px-4 py-3 text-body-default" th:text="${errorMessage}"></div>
+
+    <div class="bg-surface-card rounded-xl card-shadow border border-border-default p-5">
+        <h2 class="font-card-header text-card-header text-on-surface mb-1">Add a GL Account</h2>
+        <p class="text-label-small text-secondary mb-4">
+            Journal entries are generated automatically from asset transactions — set up accounts here, then assign
+            them to categories under Category Mappings so generation actually has somewhere to post.
+        </p>
+        <form th:action="@{/gl/accounts}" method="post" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div>
+                <label for="accountCode" class="block text-xs font-medium text-textMuted mb-1.5">Account Code</label>
+                <input id="accountCode" name="accountCode" type="text" required placeholder="e.g. 1510" class="form-input">
+            </div>
+            <div class="lg:col-span-2">
+                <label for="accountName" class="block text-xs font-medium text-textMuted mb-1.5">Account Name</label>
+                <input id="accountName" name="accountName" type="text" required placeholder="e.g. Office Equipment — Cost" class="form-input">
+            </div>
+            <div>
+                <label for="accountType" class="block text-xs font-medium text-textMuted mb-1.5">Account Type</label>
+                <select id="accountType" name="accountType" required class="form-input">
+                    <option th:each="t : ${types}" th:value="${t}" th:text="${t}">ASSET_COST</option>
+                </select>
+            </div>
+            <div class="lg:col-span-4">
+                <button type="submit" class="h-[38px] px-5 bg-primary text-on-primary rounded-lg font-body-medium hover:opacity-90 transition-all">
+                    Add Account
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <div class="bg-surface-card border border-border-default rounded-xl overflow-hidden card-shadow">
+        <div class="p-5 border-b border-border-default flex items-center justify-between">
+            <h3 class="font-card-header text-card-header text-on-surface">Chart of Accounts</h3>
+            <span class="px-2.5 py-0.5 bg-surface-container-high text-on-secondary-fixed-variant rounded-full text-badge-label font-badge-label"
+                  th:text="${#lists.size(accounts)} + ' accounts'">0 accounts</span>
+        </div>
+        <div th:if="${#lists.isEmpty(accounts)}" class="p-12 text-center text-secondary">No accounts yet — add one above.</div>
+        <div th:unless="${#lists.isEmpty(accounts)}" class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                <tr class="bg-surface-canvas border-b border-border-default">
+                    <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Code</th>
+                    <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Name</th>
+                    <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Type</th>
+                </tr>
+                </thead>
+                <tbody class="divide-y divide-border-default">
+                <tr th:each="a : ${accounts}" class="hover:bg-surface-canvas/50 transition-colors">
+                    <td class="px-5 py-3 font-technical-data text-technical-data text-on-surface" th:text="${a.accountCode}">1510</td>
+                    <td class="px-5 py-3 text-body-default text-on-surface" th:text="${a.accountName}">Account</td>
+                    <td class="px-5 py-3 text-body-default text-secondary" th:text="${a.accountType}">ASSET_COST</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+</body>
+</html>

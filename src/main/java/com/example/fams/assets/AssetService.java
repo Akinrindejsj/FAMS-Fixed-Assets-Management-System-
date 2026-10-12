@@ -32,16 +32,20 @@ public class AssetService {
     private final AdminSettingsService adminSettingsService;
     private final AssetLifecycleService assetLifecycleService;
 
+    private final com.example.fams.gl.GLAccountingService glAccountingService;
+
     public AssetService(AssetRepository assetRepository,
                         CloudinaryUploadService cloudinaryUploadService,
                         AssetTagGenerationService assetTagGenerationService,
                         AdminSettingsService adminSettingsService,
-                        AssetLifecycleService assetLifecycleService) {
+                        AssetLifecycleService assetLifecycleService,
+                        com.example.fams.gl.GLAccountingService glAccountingService) {
         this.assetRepository = assetRepository;
         this.cloudinaryUploadService = cloudinaryUploadService;
         this.assetTagGenerationService = assetTagGenerationService;
         this.adminSettingsService = adminSettingsService;
         this.assetLifecycleService = assetLifecycleService;
+        this.glAccountingService = glAccountingService;
     }
 
     /**
@@ -218,6 +222,7 @@ public class AssetService {
         validateAssetCategory(asset.getCategory());
         validateImageRequirement(image);
         asset.setCustodian(normalizeOptionalText(asset.getCustodian()));
+        resolveParentAsset(asset);
         applyGlobalDefaults(asset);
         asset.setAssetCode(nextAssetCode());
         AssetTags tags = assetTagGenerationService.generate(asset.getAssetCode());
@@ -228,7 +233,23 @@ public class AssetService {
         });
         Asset savedAsset = assetRepository.save(asset);
         assetLifecycleService.recordRegistration(savedAsset, "Asset Manager");
+        glAccountingService.generateForAcquisition(savedAsset);
         return savedAsset;
+    }
+
+    /**
+     * Resolve the create form's human-typed parentAssetCode (if any) to a real
+     * parentAssetId, so component-register reporting has a stable FK to join on.
+     */
+    private void resolveParentAsset(Asset asset) {
+        String code = normalizeOptionalText(asset.getParentAssetCode());
+        if (code == null) {
+            asset.setParentAssetId(null);
+            return;
+        }
+        Asset parent = assetRepository.findByAssetCodeIgnoreCase(code)
+                .orElseThrow(() -> new IllegalArgumentException("Parent asset code not found: " + code));
+        asset.setParentAssetId(parent.getId());
     }
 
     @Transactional

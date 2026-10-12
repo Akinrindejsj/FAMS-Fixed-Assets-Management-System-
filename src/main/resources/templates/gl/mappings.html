@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html class="light" lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layouts/app}">
+<head>
+    <title>GL Category Mappings | JustJava FAMS</title>
+</head>
+<body>
+<main id="main-content" class="space-y-6 px-4 sm:px-6 lg:px-8" layout:fragment="content">
+    <nav class="flex items-center gap-2 text-secondary font-label-small text-label-small">
+        <a class="hover:text-primary transition-colors" th:href="@{/reports}">Reports</a>
+        <span class="material-symbols-outlined text-[14px]">chevron_right</span>
+        <span class="text-on-surface font-medium">GL Category Mappings</span>
+    </nav>
+
+    <div class="flex gap-2">
+        <a th:href="@{/gl/accounts}" class="px-3 py-1.5 text-secondary rounded-lg text-body-default hover:bg-surface-canvas transition-colors">Accounts</a>
+        <a th:href="@{/gl/mappings}" class="px-3 py-1.5 bg-primary/10 text-primary rounded-lg text-body-default font-medium">Category Mappings</a>
+        <a th:href="@{/gl/journals}" class="px-3 py-1.5 text-secondary rounded-lg text-body-default hover:bg-surface-canvas transition-colors">Journals</a>
+    </div>
+
+    <div th:if="${successMessage}" class="bg-status-success/10 border border-status-success/30 text-status-success rounded-lg px-4 py-3 text-body-default" th:text="${successMessage}"></div>
+    <div th:if="${errorMessage}" class="bg-status-error/10 border border-status-error/30 text-status-error rounded-lg px-4 py-3 text-body-default" th:text="${errorMessage}"></div>
+
+    <div class="bg-surface-card rounded-xl card-shadow border border-border-default p-5">
+        <h2 class="font-card-header text-card-header text-on-surface mb-1">Add / Update a Mapping</h2>
+        <p class="text-label-small text-secondary mb-4">
+            Leave Category blank to set the <strong>global default</strong> — used for any category without its own
+            mapping. Saving a mapping for a category that already has one updates it in place. Leave any account
+            blank if that transaction type doesn't apply (e.g. non-depreciable categories can skip the depreciation
+            accounts) — journal lines needing a missing account simply won't be generated for that category.
+        </p>
+        <form th:action="@{/gl/mappings}" method="post" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div>
+                <label for="category" class="block text-xs font-medium text-textMuted mb-1.5">Category <span class="text-textMuted">(blank = global default)</span></label>
+                <input id="category" name="category" type="text" placeholder="e.g. IT Equipment" class="form-input">
+            </div>
+            <div>
+                <label for="assetCostAccountId" class="block text-xs font-medium text-textMuted mb-1.5">Asset Cost</label>
+                <select id="assetCostAccountId" name="assetCostAccountId" class="form-input">
+                    <option value="">—</option>
+                    <option th:each="a : ${accounts}" th:value="${a.id}" th:text="${a.accountCode + ' — ' + a.accountName}"></option>
+                </select>
+            </div>
+            <div>
+                <label for="cashPayablesAccountId" class="block text-xs font-medium text-textMuted mb-1.5">Cash / Payables Clearing</label>
+                <select id="cashPayablesAccountId" name="cashPayablesAccountId" class="form-input">
+                    <option value="">—</option>
+                    <option th:each="a : ${accounts}" th:value="${a.id}" th:text="${a.accountCode + ' — ' + a.accountName}"></option>
+                </select>
+            </div>
+            <div>
+                <label for="accumulatedDepreciationAccountId" class="block text-xs font-medium text-textMuted mb-1.5">Accumulated Depreciation</label>
+                <select id="accumulatedDepreciationAccountId" name="accumulatedDepreciationAccountId" class="form-input">
+                    <option value="">—</option>
+                    <option th:each="a : ${accounts}" th:value="${a.id}" th:text="${a.accountCode + ' — ' + a.accountName}"></option>
+                </select>
+            </div>
+            <div>
+                <label for="depreciationExpenseAccountId" class="block text-xs font-medium text-textMuted mb-1.5">Depreciation Expense</label>
+                <select id="depreciationExpenseAccountId" name="depreciationExpenseAccountId" class="form-input">
+                    <option value="">—</option>
+                    <option th:each="a : ${accounts}" th:value="${a.id}" th:text="${a.accountCode + ' — ' + a.accountName}"></option>
+                </select>
+            </div>
+            <div>
+                <label for="accumulatedImpairmentAccountId" class="block text-xs font-medium text-textMuted mb-1.5">Accumulated Impairment</label>
+                <select id="accumulatedImpairmentAccountId" name="accumulatedImpairmentAccountId" class="form-input">
+                    <option value="">—</option>
+                    <option th:each="a : ${accounts}" th:value="${a.id}" th:text="${a.accountCode + ' — ' + a.accountName}"></option>
+                </select>
+            </div>
+            <div>
+                <label for="impairmentLossAccountId" class="block text-xs font-medium text-textMuted mb-1.5">Impairment Loss</label>
+                <select id="impairmentLossAccountId" name="impairmentLossAccountId" class="form-input">
+                    <option value="">—</option>
+                    <option th:each="a : ${accounts}" th:value="${a.id}" th:text="${a.accountCode + ' — ' + a.accountName}"></option>
+                </select>
+            </div>
+            <div>
+                <label for="revaluationSurplusAccountId" class="block text-xs font-medium text-textMuted mb-1.5">Revaluation Surplus</label>
+                <select id="revaluationSurplusAccountId" name="revaluationSurplusAccountId" class="form-input">
+                    <option value="">—</option>
+                    <option th:each="a : ${accounts}" th:value="${a.id}" th:text="${a.accountCode + ' — ' + a.accountName}"></option>
+                </select>
+            </div>
+            <div>
+                <label for="revaluationLossAccountId" class="block text-xs font-medium text-textMuted mb-1.5">Revaluation Loss</label>
+                <select id="revaluationLossAccountId" name="revaluationLossAccountId" class="form-input">
+                    <option value="">—</option>
+                    <option th:each="a : ${accounts}" th:value="${a.id}" th:text="${a.accountCode + ' — ' + a.accountName}"></option>
+                </select>
+            </div>
+            <div>
+                <label for="disposalGainAccountId" class="block text-xs font-medium text-textMuted mb-1.5">Gain on Disposal</label>
+                <select id="disposalGainAccountId" name="disposalGainAccountId" class="form-input">
+                    <option value="">—</option>
+                    <option th:each="a : ${accounts}" th:value="${a.id}" th:text="${a.accountCode + ' — ' + a.accountName}"></option>
+                </select>
+            </div>
+            <div>
+                <label for="disposalLossAccountId" class="block text-xs font-medium text-textMuted mb-1.5">Loss on Disposal</label>
+                <select id="disposalLossAccountId" name="disposalLossAccountId" class="form-input">
+                    <option value="">—</option>
+                    <option th:each="a : ${accounts}" th:value="${a.id}" th:text="${a.accountCode + ' — ' + a.accountName}"></option>
+                </select>
+            </div>
+            <div>
+                <label for="disposalProceedsAccountId" class="block text-xs font-medium text-textMuted mb-1.5">Disposal Proceeds Receivable</label>
+                <select id="disposalProceedsAccountId" name="disposalProceedsAccountId" class="form-input">
+                    <option value="">—</option>
+                    <option th:each="a : ${accounts}" th:value="${a.id}" th:text="${a.accountCode + ' — ' + a.accountName}"></option>
+                </select>
+            </div>
+            <div class="lg:col-span-3">
+                <button type="submit" class="h-[38px] px-5 bg-primary text-on-primary rounded-lg font-body-medium hover:opacity-90 transition-all">
+                    Save Mapping
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <div class="bg-surface-card border border-border-default rounded-xl overflow-hidden card-shadow">
+        <div class="p-5 border-b border-border-default flex items-center justify-between">
+            <h3 class="font-card-header text-card-header text-on-surface">Existing Mappings</h3>
+            <span class="px-2.5 py-0.5 bg-surface-container-high text-on-secondary-fixed-variant rounded-full text-badge-label font-badge-label"
+                  th:text="${#lists.size(mappings)} + ' mappings'">0 mappings</span>
+        </div>
+        <div th:if="${#lists.isEmpty(mappings)}" class="p-12 text-center text-secondary">
+            No mappings yet — nothing will post to GL until at least a global default is set above.
+        </div>
+        <div th:unless="${#lists.isEmpty(mappings)}" class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                <tr class="bg-surface-canvas border-b border-border-default">
+                    <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Category</th>
+                    <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Asset Cost</th>
+                    <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Accum. Depr.</th>
+                    <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Depr. Expense</th>
+                    <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Disposal Gain/Loss</th>
+                </tr>
+                </thead>
+                <tbody class="divide-y divide-border-default">
+                <tr th:each="m : ${mappings}" class="hover:bg-surface-canvas/50 transition-colors">
+                    <td class="px-5 py-3 text-body-default font-medium text-on-surface" th:text="${m.category ?: 'Global Default'}">Global Default</td>
+                    <td class="px-5 py-3 text-body-default text-secondary" th:text="${m.assetCostAccount != null ? m.assetCostAccount.accountCode : '—'}">—</td>
+                    <td class="px-5 py-3 text-body-default text-secondary" th:text="${m.accumulatedDepreciationAccount != null ? m.accumulatedDepreciationAccount.accountCode : '—'}">—</td>
+                    <td class="px-5 py-3 text-body-default text-secondary" th:text="${m.depreciationExpenseAccount != null ? m.depreciationExpenseAccount.accountCode : '—'}">—</td>
+                    <td class="px-5 py-3 text-body-default text-secondary" th:text="${(m.disposalGainAccount != null ? m.disposalGainAccount.accountCode : '—') + ' / ' + (m.disposalLossAccount != null ? m.disposalLossAccount.accountCode : '—')}">—</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+</body>
+</html>

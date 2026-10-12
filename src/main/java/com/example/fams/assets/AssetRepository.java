@@ -33,4 +33,9 @@ public interface AssetRepository extends JpaRepository<Asset, Long> {
     long countByCategoryIgnoreCase(String category);
 
     Optional<Asset> findByAssetCodeIgnoreCaseOrBarcodeValueIgnoreCase(String assetCode, String barcodeValue);
+
+    Optional<Asset> findByAssetCodeIgnoreCase(String assetCode);
+
+    /** Component-register support: assets that are components of a parent asset. */
+    List<Asset> findByParentAssetIdIsNotNull();
 }

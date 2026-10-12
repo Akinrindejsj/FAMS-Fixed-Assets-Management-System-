@@ -7,4 +7,6 @@ import java.util.List;
 public interface AssetLifecycleApprovalActionRepository extends JpaRepository<AssetLifecycleApprovalAction, Long> {
 
     List<AssetLifecycleApprovalAction> findByWorkflowOrderByActionAtAsc(AssetLifecycleWorkflow workflow);
+
+    List<AssetLifecycleApprovalAction> findByWorkflowInOrderByActionAtAsc(List<AssetLifecycleWorkflow> workflows);
 }

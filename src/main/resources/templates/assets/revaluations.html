@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html class="light" lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layouts/app}">
+<head>
+    <title>Asset Revaluations | JustJava FAMS</title>
+</head>
+<body>
+<main id="main-content" class="space-y-6 px-4 sm:px-6 lg:px-8" layout:fragment="content">
+    <nav class="flex items-center gap-2 text-secondary font-label-small text-label-small">
+        <a class="hover:text-primary transition-colors" th:href="@{/assets}">All Assets</a>
+        <span class="material-symbols-outlined text-[14px]">chevron_right</span>
+        <span class="text-on-surface font-medium">Revaluations</span>
+    </nav>
+
+    <div th:if="${successMessage}" class="bg-status-success/10 border border-status-success/30 text-status-success rounded-lg px-4 py-3 text-body-default" th:text="${successMessage}"></div>
+    <div th:if="${errorMessage}" class="bg-status-error/10 border border-status-error/30 text-status-error rounded-lg px-4 py-3 text-body-default" th:text="${errorMessage}"></div>
+
+    <div class="bg-surface-card rounded-xl card-shadow border border-border-default p-5">
+        <h2 class="font-card-header text-card-header text-on-surface mb-1">Record a Revaluation</h2>
+        <p class="text-label-small text-secondary mb-4">
+            Set an asset's revalued carrying amount. The "before" figure is captured automatically from the
+            asset's current net book value, so gain/loss is always calculated consistently.
+        </p>
+        <form th:action="@{/assets/revaluations}" method="post" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div>
+                <label for="assetCode" class="block text-xs font-medium text-textMuted mb-1.5">Asset Code</label>
+                <input id="assetCode" name="assetCode" type="text" required placeholder="e.g. FA-000123" class="form-input">
+            </div>
+            <div>
+                <label for="date" class="block text-xs font-medium text-textMuted mb-1.5">Date</label>
+                <input id="date" name="date" type="date" required class="form-input">
+            </div>
+            <div>
+                <label for="revaluedAmount" class="block text-xs font-medium text-textMuted mb-1.5">Revalued Amount</label>
+                <input id="revaluedAmount" name="revaluedAmount" type="number" step="0.01" min="0" required class="form-input">
+            </div>
+            <div class="lg:col-span-4">
+                <label for="reason" class="block text-xs font-medium text-textMuted mb-1.5">Reason (required for audit)</label>
+                <textarea id="reason" name="reason" rows="2" required placeholder="Basis for the revaluation (e.g. independent valuer report)" class="form-input"></textarea>
+            </div>
+            <div class="lg:col-span-4">
+                <button type="submit" class="h-[38px] px-5 bg-primary text-on-primary rounded-lg font-body-medium hover:opacity-90 transition-all">
+                    Record Revaluation
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <div class="bg-surface-card border border-border-default rounded-xl overflow-hidden card-shadow">
+        <div class="p-5 border-b border-border-default flex items-center justify-between gap-3 flex-wrap">
+            <div>
+                <h3 class="font-card-header text-card-header text-on-surface">Recent Revaluations</h3>
+                <p class="text-label-small text-secondary mt-1">Most recent first. Feeds the Revaluation Report, History and Gain/Loss Report.</p>
+            </div>
+            <span class="px-2.5 py-0.5 bg-surface-container-high text-on-secondary-fixed-variant rounded-full text-badge-label font-badge-label"
+                  th:text="${#lists.size(revaluations)} + ' records'">0 records</span>
+        </div>
+
+        <div th:if="${#lists.isEmpty(revaluations)}" class="p-12 text-center">
+            <div class="w-14 h-14 rounded-2xl bg-surface-variant text-primary mx-auto flex items-center justify-center mb-4">
+                <span class="material-symbols-outlined text-[34px]">price_change</span>
+            </div>
+            <h4 class="font-card-header text-card-header text-on-surface mb-1">No revaluations recorded yet</h4>
+            <p class="text-body-default text-secondary">Use the form above to record the first one.</p>
+        </div>
+
+        <div th:unless="${#lists.isEmpty(revaluations)}" class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                <tr class="bg-surface-canvas border-b border-border-default">
+                    <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Date</th>
+                    <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Asset</th>
+                    <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Previous</th>
+                    <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Revalued</th>
+                    <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Gain/Loss</th>
+                    <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Reason</th>
+                    <th class="px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider">Recorded By</th>
+                </tr>
+                </thead>
+                <tbody class="divide-y divide-border-default">
+                <tr th:each="r : ${revaluations}" class="hover:bg-surface-canvas/50 transition-colors">
+                    <td class="px-5 py-3 text-body-default text-on-surface" th:text="${r.date}">2026-01-01</td>
+                    <td class="px-5 py-3 font-technical-data text-technical-data text-on-surface" th:text="${r.asset.assetCode + ' — ' + r.asset.name}">FA-000123 — Asset</td>
+                    <td class="px-5 py-3 text-body-default text-secondary" th:text="${#numbers.formatDecimal(r.previousCarryingAmount, 1, 'COMMA', 2, 'POINT')}">0.00</td>
+                    <td class="px-5 py-3 text-body-default text-on-surface" th:text="${#numbers.formatDecimal(r.revaluedAmount, 1, 'COMMA', 2, 'POINT')}">0.00</td>
+                    <td class="px-5 py-3 font-bold text-body-default"
+                        th:classappend="${r.gainLoss.signum() >= 0} ? 'text-status-success' : 'text-status-error'"
+                        th:text="${#numbers.formatDecimal(r.gainLoss, 1, 'COMMA', 2, 'POINT')}">0.00</td>
+                    <td class="px-5 py-3 text-body-default text-secondary" th:text="${r.reason}">Reason</td>
+                    <td class="px-5 py-3 text-body-default text-secondary" th:text="${r.recordedBy}">user</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+</body>
+</html>

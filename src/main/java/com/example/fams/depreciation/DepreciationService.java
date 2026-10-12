@@ -20,15 +20,18 @@ public class DepreciationService {
     private final DepreciationPostingRepository postingRepository;
     private final AssetRepository assetRepository;
     private final DepreciationCalculationService calculationService;
+    private final DepreciationRunRepository runRepository;
 
     public DepreciationService(DepreciationParametersRepository parametersRepository,
-                               DepreciationPostingRepository postingRepository,
-                               AssetRepository assetRepository,
-                               DepreciationCalculationService calculationService) {
+                              DepreciationPostingRepository postingRepository,
+                              AssetRepository assetRepository,
+                              DepreciationCalculationService calculationService,
+                              DepreciationRunRepository runRepository) {
         this.parametersRepository = parametersRepository;
         this.postingRepository = postingRepository;
         this.assetRepository = assetRepository;
         this.calculationService = calculationService;
+        this.runRepository = runRepository;
     }
 
     /**
@@ -82,6 +85,15 @@ public class DepreciationService {
      */
     @Transactional
     public DepreciationRunResult runDepreciation(String depreciationPeriod, LocalDate periodEndDate) {
+        return runDepreciation(depreciationPeriod, periodEndDate, "Unknown");
+    }
+
+    /**
+     * Same as {@link #runDepreciation(String, LocalDate)}, but also persists a
+     * {@link DepreciationRun} record of the outcome — see that entity's javadoc for why.
+     */
+    @Transactional
+    public DepreciationRunResult runDepreciation(String depreciationPeriod, LocalDate periodEndDate, String triggeredBy) {
         DepreciationRunResult result = new DepreciationRunResult();
         result.setPeriod(depreciationPeriod);
         result.setRunDate(AppClock.today());
@@ -118,7 +130,31 @@ public class DepreciationService {
             result.setErrorMessage(e.getMessage());
         }
 
+        persistRunRecord(depreciationPeriod, periodEndDate, triggeredBy, result);
         return result;
+    }
+
+    private void persistRunRecord(String depreciationPeriod, LocalDate periodEndDate, String triggeredBy, DepreciationRunResult result) {
+        DepreciationRun run = new DepreciationRun();
+        run.setPeriod(depreciationPeriod);
+        run.setPeriodEndDate(periodEndDate);
+        run.setStatus(result.getStatus());
+        run.setErrorMessage(result.getErrorMessage());
+        run.setTriggeredBy(triggeredBy);
+        run.setTriggeredAt(LocalDateTime.now());
+        run.setProcessedCount(result.getProcessedCount());
+        run.setSuccessCount(result.getSuccessCount());
+        run.setFailureCount(result.getFailureCount());
+        run.setSuccessfulAssetCodes(String.join(", ", result.getSuccessfulAssets()));
+        run.setFailedAssetDetails(result.getFailedAssets().entrySet().stream()
+                .map(e -> e.getKey() + ": " + e.getValue())
+                .collect(Collectors.joining("; ")));
+        runRepository.save(run);
+    }
+
+    @Transactional(readOnly = true)
+    public List<DepreciationRun> getRunHistory() {
+        return runRepository.findAllByOrderByTriggeredAtDesc();
     }
 
     /**
@@ -244,6 +280,55 @@ public class DepreciationService {
     }
 
     /**
+     * Project future annual depreciation for an asset from its current position,
+     * out to {@code horizonYears} years or until fully depreciated, whichever comes first.
+     *
+     * <p><b>Assumption (documented, not verified against actual run cadence):</b> this
+     * treats each projected period as one full year and estimates the asset's current
+     * "year number" (needed for REDUCING_BALANCE/DOUBLE_DECLINING_BALANCE, which depend
+     * on it) from elapsed time since {@code effectiveFromDate}. If your depreciation runs
+     * are monthly, the year-number estimate is still elapsed-time-based so it should track
+     * correctly, but the projection itself is annual-only (no monthly breakdown).
+     */
+    @Transactional(readOnly = true)
+    public List<com.example.fams.reports.DepreciationProjectionPoint> projectDepreciation(
+            Asset asset, DepreciationParameters params, DepreciationPosting latestPosting, int horizonYears) {
+
+        List<com.example.fams.reports.DepreciationProjectionPoint> points = new java.util.ArrayList<>();
+        if (params == null) {
+            return points;
+        }
+
+        BigDecimal cost = asset.getPurchaseCost() == null ? BigDecimal.ZERO : asset.getPurchaseCost();
+        BigDecimal residual = params.getResidualValue() == null ? BigDecimal.ZERO : params.getResidualValue();
+        BigDecimal accumulated = latestPosting != null && latestPosting.getClosingAccumulatedDepreciation() != null
+                ? latestPosting.getClosingAccumulatedDepreciation() : BigDecimal.ZERO;
+
+        int yearsElapsed = params.getEffectiveFromDate() != null
+                ? Math.max(1, java.time.Period.between(params.getEffectiveFromDate(), AppClock.today()).getYears() + 1)
+                : 1;
+
+        int currentYear = AppClock.today().getYear();
+        for (int i = 1; i <= horizonYears; i++) {
+            if (calculationService.isFullyDepreciated(cost, residual, accumulated)) {
+                break;
+            }
+            int yearNumber = yearsElapsed + i - 1;
+            BigDecimal annualCharge = calculationService.calculateAnnualDepreciation(
+                    cost, residual, params.getUsefulLifeYears(), params.getMethod(), yearNumber, accumulated);
+            accumulated = accumulated.add(annualCharge);
+            BigDecimal depreciableLimit = cost.subtract(residual);
+            if (accumulated.compareTo(depreciableLimit) > 0) {
+                accumulated = depreciableLimit;
+            }
+            BigDecimal bookValue = calculationService.calculateBookValue(cost, accumulated);
+            points.add(new com.example.fams.reports.DepreciationProjectionPoint(
+                    String.valueOf(currentYear + i), annualCharge, accumulated, bookValue));
+        }
+        return points;
+    }
+
+    /**
      * Get depreciation history for an asset
      */
     @Transactional(readOnly = true)
@@ -252,8 +337,38 @@ public class DepreciationService {
     }
 
     /**
+     * Bulk version of {@link #resolveParameters(Asset)} — resolves effective parameters
+     * for many assets using a single query instead of one resolveParameters() call (and
+     * its underlying queries) per asset. Same priority: asset-specific over category-wide.
+     */
+    @Transactional(readOnly = true)
+    public java.util.Map<Long, DepreciationParameters> resolveParametersForAssets(List<Asset> assets) {
+        List<DepreciationParameters> activeParams = getAllActiveParameters();
+        java.util.Map<Long, DepreciationParameters> byAssetId = activeParams.stream()
+                .filter(p -> p.getAssetId() != null)
+                .collect(java.util.stream.Collectors.toMap(DepreciationParameters::getAssetId, p -> p, (a, b) -> a));
+        java.util.Map<String, DepreciationParameters> byCategory = activeParams.stream()
+                .filter(p -> p.getAssetId() == null && p.getCategory() != null)
+                .collect(java.util.stream.Collectors.toMap(p -> p.getCategory().toLowerCase(), p -> p, (a, b) -> a));
+
+        java.util.Map<Long, DepreciationParameters> result = new java.util.HashMap<>();
+        for (Asset asset : assets) {
+            DepreciationParameters resolved = byAssetId.get(asset.getId());
+            if (resolved == null && asset.getCategory() != null) {
+                resolved = byCategory.get(asset.getCategory().toLowerCase());
+            }
+            if (resolved != null) {
+                result.put(asset.getId(), resolved);
+            }
+        }
+        return result;
+    }
+
+    /**
      * All depreciation parameter records (asset-specific or category-wide) that are
-     * active as of today. 
+     * active as of today. Used to determine, without a per-asset query, whether an
+     * asset has any resolvable depreciation policy at all — see
+     * {@link com.example.fams.reports.ReportService#generateNonDepreciableAssetRegisterReport}.
      */
     @Transactional(readOnly = true)
     public List<DepreciationParameters> getAllActiveParameters() {
@@ -264,6 +379,8 @@ public class DepreciationService {
 
     /**
      * Latest depreciation posting for each of the given assets, keyed by asset id.
+     * Assets with no posting yet (never depreciated) are simply absent from the map —
+     * callers should treat that as zero accumulated depreciation / NBV == cost.
      */
     @Transactional(readOnly = true)
     public java.util.Map<Long, DepreciationPosting> getLatestPostingsForAssets(java.util.Collection<Long> assetIds) {

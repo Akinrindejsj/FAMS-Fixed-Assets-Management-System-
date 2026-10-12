@@ -91,8 +91,6 @@ public class ReportExportController {
                     reportService.generateLocationAuditReport(scope, department);
             case "valuation" ->
                     reportService.generateValuationReport(scope, category, department);
-            case "depreciation-schedule" ->
-                    reportService.generateDepreciationScheduleReport(scope, category, department);
             case "purchase-analysis" ->
                     reportService.generatePurchaseAnalysisReport(scope, startDate, endDate);
             case "maintenance-history" ->
@@ -107,6 +105,14 @@ public class ReportExportController {
                     reportService.generateFullyDepreciatedAssetRegisterReport(scope, category, department);
             case "non-depreciable" ->
                     reportService.generateNonDepreciableAssetRegisterReport(scope, category, department);
+            case "asset-acquisition" ->
+                    reportService.generateAssetAcquisitionReport(scope, startDate, endDate, category, department);
+            case "asset-additions" ->
+                    reportService.generateAssetAdditionsReport(scope, startDate, endDate, category, department);
+            case "capitalisation" ->
+                    reportService.generateCapitalisationReport(scope, startDate, endDate, category, department);
+            case "awaiting-capitalisation" ->
+                    reportService.generateAwaitingCapitalisationReport(scope, category, department);
             default -> throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "Unknown report type: " + type);
         };

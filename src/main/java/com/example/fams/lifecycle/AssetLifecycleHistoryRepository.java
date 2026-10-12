@@ -12,5 +12,8 @@ public interface AssetLifecycleHistoryRepository extends JpaRepository<AssetLife
     List<AssetLifecycleHistory> findByAssetOrderByEventAtDesc(Asset asset);
 
     @EntityGraph(attributePaths = "asset")
+    List<AssetLifecycleHistory> findByAssetInOrderByEventAtDesc(List<Asset> assets);
+
+    @EntityGraph(attributePaths = "asset")
     List<AssetLifecycleHistory> findTop8ByOrderByEventAtDesc();
 }
