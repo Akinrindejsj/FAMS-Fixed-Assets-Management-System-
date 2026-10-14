@@ -4,6 +4,7 @@ import com.example.fams.assets.Asset;
 import com.example.fams.assets.AssetRepository;
 import com.example.fams.depreciation.DepreciationPosting;
 import com.example.fams.depreciation.DepreciationService;
+import com.example.fams.gl.GLAccountingService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,9 +18,11 @@ public class AssetRevaluationService {
     private final AssetRevaluationRepository revaluationRepository;
     private final AssetRepository assetRepository;
     private final DepreciationService depreciationService;
+    private final GLAccountingService glAccountingService;
 
     public AssetRevaluationService(AssetRevaluationRepository revaluationRepository, AssetRepository assetRepository,
-                                    DepreciationService depreciationService) {
+                                    DepreciationService depreciationService, GLAccountingService glAccountingService) {
+        this.glAccountingService = glAccountingService;
         this.revaluationRepository = revaluationRepository;
         this.assetRepository = assetRepository;
         this.depreciationService = depreciationService;
@@ -53,7 +56,9 @@ public class AssetRevaluationService {
         revaluation.setReason(reason.trim());
         revaluation.setRecordedBy(recordedBy);
 
-        return revaluationRepository.save(revaluation);
+        AssetRevaluation saved = revaluationRepository.save(revaluation);
+        glAccountingService.generateForRevaluation(saved);
+        return saved;
     }
 
     /** Current NBV (cost - accumulated depreciation), same basis the reports use. */

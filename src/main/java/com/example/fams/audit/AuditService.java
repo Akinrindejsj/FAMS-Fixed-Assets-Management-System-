@@ -20,10 +20,16 @@ public class AuditService {
     private final AuditSessionRepository sessionRepository;
     private final AuditVerificationResultRepository resultRepository;
     private final AssetRepository assetRepository;
+    private final AuditScanLogRepository scanLogRepository;
+    private final AuditSessionExpectedAssetRepository expectedAssetRepository;
 
     public AuditService(AuditSessionRepository sessionRepository,
                         AuditVerificationResultRepository resultRepository,
-                        AssetRepository assetRepository) {
+                        AssetRepository assetRepository,
+                        AuditScanLogRepository scanLogRepository,
+                        AuditSessionExpectedAssetRepository expectedAssetRepository) {
+        this.scanLogRepository = scanLogRepository;
+        this.expectedAssetRepository = expectedAssetRepository;
         this.sessionRepository = sessionRepository;
         this.resultRepository = resultRepository;
         this.assetRepository = assetRepository;
@@ -75,7 +81,38 @@ public class AuditService {
         session.setScopeLocation(blankToNull(scopeLocation));
         session.setAuditorName(auditorName == null || auditorName.isBlank() ? "Auditor" : auditorName.trim());
         session.setNotes(blankToNull(notes));
-        return sessionRepository.save(session);
+        AuditSession saved = sessionRepository.save(session);
+        snapshotExpectedAssets(saved);
+        return saved;
+    }
+
+    /** Records which assets are expected to be verified, so later reports use a fixed population. */
+    private void snapshotExpectedAssets(AuditSession session) {
+        List<AuditSessionExpectedAsset> expected = assetRepository.findAll().stream()
+                .filter(asset -> !"Disposed".equalsIgnoreCase(asset.getStatus()))
+                .filter(asset -> isInScope(session, asset))
+                .map(asset -> {
+                    AuditSessionExpectedAsset row = new AuditSessionExpectedAsset();
+                    row.setSession(session);
+                    row.setAsset(asset);
+                    row.setExpectedLocation(expectedLocation(asset));
+                    row.setExpectedCustodian(asset.getCustodian());
+                    return row;
+                })
+                .toList();
+        expectedAssetRepository.saveAll(expected);
+    }
+
+    /**
+     * An asset is in scope when the session has no scope location, or the scope text appears
+     * in the asset's "branch / department" location.
+     */
+    public boolean isInScope(AuditSession session, Asset asset) {
+        String scope = session.getScopeLocation();
+        if (scope == null || scope.isBlank()) {
+            return true;
+        }
+        return expectedLocation(asset).toLowerCase().contains(scope.trim().toLowerCase());
     }
 
     @Transactional(readOnly = true)
@@ -88,6 +125,11 @@ public class AuditService {
 
     @Transactional
     public AuditResultView recordVerification(Long sessionId, AuditVerificationRequest request) {
+        return recordVerification(sessionId, request, null);
+    }
+
+    @Transactional
+    public AuditResultView recordVerification(Long sessionId, AuditVerificationRequest request, String verifiedBy) {
         if (request == null || request.getAssetId() == null) {
             throw new IllegalArgumentException("A scanned asset is required before submitting verification.");
         }
@@ -112,8 +154,29 @@ public class AuditService {
         result.setRegisterStatus(asset.getStatus());
         result.setResultStatus(request.getResultStatus());
         result.setConditionNotes(blankToNull(request.getConditionNotes()));
+        result.setExpectedCustodian(blankToNull(asset.getCustodian()));
+        result.setActualCustodian(blankToNull(request.getActualCustodian()));
+        result.setConditionRating(request.getConditionRating());
+        ScanMethod method = request.getScanMethod() != null ? request.getScanMethod() : ScanMethod.MANUAL;
+        result.setScanMethod(method);
+        result.setVerifiedBy(blankToNull(verifiedBy));
+        boolean expected = expectedAssetRepository.existsBySessionId(session.getId())
+                ? expectedAssetRepository.existsBySessionIdAndAssetId(session.getId(), asset.getId())
+                : isInScope(session, asset);
+        result.setUnexpectedAsset(!expected);
 
-        return toView(resultRepository.save(result));
+        AuditVerificationResult saved = resultRepository.save(result);
+
+        AuditScanLog scan = new AuditScanLog();
+        scan.setSession(session);
+        scan.setAsset(asset);
+        scan.setScannedCode(saved.getScannedCode());
+        scan.setScanMethod(method);
+        scan.setResultStatus(request.getResultStatus());
+        scan.setScannedBy(blankToNull(verifiedBy));
+        scanLogRepository.save(scan);
+
+        return toView(saved);
     }
 
     @Transactional

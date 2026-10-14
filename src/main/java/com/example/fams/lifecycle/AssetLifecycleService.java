@@ -54,6 +54,7 @@ public class AssetLifecycleService {
     private final AuthenticationManager authenticationManager;
     private final SyncedUserRepository syncedUserRepository;
     private final EmailService emailService;
+    private final com.example.fams.gl.GLAccountingService glAccountingService;
 
     public AssetLifecycleService(AssetRepository assetRepository,
                                  AssetLifecycleWorkflowRepository workflowRepository,
@@ -66,7 +67,9 @@ public class AssetLifecycleService {
                                  AdminSettingsService adminSettingsService,
                                 AuthenticationManager authenticationManager,
                                 SyncedUserRepository syncedUserRepository,
-                                EmailService emailService) {
+                                EmailService emailService,
+                                com.example.fams.gl.GLAccountingService glAccountingService) {
+        this.glAccountingService = glAccountingService;
         this.assetRepository = assetRepository;
         this.workflowRepository = workflowRepository;
         this.approvalActionRepository = approvalActionRepository;
@@ -453,6 +456,9 @@ public class AssetLifecycleService {
         }
         assetRepository.save(asset);
         workflow.setStatus(LifecycleWorkflowStatus.COMPLETED);
+        if (workflow.getType() == LifecycleWorkflowType.DISPOSAL) {
+            glAccountingService.generateForDisposal(workflow);
+        }
         addHistory(asset, eventFor(workflow.getType()), actor,
                 workflow.getType().name().replace('_', ' ') + " completed",
                 describeCompletion(workflow), workflow.getFromEmployee(), targetSummary(workflow));

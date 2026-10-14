@@ -182,7 +182,7 @@ public class MaintenanceService {
                                               String serviceProvider,
                                               BigDecimal maintenanceCost,
                                               LocalDate resolutionDate) {
-        return recordCorrective(assetId, issueDescription, serviceProvider, maintenanceCost, resolutionDate, null, null);
+        return recordCorrective(assetId, issueDescription, serviceProvider, maintenanceCost, resolutionDate, null, null, null, null);
     }
 
     @Transactional
@@ -193,7 +193,26 @@ public class MaintenanceService {
                                               LocalDate resolutionDate,
                                               String requestedBy,
                                               String requestedByEmail) {
+        return recordCorrective(assetId, issueDescription, serviceProvider, maintenanceCost, resolutionDate,
+                requestedBy, requestedByEmail, null, null);
+    }
+
+    @Transactional
+    public MaintenanceRecord recordCorrective(Long assetId,
+                                              String issueDescription,
+                                              String serviceProvider,
+                                              BigDecimal maintenanceCost,
+                                              LocalDate resolutionDate,
+                                              String requestedBy,
+                                              String requestedByEmail,
+                                              LocalDate downtimeStart,
+                                              LocalDate downtimeEnd) {
+        if (downtimeStart != null && downtimeEnd != null && downtimeEnd.isBefore(downtimeStart)) {
+            throw new IllegalArgumentException("Downtime end cannot be before downtime start.");
+        }
         MaintenanceRecord record = new MaintenanceRecord();
+        record.setDowntimeStart(downtimeStart);
+        record.setDowntimeEnd(downtimeEnd);
         record.setAsset(assetService.findById(assetId));
         record.setType(MaintenanceType.CORRECTIVE);
         record.setIssueDescription(issueDescription);

@@ -943,6 +943,10 @@
                     <span class="material-symbols-outlined">build_circle</span>
                     Log Corrective
                 </button>
+                <button type="button" data-modal-target="contract-modal" class="btn btn-secondary">
+                    <span class="material-symbols-outlined">contract</span>
+                    Add Service Contract
+                </button>
             </div>
         </div>
     </div>
@@ -1027,6 +1031,10 @@
             <button class="tab-nexus" data-tab="requests" role="tab" aria-selected="false">
                 <span class="material-symbols-outlined">request_quote</span>
                 Requests
+            </button>
+            <button class="tab-nexus" data-tab="contracts" role="tab" aria-selected="false">
+                <span class="material-symbols-outlined">contract</span>
+                Contracts
             </button>
         </div>
 
@@ -1251,6 +1259,47 @@
             </div>
         </div>
 
+        <!-- ─── Tab: Contracts ─── -->
+        <div id="tab-contracts" class="tab-content-nexus" role="tabpanel">
+            <div class="table-container">
+                <div th:if="${#lists.isEmpty(contracts)}" class="empty-state-nexus">
+                    <span class="material-symbols-outlined">contract</span>
+                    <p>No service contracts recorded. Add maintenance or service agreements to track their expiry.</p>
+                </div>
+                <table th:unless="${#lists.isEmpty(contracts)}">
+                    <thead>
+                    <tr>
+                        <th>Contract</th>
+                        <th>Vendor</th>
+                        <th>Asset</th>
+                        <th>Coverage</th>
+                        <th>Start</th>
+                        <th>End</th>
+                        <th class="text-right">Annual Cost</th>
+                        <th></th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="contract : ${contracts}" class="hover:bg-slate-50 transition-colors">
+                        <td class="font-technical-data" th:text="${contract.contractNumber}">SC-001</td>
+                        <td th:text="${contract.vendor}">Vendor</td>
+                        <td th:text="${contract.asset != null ? contract.asset.assetCode + ' - ' + contract.asset.name : 'Not asset-specific'}">Asset</td>
+                        <td th:text="${contract.coverage ?: '-'}">Coverage</td>
+                        <td class="font-technical-data" th:text="${contract.startDate}">2026-01-01</td>
+                        <td class="font-technical-data" th:text="${contract.endDate}">2026-12-31</td>
+                        <td class="text-right font-technical-data" th:text="${contract.annualCost != null ? '₦' + #numbers.formatDecimal(contract.annualCost, 1, 'COMMA', 2, 'POINT') : '-'}">₦0.00</td>
+                        <td>
+                            <form th:action="@{/assets/maintenance/contracts/{id}/delete(id=${contract.id})}" method="post"
+                                  onsubmit="return confirm('Remove this service contract?');">
+                                <button type="submit" class="btn btn-secondary">Remove</button>
+                            </form>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
         <!-- ─── Tab: Requests ─── -->
         <div id="tab-requests" class="tab-content-nexus" role="tabpanel">
             <div class="table-container">
@@ -1405,6 +1454,14 @@
                             <label for="resolution-date">Resolution Date</label>
                             <input id="resolution-date" name="resolutionDate" type="date">
                         </div>
+                        <div>
+                            <label for="downtime-start">Unavailable From</label>
+                            <input id="downtime-start" name="downtimeStart" type="date">
+                        </div>
+                        <div>
+                            <label for="downtime-end">Available Again</label>
+                            <input id="downtime-end" name="downtimeEnd" type="date">
+                        </div>
                     </div>
                     <div>
                         <label for="issue-description">Issue Description <span class="text-error">*</span></label>
@@ -1420,6 +1477,60 @@
                             <span class="spinner spinner-white spinner-sm"></span>
                             <span>Saving…</span>
                         </span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ─── Service Contract Modal ─── -->
+    <div id="contract-modal" class="modal-overlay-nexus" aria-hidden="true">
+        <div class="modal-content-nexus">
+            <h3>Add Service Contract</h3>
+            <p>Record a maintenance or service agreement so its expiry can be tracked.</p>
+            <form th:action="@{/assets/maintenance/contracts}" method="post" id="contract-form">
+                <div class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="md:col-span-2">
+                            <label for="contract-asset-select">Asset <span class="text-slate-400">(optional)</span></label>
+                            <div class="searchable-select-wrapper">
+                                <select id="contract-asset-select" name="assetId">
+                                    <option value="">Not asset-specific</option>
+                                    <option th:each="asset : ${assets}" th:value="${asset.id}" th:text="${asset.assetCode + ' - ' + asset.name}">Asset</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div>
+                            <label for="contract-number">Contract Number <span class="text-error">*</span></label>
+                            <input id="contract-number" name="contractNumber" required maxlength="80">
+                        </div>
+                        <div>
+                            <label for="contract-vendor">Vendor <span class="text-error">*</span></label>
+                            <input id="contract-vendor" name="vendor" required maxlength="160">
+                        </div>
+                        <div>
+                            <label for="contract-start">Start Date <span class="text-error">*</span></label>
+                            <input id="contract-start" name="startDate" type="date" required>
+                        </div>
+                        <div>
+                            <label for="contract-end">End Date <span class="text-error">*</span></label>
+                            <input id="contract-end" name="endDate" type="date" required>
+                        </div>
+                        <div>
+                            <label for="contract-cost">Annual Cost</label>
+                            <input id="contract-cost" name="annualCost" type="number" min="0" step="0.01" placeholder="0.00">
+                        </div>
+                        <div>
+                            <label for="contract-coverage">Coverage</label>
+                            <input id="contract-coverage" name="coverage" maxlength="255" placeholder="e.g. Quarterly servicing, parts excluded">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" data-modal-close class="btn btn-secondary">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <span class="material-symbols-outlined">save</span>
+                        <span>Save Contract</span>
                     </button>
                 </div>
             </form>

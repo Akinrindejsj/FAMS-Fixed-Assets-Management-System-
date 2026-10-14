@@ -163,6 +163,53 @@
                         <li><button onclick="loadReport('disposal-approval-history')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Disposal Approval History</button></li>
                     </ul>
                 </div>
+                <!-- Accounting & GL Reports -->
+                <div th:if="${canViewLedgerReports}">
+                    <div class="flex items-center gap-2 mb-2 px-2">
+                        <span class="material-symbols-outlined text-[18px] text-primary">account_balance</span>
+                        <h4 class="font-body-medium text-on-surface">Accounting &amp; GL Reports</h4>
+                    </div>
+                    <ul class="space-y-1">
+                        <li><button onclick="loadReport('gl-subledger')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Fixed Asset Subledger</button></li>
+                        <li><button onclick="loadReport('gl-journals')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Fixed Asset Journal Report</button></li>
+                        <li><button onclick="loadReport('gl-unposted')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Unposted Journals</button></li>
+                        <li><button onclick="loadReport('gl-posted')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Posted Journals</button></li>
+                        <li><button onclick="loadReport('gl-account-activity')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Asset Account Activity</button></li>
+                        <li><button onclick="loadReport('gl-cost-recon')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Asset Cost Reconciliation</button></li>
+                        <li><button onclick="loadReport('gl-accdep-recon')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Accumulated Depreciation Reconciliation</button></li>
+                        <li><button onclick="loadReport('gl-depexp-recon')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Depreciation Expense Reconciliation</button></li>
+                        <li><button onclick="loadReport('gl-fa-recon')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Fixed Asset to GL Reconciliation</button></li>
+                        <li><button onclick="loadReport('gl-posting-summary')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">GL Posting Summary</button></li>
+                        <li><button onclick="loadReport('gl-posting-detail')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">GL Posting Detail</button></li>
+                        <li><button onclick="loadReport('gl-exceptions')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Journal Exception Report</button></li>
+                        <li><button onclick="loadReport('gl-period-movement')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Period Movement Report</button></li>
+                        <li><button onclick="loadReport('gl-trial-balance')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Trial Balance by Asset Account</button></li>
+                        <li th:if="${canManageLedger}"><a th:href="@{/gl/journals}" class="w-full block text-left px-3 py-1.5 text-body-default text-primary rounded-lg hover:bg-surface-canvas transition-colors">Manage Journals &amp; GL Accounts</a></li>
+                    </ul>
+                </div>
+                <!-- Physical Verification Reports -->
+                <div th:if="${canViewAuditReports}">
+                    <div class="flex items-center gap-2 mb-2 px-2">
+                        <span class="material-symbols-outlined text-[18px] text-primary">fact_check</span>
+                        <h4 class="font-body-medium text-on-surface">Physical Verification Reports</h4>
+                    </div>
+                    <ul class="space-y-1">
+                        <li><button onclick="loadReport('audit-verification')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Physical Verification Report</button></li>
+                        <li><button onclick="loadReport('audit-count')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Asset Count Report</button></li>
+                        <li><button onclick="loadReport('audit-verified')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Verified Assets</button></li>
+                        <li><button onclick="loadReport('audit-unverified')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Unverified Assets</button></li>
+                        <li><button onclick="loadReport('audit-missing')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Missing Assets</button></li>
+                        <li><button onclick="loadReport('audit-wrong-location')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Wrong Location</button></li>
+                        <li><button onclick="loadReport('audit-custodian')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Custodian Mismatch</button></li>
+                        <li><button onclick="loadReport('audit-unexpected')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Unexpected Assets</button></li>
+                        <li><button onclick="loadReport('audit-damaged')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Damaged Assets</button></li>
+                        <li><button onclick="loadReport('audit-condition')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Asset Condition Report</button></li>
+                        <li><button onclick="loadReport('audit-exceptions')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Verification Exceptions</button></li>
+                        <li><button onclick="loadReport('audit-reconciliation')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Verification Reconciliation</button></li>
+                        <li><button onclick="loadReport('audit-scan-log')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">QR / Barcode Scan Report</button></li>
+                        <li><button onclick="loadReport('audit-last')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Last Verification Date</button></li>
+                    </ul>
+                </div>
                 <!-- Financial Reports -->
                 <div>
                     <div class="flex items-center gap-2 mb-2 px-2">
@@ -182,8 +229,18 @@
                         <h4 class="font-body-medium text-on-surface">Maintenance</h4>
                     </div>
                     <ul class="space-y-1">
-                        <li><button onclick="loadReport('maintenance-history')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Service History</button></li>
+                        <li><button onclick="loadReport('maintenance-history')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Asset Maintenance History</button></li>
+                        <li><button onclick="loadReport('maint-scheduled')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Scheduled Maintenance</button></li>
+                        <li><button onclick="loadReport('maint-due')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Maintenance Due</button></li>
+                        <li><button onclick="loadReport('maint-overdue')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Overdue Maintenance</button></li>
+                        <li><button onclick="loadReport('maint-cost-asset')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Cost by Asset</button></li>
+                        <li><button onclick="loadReport('maint-cost-category')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Cost by Category</button></li>
+                        <li><button onclick="loadReport('maint-cost-location')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Cost by Location</button></li>
+                        <li><button onclick="loadReport('maint-breakdowns')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Breakdown / Repair History</button></li>
+                        <li><button onclick="loadReport('maint-downtime')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Asset Downtime</button></li>
                         <li><button onclick="loadReport('warranty-expiry')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Warranty Expiry</button></li>
+                        <li><button onclick="loadReport('maint-contracts')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Service Contract Expiry</button></li>
+                        <li><button onclick="loadReport('maint-high-cost')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">High-Maintenance-Cost Assets</button></li>
                     </ul>
                 </div>
                 <!-- Audit & Compliance -->
@@ -285,6 +342,27 @@
                     <div id="periodFilterWrapper" class="hidden space-y-1.5">
                         <label class="text-label-small text-secondary uppercase tracking-wide">Period</label>
                         <input id="periodFilter" type="text" placeholder="e.g. 2026-03" onchange="reloadCurrentReport()" class="w-full h-[38px] px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                    </div>
+                    <div id="auditSessionWrapper" class="hidden space-y-1.5">
+                        <label class="text-label-small text-secondary uppercase tracking-wide">Audit Session</label>
+                        <select id="auditSessionFilter" onchange="reloadCurrentReport()" class="w-full h-[38px] px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                            <option value="">All sessions in date range</option>
+                        </select>
+                    </div>
+                    <div id="glAccountWrapper" class="hidden space-y-1.5">
+                        <label class="text-label-small text-secondary uppercase tracking-wide">GL Account</label>
+                        <select id="glAccountFilter" onchange="reloadCurrentReport()" class="w-full h-[38px] px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                            <option value="">All accounts</option>
+                        </select>
+                    </div>
+                    <div id="glStatusWrapper" class="hidden space-y-1.5">
+                        <label class="text-label-small text-secondary uppercase tracking-wide">Journal Status</label>
+                        <select id="glStatusFilter" onchange="reloadCurrentReport()" class="w-full h-[38px] px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                            <option value="POSTED">Posted</option>
+                            <option value="UNPOSTED">Unposted</option>
+                            <option value="REJECTED">Rejected</option>
+                            <option value="ALL">All</option>
+                        </select>
                     </div>
                     <div id="horizonYearsWrapper" class="hidden space-y-1.5">
                         <label class="text-label-small text-secondary uppercase tracking-wide">Horizon (years)</label>
@@ -739,6 +817,17 @@
                     </table>
                 </div>
 
+                <div id="ledgerViewContainer" class="hidden">
+                    <div id="ledgerSummary" class="hidden px-5 py-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 border-b border-border-default"></div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead id="ledgerHead"></thead>
+                            <tbody id="ledgerBody" class="divide-y divide-border-default"></tbody>
+                        </table>
+                    </div>
+                    <div id="ledgerNotes" class="px-5 py-3 text-body-default text-secondary space-y-1"></div>
+                </div>
+
                 <!-- Report Data Template -->
                 <div id="reportDataContainer" class="hidden">
                     <div class="px-5 py-3 bg-surface-canvas border-b border-border-default flex justify-between items-center">
@@ -1129,6 +1218,322 @@
                 rowType: 'revaluation',
                 canExport: false
             },
+            'gl-subledger': {
+                name: 'Fixed Asset Subledger',
+                description: 'Every journal line booked against an asset, grouped by asset',
+                apiEndpoint: '/api/reports/gl/subledger',
+                ledger: true,
+                ledgerType: 'subledger',
+                hasFilters: false,
+                canExport: true,
+                hasDateRange: true,
+                hasGlAccount: true
+            },
+            'gl-journals': {
+                name: 'Fixed Asset Journal Report',
+                description: 'All journal entries generated from asset transactions',
+                apiEndpoint: '/api/reports/gl/journals',
+                ledger: true,
+                ledgerType: 'journals',
+                hasFilters: false,
+                canExport: true,
+                hasDateRange: true,
+                hasGlStatus: true,
+                glStatusDefault: 'ALL'
+            },
+            'gl-unposted': {
+                name: 'Unposted Journals',
+                description: 'Journal entries waiting to be posted or rejected',
+                apiEndpoint: '/api/reports/gl/unposted-journals',
+                ledger: true,
+                ledgerType: 'unposted-journals',
+                hasFilters: false,
+                canExport: true,
+                hasDateRange: true
+            },
+            'gl-posted': {
+                name: 'Posted Journals',
+                description: 'Journal entries that have been posted to the ledger',
+                apiEndpoint: '/api/reports/gl/posted-journals',
+                ledger: true,
+                ledgerType: 'posted-journals',
+                hasFilters: false,
+                canExport: true,
+                hasDateRange: true
+            },
+            'gl-account-activity': {
+                name: 'Asset Account Activity',
+                description: 'Posted movement on one GL account with opening and closing balances',
+                apiEndpoint: '/api/reports/gl/account-activity',
+                ledger: true,
+                ledgerType: 'account-activity',
+                hasFilters: false,
+                canExport: true,
+                hasDateRange: true,
+                hasGlAccount: true,
+                requiresGlAccount: true
+            },
+            'gl-cost-recon': {
+                name: 'Asset Cost Reconciliation',
+                description: 'Asset cost per the register against the GL cost account',
+                apiEndpoint: '/api/reports/gl/cost-reconciliation',
+                ledger: true,
+                ledgerType: 'cost-reconciliation',
+                hasFilters: false,
+                canExport: true
+            },
+            'gl-accdep-recon': {
+                name: 'Accumulated Depreciation Reconciliation',
+                description: 'Accumulated depreciation per depreciation postings against the GL',
+                apiEndpoint: '/api/reports/gl/accumulated-depreciation-reconciliation',
+                ledger: true,
+                ledgerType: 'accumulated-depreciation-reconciliation',
+                hasFilters: false,
+                canExport: true
+            },
+            'gl-depexp-recon': {
+                name: 'Depreciation Expense Reconciliation',
+                description: 'Depreciation charged per postings against the GL expense account',
+                apiEndpoint: '/api/reports/gl/depreciation-expense-reconciliation',
+                ledger: true,
+                ledgerType: 'depreciation-expense-reconciliation',
+                hasFilters: false,
+                canExport: true,
+                hasPeriod: true
+            },
+            'gl-fa-recon': {
+                name: 'Fixed Asset to GL Reconciliation',
+                description: 'Cost, accumulated depreciation, expense and impairment against the ledger',
+                apiEndpoint: '/api/reports/gl/fixed-asset-gl-reconciliation',
+                ledger: true,
+                ledgerType: 'fixed-asset-gl-reconciliation',
+                hasFilters: false,
+                canExport: true,
+                hasPeriod: true
+            },
+            'gl-posting-summary': {
+                name: 'GL Posting Summary',
+                description: 'Total debits and credits per GL account',
+                apiEndpoint: '/api/reports/gl/posting-summary',
+                ledger: true,
+                ledgerType: 'posting-summary',
+                hasFilters: false,
+                canExport: true,
+                hasDateRange: true,
+                hasGlStatus: true,
+                glStatusDefault: 'POSTED'
+            },
+            'gl-posting-detail': {
+                name: 'GL Posting Detail',
+                description: 'Individual journal lines generated from asset activity',
+                apiEndpoint: '/api/reports/gl/posting-detail',
+                ledger: true,
+                ledgerType: 'posting-detail',
+                hasFilters: false,
+                canExport: true,
+                hasDateRange: true,
+                hasGlAccount: true,
+                hasGlStatus: true,
+                glStatusDefault: 'POSTED'
+            },
+            'gl-exceptions': {
+                name: 'Journal Exception Report',
+                description: 'Rejected or unbalanced journals and journals that could not be generated',
+                apiEndpoint: '/api/reports/gl/journal-exceptions',
+                ledger: true,
+                ledgerType: 'journal-exceptions',
+                hasFilters: false,
+                canExport: true,
+                hasDateRange: true
+            },
+            'gl-period-movement': {
+                name: 'Period Movement Report',
+                description: 'Opening net book value, movement by transaction type and closing net book value',
+                apiEndpoint: '/api/reports/gl/period-movement',
+                ledger: true,
+                ledgerType: 'period-movement',
+                hasFilters: false,
+                canExport: true,
+                hasDateRange: true
+            },
+            'gl-trial-balance': {
+                name: 'Trial Balance by Asset Account',
+                description: 'Net balance of each GL account as at the end date (leave blank for today)',
+                apiEndpoint: '/api/reports/gl/trial-balance',
+                ledger: true,
+                ledgerType: 'trial-balance',
+                hasFilters: false,
+                canExport: true,
+                hasDateRange: true,
+                hasGlStatus: true,
+                glStatusDefault: 'POSTED'
+            },
+            'audit-verification': {
+                name: 'Physical Verification Report',
+                description: 'Every asset verification recorded in the selected audits',
+                apiEndpoint: '/api/reports/audit/verification-report',
+                ledger: true,
+                ledgerBase: '/api/reports/audit',
+                ledgerType: 'verification-report',
+                hasFilters: false,
+                hasAuditSession: true,
+                canExport: true,
+                hasDateRange: true
+            },
+            'audit-count': {
+                name: 'Asset Count Report',
+                description: 'Expected assets against assets counted in each audit',
+                apiEndpoint: '/api/reports/audit/asset-count',
+                ledger: true,
+                ledgerBase: '/api/reports/audit',
+                ledgerType: 'asset-count',
+                hasFilters: false,
+                hasAuditSession: true,
+                canExport: true,
+                hasDateRange: true
+            },
+            'audit-verified': {
+                name: 'Verified Assets Report',
+                description: 'Assets found where expected, with no discrepancy',
+                apiEndpoint: '/api/reports/audit/verified-assets',
+                ledger: true,
+                ledgerBase: '/api/reports/audit',
+                ledgerType: 'verified-assets',
+                hasFilters: false,
+                hasAuditSession: true,
+                canExport: true,
+                hasDateRange: true
+            },
+            'audit-unverified': {
+                name: 'Unverified Assets Report',
+                description: 'Assets expected in the audit that have not been verified (defaults to the active or latest audit)',
+                apiEndpoint: '/api/reports/audit/unverified-assets',
+                ledger: true,
+                ledgerBase: '/api/reports/audit',
+                ledgerType: 'unverified-assets',
+                hasFilters: false,
+                hasAuditSession: true,
+                canExport: true
+            },
+            'audit-missing': {
+                name: 'Missing Assets Report',
+                description: 'Assets that could not be found during verification',
+                apiEndpoint: '/api/reports/audit/missing-assets',
+                ledger: true,
+                ledgerBase: '/api/reports/audit',
+                ledgerType: 'missing-assets',
+                hasFilters: false,
+                hasAuditSession: true,
+                canExport: true,
+                hasDateRange: true
+            },
+            'audit-wrong-location': {
+                name: 'Wrong Location Report',
+                description: 'Assets found somewhere other than their recorded location',
+                apiEndpoint: '/api/reports/audit/wrong-location',
+                ledger: true,
+                ledgerBase: '/api/reports/audit',
+                ledgerType: 'wrong-location',
+                hasFilters: false,
+                hasAuditSession: true,
+                canExport: true,
+                hasDateRange: true
+            },
+            'audit-custodian': {
+                name: 'Custodian Mismatch Report',
+                description: 'Assets held by someone other than the custodian in the register',
+                apiEndpoint: '/api/reports/audit/custodian-mismatch',
+                ledger: true,
+                ledgerBase: '/api/reports/audit',
+                ledgerType: 'custodian-mismatch',
+                hasFilters: false,
+                hasAuditSession: true,
+                canExport: true,
+                hasDateRange: true
+            },
+            'audit-unexpected': {
+                name: 'Unexpected Assets Report',
+                description: 'Assets verified in an audit whose scope did not include them',
+                apiEndpoint: '/api/reports/audit/unexpected-assets',
+                ledger: true,
+                ledgerBase: '/api/reports/audit',
+                ledgerType: 'unexpected-assets',
+                hasFilters: false,
+                hasAuditSession: true,
+                canExport: true,
+                hasDateRange: true
+            },
+            'audit-damaged': {
+                name: 'Damaged Assets Report',
+                description: 'Assets reported as damaged during verification',
+                apiEndpoint: '/api/reports/audit/damaged-assets',
+                ledger: true,
+                ledgerBase: '/api/reports/audit',
+                ledgerType: 'damaged-assets',
+                hasFilters: false,
+                hasAuditSession: true,
+                canExport: true,
+                hasDateRange: true
+            },
+            'audit-condition': {
+                name: 'Asset Condition Report',
+                description: 'Condition ratings and notes recorded during verification',
+                apiEndpoint: '/api/reports/audit/condition-report',
+                ledger: true,
+                ledgerBase: '/api/reports/audit',
+                ledgerType: 'condition-report',
+                hasFilters: false,
+                hasAuditSession: true,
+                canExport: true,
+                hasDateRange: true
+            },
+            'audit-exceptions': {
+                name: 'Verification Exception Report',
+                description: 'Every verification with a discrepancy of any kind',
+                apiEndpoint: '/api/reports/audit/exception-report',
+                ledger: true,
+                ledgerBase: '/api/reports/audit',
+                ledgerType: 'exception-report',
+                hasFilters: false,
+                hasAuditSession: true,
+                canExport: true,
+                hasDateRange: true
+            },
+            'audit-reconciliation': {
+                name: 'Physical Verification Reconciliation',
+                description: 'Expected assets reconciled to verification outcomes per audit',
+                apiEndpoint: '/api/reports/audit/reconciliation',
+                ledger: true,
+                ledgerBase: '/api/reports/audit',
+                ledgerType: 'reconciliation',
+                hasFilters: false,
+                hasAuditSession: true,
+                canExport: true,
+                hasDateRange: true
+            },
+            'audit-scan-log': {
+                name: 'QR / Barcode Scan Report',
+                description: 'Every verification submission, including re-scans',
+                apiEndpoint: '/api/reports/audit/scan-log',
+                ledger: true,
+                ledgerBase: '/api/reports/audit',
+                ledgerType: 'scan-log',
+                hasFilters: false,
+                hasAuditSession: true,
+                canExport: true,
+                hasDateRange: true
+            },
+            'audit-last': {
+                name: 'Last Verification Date Report',
+                description: 'When each active asset was last physically verified',
+                apiEndpoint: '/api/reports/audit/last-verification',
+                ledger: true,
+                ledgerBase: '/api/reports/audit',
+                ledgerType: 'last-verification',
+                hasFilters: false,
+                hasAuditSession: true,
+                canExport: true
+            },
             'impairment-report': {
                 name: 'Impairment Report',
                 description: 'Impairment losses and reversals recorded within a selected reporting period',
@@ -1460,13 +1865,123 @@
                 canExport: true
             },
             'maintenance-history': {
-                name: 'Service History',
-                description: 'Complete maintenance and service records',
-                apiEndpoint: '/api/reports/maintenance-history',
+                name: 'Asset Maintenance History',
+                description: 'Complete maintenance and repair history by asset',
+                apiEndpoint: '/api/reports/maintenance/history',
+                ledger: true,
+                ledgerBase: '/api/reports/maintenance',
+                ledgerType: 'history',
                 hasFilters: false,
-                hasDateRange: true,
-                rowType: 'register',
+                canExport: true,
+                hasDateRange: true
+            },
+            'maint-scheduled': {
+                name: 'Scheduled Maintenance Report',
+                description: 'Planned preventive maintenance activities',
+                apiEndpoint: '/api/reports/maintenance/scheduled',
+                ledger: true,
+                ledgerBase: '/api/reports/maintenance',
+                ledgerType: 'scheduled',
+                hasFilters: false,
                 canExport: true
+            },
+            'maint-due': {
+                name: 'Maintenance Due Report',
+                description: 'Maintenance due within the selected period (defaults to the next 30 days)',
+                apiEndpoint: '/api/reports/maintenance/due',
+                ledger: true,
+                ledgerBase: '/api/reports/maintenance',
+                ledgerType: 'due',
+                hasFilters: false,
+                canExport: true,
+                hasDateRange: true
+            },
+            'maint-overdue': {
+                name: 'Overdue Maintenance Report',
+                description: 'Maintenance that has passed its due date and is not completed',
+                apiEndpoint: '/api/reports/maintenance/overdue',
+                ledger: true,
+                ledgerBase: '/api/reports/maintenance',
+                ledgerType: 'overdue',
+                hasFilters: false,
+                canExport: true
+            },
+            'maint-cost-asset': {
+                name: 'Maintenance Cost by Asset',
+                description: 'Total maintenance expenditure attributable to each asset',
+                apiEndpoint: '/api/reports/maintenance/cost-by-asset',
+                ledger: true,
+                ledgerBase: '/api/reports/maintenance',
+                ledgerType: 'cost-by-asset',
+                hasFilters: false,
+                canExport: true,
+                hasDateRange: true
+            },
+            'maint-cost-category': {
+                name: 'Maintenance Cost by Category',
+                description: 'Maintenance expenditure by asset class',
+                apiEndpoint: '/api/reports/maintenance/cost-by-category',
+                ledger: true,
+                ledgerBase: '/api/reports/maintenance',
+                ledgerType: 'cost-by-category',
+                hasFilters: false,
+                canExport: true,
+                hasDateRange: true
+            },
+            'maint-cost-location': {
+                name: 'Maintenance Cost by Location',
+                description: 'Maintenance expenditure by branch or site',
+                apiEndpoint: '/api/reports/maintenance/cost-by-location',
+                ledger: true,
+                ledgerBase: '/api/reports/maintenance',
+                ledgerType: 'cost-by-location',
+                hasFilters: false,
+                canExport: true,
+                hasDateRange: true
+            },
+            'maint-breakdowns': {
+                name: 'Breakdown / Repair History',
+                description: 'History of failures, breakdowns and corrective repairs',
+                apiEndpoint: '/api/reports/maintenance/breakdown-history',
+                ledger: true,
+                ledgerBase: '/api/reports/maintenance',
+                ledgerType: 'breakdown-history',
+                hasFilters: false,
+                canExport: true,
+                hasDateRange: true
+            },
+            'maint-downtime': {
+                name: 'Asset Downtime Report',
+                description: 'Periods assets were unavailable due to maintenance or failure',
+                apiEndpoint: '/api/reports/maintenance/downtime',
+                ledger: true,
+                ledgerBase: '/api/reports/maintenance',
+                ledgerType: 'downtime',
+                hasFilters: false,
+                canExport: true,
+                hasDateRange: true
+            },
+            'maint-contracts': {
+                name: 'Service Contract Expiry Report',
+                description: 'Maintenance and service agreements approaching or past expiry',
+                apiEndpoint: '/api/reports/maintenance/contract-expiry',
+                ledger: true,
+                ledgerBase: '/api/reports/maintenance',
+                ledgerType: 'contract-expiry',
+                hasFilters: false,
+                canExport: true,
+                hasDateRange: true
+            },
+            'maint-high-cost': {
+                name: 'High-Maintenance-Cost Assets',
+                description: 'Assets whose maintenance cost is well above their category average',
+                apiEndpoint: '/api/reports/maintenance/high-cost-assets',
+                ledger: true,
+                ledgerBase: '/api/reports/maintenance',
+                ledgerType: 'high-cost-assets',
+                hasFilters: false,
+                canExport: true,
+                hasDateRange: true
             },
             'warranty-expiry': {
                 name: 'Warranty Expiry',
@@ -1527,7 +2042,72 @@
         }
 
         // Load report data
+        let lastLoadedReport = null;
+        let glAccountsLoaded = false;
+
+        // Populate the GL account filter once, the first time a ledger report needs it.
+        async function loadGlAccounts() {
+            if (glAccountsLoaded) return;
+            try {
+                const response = await fetch('/api/reports/gl/accounts');
+                const result = await response.json();
+                if (result.success) {
+                    const select = document.getElementById('glAccountFilter');
+                    result.data.forEach(a => {
+                        const option = document.createElement('option');
+                        option.value = a.id;
+                        option.textContent = a.label;
+                        select.appendChild(option);
+                    });
+                    glAccountsLoaded = true;
+                }
+            } catch (e) {
+                console.error('Could not load GL accounts', e);
+            }
+        }
+
+        let auditSessionsLoaded = false;
+
+        // Populate the audit session filter once, the first time a verification report needs it.
+        async function loadAuditSessions() {
+            if (auditSessionsLoaded) return;
+            try {
+                const response = await fetch('/api/reports/audit/sessions');
+                const result = await response.json();
+                if (result.success) {
+                    const select = document.getElementById('auditSessionFilter');
+                    result.data.forEach(s => {
+                        const option = document.createElement('option');
+                        option.value = s.id;
+                        option.textContent = s.label;
+                        select.appendChild(option);
+                    });
+                    auditSessionsLoaded = true;
+                }
+            } catch (e) {
+                console.error('Could not load audit sessions', e);
+            }
+        }
+
+        // Filters shared by the on-screen ledger reports and their exports.
+        function ledgerParams(config, params) {
+            if (config.hasAuditSession) {
+                const sessionId = document.getElementById('auditSessionFilter')?.value;
+                if (sessionId) params.append('sessionId', sessionId);
+            }
+            if (config.hasGlAccount) {
+                const accountId = document.getElementById('glAccountFilter')?.value;
+                if (accountId) params.append('accountId', accountId);
+            }
+            if (config.hasGlStatus) {
+                const status = document.getElementById('glStatusFilter')?.value;
+                if (status) params.append('status', status);
+            }
+        }
+
         async function loadReport(reportType) {
+            const switchedReport = lastLoadedReport !== reportType;
+            lastLoadedReport = reportType;
             currentReport = reportType;
             const config = reportConfigs[reportType];
 
@@ -1564,6 +2144,13 @@
             document.getElementById('movementHistoryViewContainer').classList.add('hidden');
             document.getElementById('disposalViewContainer').classList.add('hidden');
             document.getElementById('approvalHistoryViewContainer').classList.add('hidden');
+            document.getElementById('ledgerViewContainer').classList.add('hidden');
+            document.getElementById('glAccountWrapper').classList.toggle('hidden', !config.hasGlAccount);
+            document.getElementById('auditSessionWrapper').classList.toggle('hidden', !config.hasAuditSession || config.ledgerType === 'last-verification');
+            document.getElementById('glStatusWrapper').classList.toggle('hidden', !config.hasGlStatus);
+            if (config.hasGlStatus && switchedReport && config.glStatusDefault) {
+                document.getElementById('glStatusFilter').value = config.glStatusDefault;
+            }
             document.getElementById('groupByFilterWrapper').classList.toggle('hidden', !config.hasGroupBy);
             document.getElementById('dateRangeWrapper').classList.toggle('hidden', !config.hasDateRange);
             document.getElementById('trendGranularityWrapper').classList.toggle('hidden', !config.hasTrendGranularity);
@@ -1624,13 +2211,24 @@
                 if (config.hasThresholdYears) {
                     params.append('thresholdYears', document.getElementById('thresholdYearsFilter')?.value || '1');
                 }
+                if (config.ledger) {
+                    if (config.hasGlAccount) await loadGlAccounts();
+                    if (config.hasAuditSession) await loadAuditSessions();
+                    ledgerParams(config, params);
+                    if (config.requiresGlAccount && !document.getElementById('glAccountFilter').value) {
+                        showEmptyState();
+                        document.getElementById('reportDescription').textContent = config.description + ' — select a GL account above.';
+                        return;
+                    }
+                }
 
                 if (params.toString()) {
                     url += '?' + params.toString();
                 }
 
                 const response = await fetch(url);
-                if (!response.ok) throw new Error('Failed to load report');
+                // Ledger reports return a JSON message on failure (e.g. no access), so read it rather than a generic error.
+                if (!response.ok && !config.ledger) throw new Error('Failed to load report');
 
                 const result = await response.json();
                 if (result.success && result.data) {
@@ -1648,6 +2246,10 @@
 
         // Dispatch to the right renderer for the report's data shape.
         function displayReport(reportData, config) {
+            if (config.ledger) {
+                renderLedgerReport(reportData);
+                return;
+            }
             const rowType = config.rowType;
             if (rowType === 'summary') {
                 renderSummaryReport(reportData);
@@ -2651,6 +3253,54 @@
         }
 
         // Show empty state
+        // Generic renderer for the accounting & GL reports, which all arrive as a uniform table.
+        function ledgerEscape(value) {
+            return String(value ?? '').replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
+        }
+
+        function ledgerCell(column, value) {
+            if (value === null || value === undefined || value === '') return '';
+            if (column.type === 'money') return formatCurrency(value);
+            if (column.type === 'status') {
+                const cls = value === 'POSTED' ? 'text-status-success' : (value === 'REJECTED' ? 'text-status-error' : 'text-secondary');
+                return `<span class="${cls} font-medium">${ledgerEscape(value)}</span>`;
+            }
+            return ledgerEscape(value);
+        }
+
+        function renderLedgerReport(report) {
+            const summaryEntries = Object.entries(report.summary || {});
+            if (report.empty && summaryEntries.length === 0) {
+                showEmptyState();
+                return;
+            }
+            const th = 'px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider';
+            const columns = report.columns;
+            document.getElementById('ledgerHead').innerHTML =
+                `<tr class="bg-surface-canvas border-b border-border-default">${columns.map(c =>
+                    `<th class="${th}${(c.type === 'money' || c.type === 'number') ? ' text-right' : ''}">${ledgerEscape(c.label)}</th>`).join('')}</tr>`;
+
+            const td = 'px-5 py-3 text-body-default text-on-surface';
+            const body = report.rows.map(row =>
+                `<tr class="hover:bg-surface-canvas transition-colors">${columns.map(c =>
+                    `<td class="${td}${(c.type === 'money' || c.type === 'number') ? ' text-right' : ''}">${ledgerCell(c, row[c.key])}</td>`).join('')}</tr>`).join('');
+            const totals = report.totals && Object.keys(report.totals).length
+                ? `<tr class="bg-surface-canvas font-medium">${columns.map(c =>
+                    `<td class="${td}${(c.type === 'money' || c.type === 'number') ? ' text-right' : ''}">${ledgerCell(c, report.totals[c.key])}</td>`).join('')}</tr>`
+                : '';
+            document.getElementById('ledgerBody').innerHTML = body + totals;
+
+            const summary = document.getElementById('ledgerSummary');
+            summary.innerHTML = summaryEntries.map(([label, value]) =>
+                `<div class="bg-surface-canvas rounded-lg p-3"><div class="text-label-small text-secondary uppercase tracking-wide">${ledgerEscape(label)}</div>` +
+                `<div class="text-body-default font-medium text-on-surface mt-1">${typeof value === 'number' ? formatCurrency(value) : ledgerEscape(value)}</div></div>`).join('');
+            summary.classList.toggle('hidden', summaryEntries.length === 0);
+
+            document.getElementById('ledgerNotes').innerHTML = (report.notes || []).map(n => `<p>${ledgerEscape(n)}</p>`).join('');
+            document.getElementById('emptyStateContainer').classList.add('hidden');
+            document.getElementById('ledgerViewContainer').classList.remove('hidden');
+        }
+
         function showEmptyState() {
             document.getElementById('reportDataContainer').classList.add('hidden');
             document.getElementById('summaryViewContainer').classList.add('hidden');
@@ -2675,6 +3325,7 @@
             document.getElementById('movementHistoryViewContainer').classList.add('hidden');
             document.getElementById('disposalViewContainer').classList.add('hidden');
             document.getElementById('approvalHistoryViewContainer').classList.add('hidden');
+            document.getElementById('ledgerViewContainer').classList.add('hidden');
             document.getElementById('emptyStateContainer').classList.remove('hidden');
         }
 
@@ -2699,6 +3350,22 @@
             if (!config) {
                 console.error('Unknown report type:', currentReport);
                 return null;
+            }
+            if (config.ledger) {
+                const ledgerQuery = new URLSearchParams();
+                ledgerQuery.append('format', format);
+                if (config.hasDateRange) {
+                    const fromDate = document.getElementById('fromDateFilter')?.value;
+                    const toDate = document.getElementById('toDateFilter')?.value;
+                    if (fromDate) ledgerQuery.append('startDate', fromDate);
+                    if (toDate) ledgerQuery.append('endDate', toDate);
+                }
+                if (config.hasPeriod) {
+                    const period = document.getElementById('periodFilter')?.value;
+                    if (period) ledgerQuery.append('period', period);
+                }
+                ledgerParams(config, ledgerQuery);
+                return `${config.ledgerBase || '/api/reports/gl'}/${config.ledgerType}/export?${ledgerQuery.toString()}`;
             }
             if (!config.canExport) {
                 showError(`Export isn't available yet for "${config.name}". Use Asset Register, Valuation, or another standard report to export.`);

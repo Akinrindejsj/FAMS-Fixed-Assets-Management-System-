@@ -7,6 +7,9 @@ public class AuditVerificationRequest {
     private AuditVerificationStatus resultStatus;
     private String actualLocation;
     private String conditionNotes;
+    private String actualCustodian;
+    private AssetCondition conditionRating;
+    private ScanMethod scanMethod;
 
     public Long getAssetId() {
         return assetId;
@@ -46,5 +49,29 @@ public class AuditVerificationRequest {
 
     public void setConditionNotes(String conditionNotes) {
         this.conditionNotes = conditionNotes;
+    }
+
+    public String getActualCustodian() {
+        return actualCustodian;
+    }
+
+    public void setActualCustodian(String actualCustodian) {
+        this.actualCustodian = actualCustodian;
+    }
+
+    public AssetCondition getConditionRating() {
+        return conditionRating;
+    }
+
+    public void setConditionRating(AssetCondition conditionRating) {
+        this.conditionRating = conditionRating;
+    }
+
+    public ScanMethod getScanMethod() {
+        return scanMethod;
+    }
+
+    public void setScanMethod(ScanMethod scanMethod) {
+        this.scanMethod = scanMethod;
     }
 }

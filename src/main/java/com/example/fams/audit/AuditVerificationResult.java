@@ -59,6 +59,26 @@ public class AuditVerificationResult {
     @Column(columnDefinition = "text")
     private String conditionNotes;
 
+    @Column(length = 160)
+    private String expectedCustodian;
+
+    @Column(length = 160)
+    private String actualCustodian;
+
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20)
+    private AssetCondition conditionRating;
+
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20)
+    private ScanMethod scanMethod;
+
+    @Column(length = 160)
+    private String verifiedBy;
+
+    /** Verified in a session whose scope didn't include it. Null on results recorded before this was tracked. */
+    private Boolean unexpectedAsset;
+
     @Column(nullable = false)
     private LocalDateTime verifiedAt;
 
@@ -69,9 +89,21 @@ public class AuditVerificationResult {
         discrepancyType = resolveDiscrepancyType();
     }
 
+    /** The person who verified the asset reported a different custodian from the register. */
+    public boolean isCustodianMismatch() {
+        return actualCustodian != null && !actualCustodian.isBlank()
+                && (expectedCustodian == null || !expectedCustodian.trim().equalsIgnoreCase(actualCustodian.trim()));
+    }
+
     private String resolveDiscrepancyType() {
-        if (resultStatus == null || resultStatus == AuditVerificationStatus.FOUND) {
+        if (resultStatus == null) {
             return null;
+        }
+        if (resultStatus == AuditVerificationStatus.FOUND) {
+            if (Boolean.TRUE.equals(unexpectedAsset)) {
+                return "Unexpected asset";
+            }
+            return isCustodianMismatch() ? "Custodian mismatch" : null;
         }
         return switch (resultStatus) {
             case MISSING -> "Missing";
@@ -155,5 +187,53 @@ public class AuditVerificationResult {
 
     public LocalDateTime getVerifiedAt() {
         return verifiedAt;
+    }
+
+    public String getExpectedCustodian() {
+        return expectedCustodian;
+    }
+
+    public void setExpectedCustodian(String expectedCustodian) {
+        this.expectedCustodian = expectedCustodian;
+    }
+
+    public String getActualCustodian() {
+        return actualCustodian;
+    }
+
+    public void setActualCustodian(String actualCustodian) {
+        this.actualCustodian = actualCustodian;
+    }
+
+    public AssetCondition getConditionRating() {
+        return conditionRating;
+    }
+
+    public void setConditionRating(AssetCondition conditionRating) {
+        this.conditionRating = conditionRating;
+    }
+
+    public ScanMethod getScanMethod() {
+        return scanMethod;
+    }
+
+    public void setScanMethod(ScanMethod scanMethod) {
+        this.scanMethod = scanMethod;
+    }
+
+    public String getVerifiedBy() {
+        return verifiedBy;
+    }
+
+    public void setVerifiedBy(String verifiedBy) {
+        this.verifiedBy = verifiedBy;
+    }
+
+    public Boolean getUnexpectedAsset() {
+        return unexpectedAsset;
+    }
+
+    public void setUnexpectedAsset(Boolean unexpectedAsset) {
+        this.unexpectedAsset = unexpectedAsset;
     }
 }

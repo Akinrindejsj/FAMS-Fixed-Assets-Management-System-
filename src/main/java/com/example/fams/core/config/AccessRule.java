@@ -24,11 +24,18 @@ public enum AccessRule {
     DEPARTMENT_HEAD("department-head", "/department-head", List.of("departmentHead")),
     EMPLOYEE("employee", "/employee", List.of("employees")),
 
+    // General ledger: posting and account setup are restricted to finance-capable roles
+    GL("gl", "/gl", List.of("admin", "assetManager", "financialOfficers")),
+    // Ledger-based reports also open to auditors (read-only)
+    GL_REPORTS("gl-reports", "/api/reports/gl", List.of("admin", "assetManager", "financialOfficers", "auditor")),
+
     // Shared areas — any authenticated user may view
     ASSETS("assets", "/assets", List.of()),
     DEPRECIATION("depreciation", "/depreciation", List.of()),
     REPORTS("reports", "/reports", List.of()),
-    AUDIT("audit", "/audit", List.of()),
+    AUDIT("audit", "/audit", List.of("admin", "assetManager", "auditor")),
+    AUDIT_API("audit-api", "/api/audits", List.of("admin", "assetManager", "auditor")),
+    AUDIT_REPORTS("audit-reports", "/api/reports/audit", List.of("admin", "assetManager", "auditor")),
     MAINTENANCE("maintenance", "/maintenance", List.of()),
     NOTIFICATIONS("notifications", "/notifications", List.of()),
     DASHBOARD("dashboard", "/dashboard", List.of()),

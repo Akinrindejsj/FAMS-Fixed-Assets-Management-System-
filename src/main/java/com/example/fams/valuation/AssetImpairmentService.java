@@ -4,6 +4,7 @@ import com.example.fams.assets.Asset;
 import com.example.fams.assets.AssetRepository;
 import com.example.fams.depreciation.DepreciationPosting;
 import com.example.fams.depreciation.DepreciationService;
+import com.example.fams.gl.GLAccountingService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,9 +21,11 @@ public class AssetImpairmentService {
     private final AssetImpairmentRepository impairmentRepository;
     private final AssetRepository assetRepository;
     private final DepreciationService depreciationService;
+    private final GLAccountingService glAccountingService;
 
     public AssetImpairmentService(AssetImpairmentRepository impairmentRepository, AssetRepository assetRepository,
-                                   DepreciationService depreciationService) {
+                                   DepreciationService depreciationService, GLAccountingService glAccountingService) {
+        this.glAccountingService = glAccountingService;
         this.impairmentRepository = impairmentRepository;
         this.assetRepository = assetRepository;
         this.depreciationService = depreciationService;
@@ -62,7 +65,9 @@ public class AssetImpairmentService {
         impairment.setReason(reason.trim());
         impairment.setRecordedBy(recordedBy);
 
-        return impairmentRepository.save(impairment);
+        AssetImpairment saved = impairmentRepository.save(impairment);
+        glAccountingService.generateForImpairment(saved);
+        return saved;
     }
 
     /** Current NBV net of all prior impairments/reversals recorded for this asset. */

@@ -1018,6 +1018,20 @@
                                        class="w-full h-10 px-3 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 focus:ring-2 focus:ring-primary focus:border-primary outline-none">
                             </div>
                             <div>
+                                <label class="block text-xs text-slate-500 mb-1">Custodian found with the asset</label>
+                                <input id="actual-custodian" maxlength="160" placeholder="Person who has the asset" data-input-type="text"
+                                       class="w-full h-10 px-3 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-slate-500 mb-1">Condition <span class="font-normal opacity-60">(optional)</span></label>
+                                <select id="condition-rating" class="w-full h-10 px-3 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                                    <option value="">Not rated</option>
+                                    <option value="GOOD">Good</option>
+                                    <option value="FAIR">Fair</option>
+                                    <option value="POOR">Poor</option>
+                                </select>
+                            </div>
+                            <div>
                                 <label class="block text-xs text-slate-500 mb-1">Condition notes <span class="font-normal opacity-60">(optional)</span></label>
                                 <textarea id="condition-notes" rows="3" placeholder="Note for damage, missing status, or location mismatch" data-input-type="text"
                                           class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 focus:ring-2 focus:ring-primary focus:border-primary outline-none resize-none"></textarea>
@@ -1151,6 +1165,7 @@
         const scannerMessage = document.getElementById('scanner-message');
         const video = document.getElementById('scanner-video');
         let currentAsset = null;
+        let currentScanMethod = 'MANUAL';
         let stream = null;
         let detector = null;
         let codeReader = null;
@@ -1212,11 +1227,12 @@
             }
             assetCard.classList.remove('hidden');
             document.getElementById('actual-location').value = asset.expectedLocation || '';
+            document.getElementById('actual-custodian').value = asset.custodian || '';
         }
 
-        lookupButton?.addEventListener('click', () => lookupAsset(manualCode.value));
+        lookupButton?.addEventListener('click', () => { currentScanMethod = 'MANUAL'; lookupAsset(manualCode.value); });
         manualCode?.addEventListener('keydown', event => {
-            if (event.key === 'Enter') { event.preventDefault(); lookupAsset(manualCode.value); }
+            if (event.key === 'Enter') { event.preventDefault(); currentScanMethod = 'MANUAL'; lookupAsset(manualCode.value); }
         });
 
         document.getElementById('verification-form')?.addEventListener('submit', async event => {
@@ -1237,6 +1253,9 @@
                         scannedCode: document.getElementById('scanned-code').value,
                         resultStatus: document.querySelector('input[name="resultStatus"]:checked').value,
                         actualLocation: document.getElementById('actual-location').value,
+                        actualCustodian: document.getElementById('actual-custodian').value,
+                        conditionRating: document.getElementById('condition-rating').value || null,
+                        scanMethod: currentScanMethod,
                         conditionNotes: document.getElementById('condition-notes').value
                     })
                 });
@@ -1260,6 +1279,9 @@
             document.getElementById('asset-id').value = '';
             document.getElementById('scanned-code').value = '';
             document.getElementById('condition-notes').value = '';
+            document.getElementById('actual-custodian').value = '';
+            document.getElementById('condition-rating').value = '';
+            currentScanMethod = 'MANUAL';
             document.querySelector('input[name="resultStatus"][value="FOUND"]').checked = true;
             updateRadioCards();
         }
@@ -1397,6 +1419,7 @@
                                     lastDetectedCode = code;
                                     lastDetectedAt = now;
                                     manualCode.value = code;
+                                    currentScanMethod = (result.getBarcodeFormat && result.getBarcodeFormat() === ZXing.BarcodeFormat.QR_CODE) ? 'QR' : 'BARCODE';
                                     lookupAsset(code);
                                 }
                             }
@@ -1434,6 +1457,7 @@
                         lastDetectedCode = code;
                         lastDetectedAt = now;
                         manualCode.value = code;
+                        currentScanMethod = codes[0].format === 'qr_code' ? 'QR' : 'BARCODE';
                         lookupAsset(code);
                     }
                 }

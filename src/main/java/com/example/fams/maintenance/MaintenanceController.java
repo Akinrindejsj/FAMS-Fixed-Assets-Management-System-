@@ -25,8 +25,11 @@ public class MaintenanceController {
 
     private final AssetService assetService;
     private final MaintenanceService maintenanceService;
+    private final ServiceContractService contractService;
 
-    public MaintenanceController(AssetService assetService, MaintenanceService maintenanceService) {
+    public MaintenanceController(AssetService assetService, MaintenanceService maintenanceService,
+                                 ServiceContractService contractService) {
+        this.contractService = contractService;
         this.assetService = assetService;
         this.maintenanceService = maintenanceService;
     }
@@ -51,6 +54,7 @@ public class MaintenanceController {
         model.addAttribute("frequencies", MaintenanceFrequency.values());
         model.addAttribute("correctiveCount", maintenanceService.correctiveCount());
         model.addAttribute("dueTaskCount", maintenanceService.dueTaskCount());
+        model.addAttribute("contracts", contractService.findAll());
         return "assets/maintainance-management";
     }
 
@@ -73,15 +77,49 @@ public class MaintenanceController {
         return "redirect:/maintenance";
     }
 
+    @PostMapping("/assets/maintenance/contracts")
+    public String createContract(@RequestParam(value = "assetId", required = false) Long assetId,
+                                 @RequestParam String contractNumber,
+                                 @RequestParam String vendor,
+                                 @RequestParam(required = false) String coverage,
+                                 @RequestParam LocalDate startDate,
+                                 @RequestParam LocalDate endDate,
+                                 @RequestParam(required = false) BigDecimal annualCost,
+                                 RedirectAttributes redirectAttributes) {
+        try {
+            contractService.create(assetId, contractNumber, vendor, coverage, startDate, endDate, annualCost);
+            redirectAttributes.addFlashAttribute("successMessage", "Service contract saved.");
+        } catch (Exception ex) {
+            log.warn("Failed to save service contract: {}", ex.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", sanitize(ex.getMessage()));
+        }
+        return "redirect:/maintenance";
+    }
+
+    @PostMapping("/assets/maintenance/contracts/{id}/delete")
+    public String deleteContract(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+        try {
+            contractService.delete(id);
+            redirectAttributes.addFlashAttribute("successMessage", "Service contract removed.");
+        } catch (Exception ex) {
+            log.warn("Failed to remove service contract: {}", ex.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", sanitize(ex.getMessage()));
+        }
+        return "redirect:/maintenance";
+    }
+
     @PostMapping("/assets/maintenance/corrective")
     public String recordCorrective(@RequestParam Long assetId,
                                    @RequestParam String issueDescription,
                                    @RequestParam String serviceProvider,
                                    @RequestParam(required = false) BigDecimal maintenanceCost,
                                    @RequestParam(required = false) LocalDate resolutionDate,
+                                   @RequestParam(required = false) LocalDate downtimeStart,
+                                   @RequestParam(required = false) LocalDate downtimeEnd,
                                    RedirectAttributes redirectAttributes) {
         try {
-            maintenanceService.recordCorrective(assetId, issueDescription, serviceProvider, maintenanceCost, resolutionDate);
+            maintenanceService.recordCorrective(assetId, issueDescription, serviceProvider, maintenanceCost, resolutionDate,
+                    null, null, downtimeStart, downtimeEnd);
             redirectAttributes.addFlashAttribute("successMessage", "Corrective maintenance event saved to asset history.");
         } catch (Exception ex) {
             log.warn("Failed to record corrective maintenance: {}", ex.getMessage());

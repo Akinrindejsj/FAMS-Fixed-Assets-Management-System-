@@ -65,6 +65,11 @@ public class JournalEntry {
     @Column(length = 160)
     private String rejectionReason;
 
+    @Column(length = 160)
+    private String rejectedBy;
+
+    private LocalDateTime rejectedAt;
+
     private LocalDateTime createdAt;
 
     @OneToMany(mappedBy = "journalEntry", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -161,6 +166,22 @@ public class JournalEntry {
 
     public void setRejectionReason(String rejectionReason) {
         this.rejectionReason = rejectionReason;
+    }
+
+    public String getRejectedBy() {
+        return rejectedBy;
+    }
+
+    public void setRejectedBy(String rejectedBy) {
+        this.rejectedBy = rejectedBy;
+    }
+
+    public LocalDateTime getRejectedAt() {
+        return rejectedAt;
+    }
+
+    public void setRejectedAt(LocalDateTime rejectedAt) {
+        this.rejectedAt = rejectedAt;
     }
 
     public LocalDateTime getCreatedAt() {

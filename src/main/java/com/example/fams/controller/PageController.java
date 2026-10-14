@@ -1,5 +1,6 @@
 package com.example.fams.controller;
 
+import com.example.fams.core.config.AuthenticationManager;
 import com.example.fams.dashboard.DashboardModelService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -9,9 +10,11 @@ import org.springframework.web.bind.annotation.GetMapping;
 public class PageController {
 
     private final DashboardModelService dashboardModelService;
+    private final AuthenticationManager authenticationManager;
 
-    public PageController(DashboardModelService dashboardModelService) {
+    public PageController(DashboardModelService dashboardModelService, AuthenticationManager authenticationManager) {
         this.dashboardModelService = dashboardModelService;
+        this.authenticationManager = authenticationManager;
     }
 
     @GetMapping("/")
@@ -75,6 +78,12 @@ public class PageController {
         // Add initial data for reports page
         model.addAttribute("pageTitle", "Reports & Analytics");
         model.addAttribute("defaultReport", "assetRegister");
+        boolean ledgerManager = authenticationManager.isAdmin() || authenticationManager.isAssetManager()
+                || authenticationManager.isFinancialOfficer();
+        model.addAttribute("canManageLedger", ledgerManager);
+        model.addAttribute("canViewLedgerReports", ledgerManager || authenticationManager.isAuditor());
+        model.addAttribute("canViewAuditReports", authenticationManager.isAdmin() || authenticationManager.isAssetManager()
+                || authenticationManager.isAuditor());
         return "reports/reports-module";
     }
 }

@@ -86,8 +86,9 @@ public class AuditController {
     @PostMapping("/api/audits/sessions/{sessionId}/results")
     @ResponseBody
     public AuditResultView recordVerification(@PathVariable Long sessionId,
-                                              @RequestBody AuditVerificationRequest request) {
-        return auditService.recordVerification(sessionId, request);
+                                              @RequestBody AuditVerificationRequest request,
+                                              Authentication authentication) {
+        return auditService.recordVerification(sessionId, request, displayName(authentication));
     }
 
     @GetMapping("/api/audits/sessions/{sessionId}/discrepancies")

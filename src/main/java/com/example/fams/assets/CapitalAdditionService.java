@@ -1,5 +1,6 @@
 package com.example.fams.assets;
 
+import com.example.fams.gl.GLAccountingService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -12,10 +13,13 @@ public class CapitalAdditionService {
 
     private final CapitalAdditionRepository capitalAdditionRepository;
     private final AssetRepository assetRepository;
+    private final GLAccountingService glAccountingService;
 
-    public CapitalAdditionService(CapitalAdditionRepository capitalAdditionRepository, AssetRepository assetRepository) {
+    public CapitalAdditionService(CapitalAdditionRepository capitalAdditionRepository, AssetRepository assetRepository,
+                                  GLAccountingService glAccountingService) {
         this.capitalAdditionRepository = capitalAdditionRepository;
         this.assetRepository = assetRepository;
+        this.glAccountingService = glAccountingService;
     }
 
     @Transactional
@@ -44,7 +48,9 @@ public class CapitalAdditionService {
         addition.setDescription(description == null ? "" : description.trim());
         addition.setRecordedBy(recordedBy);
 
-        return capitalAdditionRepository.save(addition);
+        CapitalAddition saved = capitalAdditionRepository.save(addition);
+        glAccountingService.generateForCapitalAddition(saved);
+        return saved;
     }
 
     @Transactional(readOnly = true)

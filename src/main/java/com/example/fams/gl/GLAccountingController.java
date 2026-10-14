@@ -2,6 +2,8 @@ package com.example.fams.gl;
 
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -99,6 +101,14 @@ public class GLAccountingController {
         return "redirect:/gl/mappings";
     }
 
+    private JournalStatus parseStatus(String status) {
+        try {
+            return JournalStatus.valueOf(status.trim().toUpperCase());
+        } catch (IllegalArgumentException ex) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unknown journal status: " + status);
+        }
+    }
+
     private GLAccount lookup(Long id) {
         return id == null ? null : accountRepository.findById(id).orElse(null);
     }
@@ -106,7 +116,7 @@ public class GLAccountingController {
     @GetMapping("/journals")
     public String journals(@RequestParam(required = false) String status, Model model) {
         if (status != null && !status.isBlank()) {
-            model.addAttribute("journals", glAccountingService.findByStatus(JournalStatus.valueOf(status)));
+            model.addAttribute("journals", glAccountingService.findByStatus(parseStatus(status)));
         } else {
             model.addAttribute("journals", glAccountingService.findAll());
         }

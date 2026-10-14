@@ -58,6 +58,12 @@ public class MaintenanceRecord {
 
     private LocalDate resolutionDate;
 
+    /** When the asset became unavailable, if recorded. Reports fall back to the request date. */
+    private LocalDate downtimeStart;
+
+    /** When the asset became available again, if recorded. Reports fall back to the resolution date. */
+    private LocalDate downtimeEnd;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 40)
     private MaintenanceStatus status;
@@ -158,6 +164,22 @@ public class MaintenanceRecord {
 
     public void setResolutionDate(LocalDate resolutionDate) {
         this.resolutionDate = resolutionDate;
+    }
+
+    public LocalDate getDowntimeStart() {
+        return downtimeStart;
+    }
+
+    public void setDowntimeStart(LocalDate downtimeStart) {
+        this.downtimeStart = downtimeStart;
+    }
+
+    public LocalDate getDowntimeEnd() {
+        return downtimeEnd;
+    }
+
+    public void setDowntimeEnd(LocalDate downtimeEnd) {
+        this.downtimeEnd = downtimeEnd;
     }
 
     public MaintenanceStatus getStatus() {

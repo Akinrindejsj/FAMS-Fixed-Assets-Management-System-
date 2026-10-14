@@ -3,6 +3,9 @@ package com.example.fams.depreciation;
 import com.example.fams.assets.Asset;
 import com.example.fams.assets.AssetRepository;
 import com.example.fams.common.AppClock;
+import com.example.fams.gl.GLAccountingService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,17 +19,22 @@ import java.util.stream.Collectors;
 @Service
 public class DepreciationService {
 
+    private static final Logger log = LoggerFactory.getLogger(DepreciationService.class);
+
     private final DepreciationParametersRepository parametersRepository;
     private final DepreciationPostingRepository postingRepository;
     private final AssetRepository assetRepository;
     private final DepreciationCalculationService calculationService;
     private final DepreciationRunRepository runRepository;
+    private final GLAccountingService glAccountingService;
 
     public DepreciationService(DepreciationParametersRepository parametersRepository,
                               DepreciationPostingRepository postingRepository,
                               AssetRepository assetRepository,
                               DepreciationCalculationService calculationService,
-                              DepreciationRunRepository runRepository) {
+                              DepreciationRunRepository runRepository,
+                              GLAccountingService glAccountingService) {
+        this.glAccountingService = glAccountingService;
         this.parametersRepository = parametersRepository;
         this.postingRepository = postingRepository;
         this.assetRepository = assetRepository;
@@ -97,6 +105,7 @@ public class DepreciationService {
         DepreciationRunResult result = new DepreciationRunResult();
         result.setPeriod(depreciationPeriod);
         result.setRunDate(AppClock.today());
+        List<DepreciationPosting> savedPostings = new ArrayList<>();
 
         try {
             // Get all assets
@@ -110,7 +119,7 @@ public class DepreciationService {
                     if (posting != null) {
                         // Replace any existing posting for this asset + period (idempotent re-run).
                         deleteExistingPosting(asset.getId(), depreciationPeriod);
-                        postingRepository.save(posting);
+                        savedPostings.add(postingRepository.save(posting));
                         result.addSuccessfulAsset(asset.getAssetCode());
                     } else {
                         result.addFailedAsset(asset.getAssetCode(), "No depreciation parameters configured for this asset");
@@ -130,11 +139,16 @@ public class DepreciationService {
             result.setErrorMessage(e.getMessage());
         }
 
-        persistRunRecord(depreciationPeriod, periodEndDate, triggeredBy, result);
+        DepreciationRun run = persistRunRecord(depreciationPeriod, periodEndDate, triggeredBy, result);
+        try {
+            glAccountingService.generateForDepreciationRun(run.getId(), depreciationPeriod, periodEndDate, savedPostings);
+        } catch (RuntimeException e) {
+            log.error("Depreciation journal generation failed for period {}", depreciationPeriod, e);
+        }
         return result;
     }
 
-    private void persistRunRecord(String depreciationPeriod, LocalDate periodEndDate, String triggeredBy, DepreciationRunResult result) {
+    private DepreciationRun persistRunRecord(String depreciationPeriod, LocalDate periodEndDate, String triggeredBy, DepreciationRunResult result) {
         DepreciationRun run = new DepreciationRun();
         run.setPeriod(depreciationPeriod);
         run.setPeriodEndDate(periodEndDate);
@@ -149,7 +163,7 @@ public class DepreciationService {
         run.setFailedAssetDetails(result.getFailedAssets().entrySet().stream()
                 .map(e -> e.getKey() + ": " + e.getValue())
                 .collect(Collectors.joining("; ")));
-        runRepository.save(run);
+        return runRepository.save(run);
     }
 
     @Transactional(readOnly = true)
