@@ -395,7 +395,8 @@ public class ReportService {
      *
      * <p>{@code fromDate}/{@code toDate} are optional and filter on {@code purchaseDate}
      * (acquisition date) when present — this is how the Acquisition by Supplier/Category/
-     * Department reports reuse the same grouping for a reporting period.
+     * Department reports reuse the same grouping for a reporting period. When grouping by
+     * capitalisation month they filter on {@code capitalisationDate} instead.
      */
     @Cacheable(cacheNames = "reports",
             key = "'assetRegisterGrouped|' + #scope.cacheKey() + '|' + #groupBy + '|' + #category + '|' + #department + '|' + #status + '|' + #fromDate + '|' + #toDate")
@@ -419,14 +420,16 @@ public class ReportService {
                     .filter(a -> a.getStatus() != null && a.getStatus().equalsIgnoreCase(status))
                     .collect(Collectors.toList());
         }
+        java.util.function.Function<Asset, LocalDate> filterDate = groupBy == AssetGroupBy.CAPITALISATION_MONTH
+                ? Asset::getCapitalisationDate : Asset::getPurchaseDate;
         if (fromDate != null) {
             assets = assets.stream()
-                    .filter(a -> a.getPurchaseDate() != null && !a.getPurchaseDate().isBefore(fromDate))
+                    .filter(a -> filterDate.apply(a) != null && !filterDate.apply(a).isBefore(fromDate))
                     .collect(Collectors.toList());
         }
         if (toDate != null) {
             assets = assets.stream()
-                    .filter(a -> a.getPurchaseDate() != null && !a.getPurchaseDate().isAfter(toDate))
+                    .filter(a -> filterDate.apply(a) != null && !filterDate.apply(a).isAfter(toDate))
                     .collect(Collectors.toList());
         }
 
@@ -476,6 +479,8 @@ public class ReportService {
             case SUPPLIER -> orUnspecified(asset.getVendor());
             case ACQUISITION_MONTH -> asset.getPurchaseDate() == null ? "Unspecified"
                     : asset.getPurchaseDate().getYear() + "-" + String.format("%02d", asset.getPurchaseDate().getMonthValue());
+            case CAPITALISATION_MONTH -> asset.getCapitalisationDate() == null ? "Not yet capitalised"
+                    : asset.getCapitalisationDate().getYear() + "-" + String.format("%02d", asset.getCapitalisationDate().getMonthValue());
         };
     }
 
@@ -493,6 +498,7 @@ public class ReportService {
             case STATUS -> "Status";
             case SUPPLIER -> "Supplier";
             case ACQUISITION_MONTH -> "Acquisition Date";
+            case CAPITALISATION_MONTH -> "Capitalisation Date";
         };
     }
 

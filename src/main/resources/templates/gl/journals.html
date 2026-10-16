@@ -20,6 +20,25 @@
     <div th:if="${successMessage}" class="bg-status-success/10 border border-status-success/30 text-status-success rounded-lg px-4 py-3 text-body-default" th:text="${successMessage}"></div>
     <div th:if="${errorMessage}" class="bg-status-error/10 border border-status-error/30 text-status-error rounded-lg px-4 py-3 text-body-default" th:text="${errorMessage}"></div>
 
+    <div th:if="${canBackfill}" class="bg-surface-card border border-border-default rounded-xl p-5 space-y-3 card-shadow">
+        <h3 class="font-card-header text-card-header text-on-surface">Backfill historical journals</h3>
+        <p class="text-body-default text-secondary">
+            Generates journals for acquisitions, capital additions, depreciation runs, revaluations, impairments and
+            disposals recorded before journal generation was switched on. Anything that already has a journal is skipped,
+            so it is safe to run more than once. Opening accumulated depreciation on part-depreciated assets is not
+            journaled and will show as a reconciliation difference.
+        </p>
+        <label class="flex items-center gap-2 text-body-default text-on-surface">
+            <input type="checkbox" id="backfill-autopost">
+            Post the generated journals immediately (otherwise they are left unposted for review)
+        </label>
+        <div class="flex gap-2">
+            <button type="button" id="backfill-preview" class="px-3 py-1.5 border border-border-default rounded-lg text-body-default text-on-surface hover:bg-surface-canvas transition-colors">Preview</button>
+            <button type="button" id="backfill-run" class="px-3 py-1.5 bg-primary text-white rounded-lg text-body-default hover:opacity-90 transition-opacity">Run backfill</button>
+        </div>
+        <div id="backfill-result" class="text-body-default text-on-surface space-y-1" aria-live="polite"></div>
+    </div>
+
     <div class="flex items-center gap-2">
         <a th:href="@{/gl/journals}" class="px-3 py-1.5 text-secondary rounded-lg text-body-default hover:bg-surface-canvas transition-colors">All</a>
         <a th:each="s : ${statuses}" th:href="@{/gl/journals(status=${s})}" class="px-3 py-1.5 text-secondary rounded-lg text-body-default hover:bg-surface-canvas transition-colors" th:text="${s}">UNPOSTED</a>
@@ -29,7 +48,7 @@
         <div class="p-5 border-b border-border-default flex items-center justify-between">
             <h3 class="font-card-header text-card-header text-on-surface">Journal Entries</h3>
             <span class="px-2.5 py-0.5 bg-surface-container-high text-on-secondary-fixed-variant rounded-full text-badge-label font-badge-label"
-                  th:text="${#lists.size(journals)} + ' entries'">0 entries</span>
+                  th:text="${journalTotal > #lists.size(journals) ? 'Showing ' + #lists.size(journals) + ' of ' + journalTotal : journalTotal + ' entries'}">0 entries</span>
         </div>
 
         <div th:if="${#lists.isEmpty(journals)}" class="p-12 text-center text-secondary">
@@ -82,6 +101,81 @@
             </div>
         </div>
     </div>
+
+    <div th:if="${journalTotal > #lists.size(journals)}" class="text-body-default text-secondary">
+        Only the first entries are shown. Use the status links above to narrow the list, or the Journal Report under Reports for the full set.
+    </div>
+
+    <script th:if="${canBackfill}">
+        (function () {
+            const result = document.getElementById('backfill-result');
+            const previewButton = document.getElementById('backfill-preview');
+            const runButton = document.getElementById('backfill-run');
+            if (!result || !previewButton || !runButton) return;
+
+            function show(lines) {
+                result.replaceChildren();
+                lines.forEach(line => {
+                    const p = document.createElement('p');
+                    p.textContent = line;
+                    result.appendChild(p);
+                });
+            }
+
+            async function call(url, options) {
+                const response = await fetch(url, options);
+                let body = null;
+                try { body = await response.json(); } catch (e) { /* not JSON */ }
+                if (!response.ok || !body || !body.success) {
+                    throw new Error((body && body.message) || 'Request failed (' + response.status + ')');
+                }
+                return body.data;
+            }
+
+            previewButton.addEventListener('click', async () => {
+                show(['Checking…']);
+                try {
+                    const plan = await call('/gl/backfill/preview');
+                    show([
+                        'Would generate ' + plan.acquisitions + ' acquisition, ' + plan.capitalAdditions + ' capital addition, '
+                            + plan.depreciationPeriods + ' depreciation period, ' + plan.revaluations + ' revaluation, '
+                            + plan.impairments + ' impairment and ' + plan.disposals + ' disposal journals.',
+                        plan.acquisitions + plan.capitalAdditions + plan.depreciationPeriods + plan.revaluations
+                            + plan.impairments + plan.disposals === 0 ? 'Nothing to backfill.' : 'Nothing has been created yet.'
+                    ]);
+                } catch (e) {
+                    show([e.message]);
+                }
+            });
+
+            runButton.addEventListener('click', async () => {
+                const autoPost = document.getElementById('backfill-autopost').checked;
+                if (!confirm('Generate journals for historical transactions' + (autoPost ? ' and post them' : '') + '?')) return;
+                runButton.disabled = true;
+                previewButton.disabled = true;
+                show(['Running — this can take a while for large histories…']);
+                try {
+                    const data = await call('/gl/backfill?autoPost=' + autoPost, { method: 'POST' });
+                    const lines = Object.entries(data.created).map(([label, count]) => label + ': ' + count + ' journal(s) created');
+                    lines.push(autoPost ? data.posted + ' journal(s) posted.' : 'New journals are unposted — review them below.');
+                    if (data.failuresRecorded > 0) {
+                        lines.push(data.failuresRecorded + ' journal(s) could not be generated (see the Journal Exception Report).');
+                    }
+                    if (data.errors > 0) {
+                        lines.push(data.errors + ' error(s):');
+                        data.errorMessages.forEach(m => lines.push(' • ' + m));
+                    }
+                    lines.push('Reload the page to see the new journals.');
+                    show(lines);
+                } catch (e) {
+                    show([e.message]);
+                } finally {
+                    runButton.disabled = false;
+                    previewButton.disabled = false;
+                }
+            });
+        })();
+    </script>
 </main>
 </body>
 </html>

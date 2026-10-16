@@ -25,4 +25,16 @@ public interface JournalEntryRepository extends JpaRepository<JournalEntry, Long
     @Query("select distinct e from JournalEntry e left join fetch e.lines "
             + "where e.date between :fromDate and :toDate order by e.date desc, e.id desc")
     List<JournalEntry> findWithLinesBetween(@Param("fromDate") LocalDate fromDate, @Param("toDate") LocalDate toDate);
+
+    /** Source record ids that already have a journal in the given statuses. */
+    @Query("select e.sourceReferenceId from JournalEntry e "
+            + "where e.sourceType = :sourceType and e.status in :statuses and e.sourceReferenceId is not null")
+    List<Long> findSourceReferenceIds(@Param("sourceType") JournalSourceType sourceType,
+                                      @Param("statuses") Collection<JournalStatus> statuses);
+
+    /** Depreciation periods that already have a journal in the given statuses. */
+    @Query("select distinct e.period from JournalEntry e "
+            + "where e.sourceType = :sourceType and e.status in :statuses and e.period is not null")
+    List<String> findPeriods(@Param("sourceType") JournalSourceType sourceType,
+                             @Param("statuses") Collection<JournalStatus> statuses);
 }

@@ -9,5 +9,6 @@ public enum AssetGroupBy {
     CUSTODIAN,
     STATUS,
     ACQUISITION_MONTH, // Asset.purchaseDate, truncated to yyyy-MM
+    CAPITALISATION_MONTH, // Asset.capitalisationDate, truncated to yyyy-MM
     SUPPLIER       // Asset.vendor
 }

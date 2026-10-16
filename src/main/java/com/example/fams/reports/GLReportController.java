@@ -161,6 +161,7 @@ public class GLReportController {
                     null);
             case "journal-exceptions" -> GLReportTables.exceptions(reportService.journalExceptions(from, to));
             case "period-movement" -> GLReportTables.periodMovement(reportService.periodMovement(from, to));
+            case "carrying-amount-movement" -> reportService.carryingAmountMovementByCategory(from, to);
             case "trial-balance" -> GLReportTables.trialBalance(
                     reportService.trialBalance(to, reportService.parseStatuses(status, List.of(JournalStatus.POSTED))));
             default -> null;

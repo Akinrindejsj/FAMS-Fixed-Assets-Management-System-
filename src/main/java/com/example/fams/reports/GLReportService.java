@@ -23,6 +23,7 @@ import com.example.fams.valuation.AssetImpairment;
 import com.example.fams.valuation.AssetImpairmentRepository;
 import com.example.fams.valuation.AssetRevaluation;
 import com.example.fams.valuation.AssetRevaluationRepository;
+import com.example.fams.reports.TabularReport.Column;
 import com.example.fams.valuation.ImpairmentType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -388,6 +389,98 @@ public class GLReportService {
                 .add(data.getAdditions()).add(data.getCapitalAdditions()).add(data.getDepreciation())
                 .add(data.getRevaluationMovement()).add(data.getImpairmentMovement()).add(data.getDisposals())));
         return data;
+    }
+
+    /**
+     * Carrying Amount Movement by asset category: opening carrying amount, additions, capital
+     * additions, depreciation, revaluation, impairment, disposals and closing carrying amount,
+     * from posted journal lines on the cost, accumulated depreciation and accumulated
+     * impairment accounts. Complete from when journal generation started.
+     */
+    public TabularReport carryingAmountMovementByCategory(LocalDate from, LocalDate to) {
+        LocalDate start = from != null ? from : AppClock.today().withDayOfYear(1);
+        LocalDate end = to != null ? to : AppClock.today();
+
+        Set<Long> nbvAccounts = new HashSet<>();
+        for (GLAccountMapping m : mappingRepository.findAll()) {
+            addId(nbvAccounts, m.getAssetCostAccount());
+            addId(nbvAccounts, m.getAccumulatedDepreciationAccount());
+            addId(nbvAccounts, m.getAccumulatedImpairmentAccount());
+        }
+
+        Map<String, BigDecimal> opening = new LinkedHashMap<>();
+        Map<String, Map<JournalSourceType, BigDecimal>> movement = new LinkedHashMap<>();
+        Set<String> categories = new LinkedHashSet<>();
+
+        for (JournalLine line : lineRepository.findForReport(MIN_DATE, start.minusDays(1), POSTED_ONLY)) {
+            if (!nbvAccounts.contains(line.getAccount().getId())) continue;
+            String category = categoryOf(line);
+            categories.add(category);
+            opening.merge(category, line.getDebit().subtract(line.getCredit()), BigDecimal::add);
+        }
+        for (JournalLine line : lineRepository.findForReport(start, end, POSTED_ONLY)) {
+            if (!nbvAccounts.contains(line.getAccount().getId())) continue;
+            String category = categoryOf(line);
+            categories.add(category);
+            movement.computeIfAbsent(category, k -> new EnumMap<>(JournalSourceType.class))
+                    .merge(line.getJournalEntry().getSourceType(), line.getDebit().subtract(line.getCredit()), BigDecimal::add);
+        }
+
+        List<Map<String, Object>> rows = new ArrayList<>();
+        BigDecimal[] sums = new BigDecimal[8];
+        java.util.Arrays.fill(sums, BigDecimal.ZERO);
+        for (String category : categories) {
+            Map<JournalSourceType, BigDecimal> m = movement.getOrDefault(category, new EnumMap<>(JournalSourceType.class));
+            BigDecimal open = opening.getOrDefault(category, BigDecimal.ZERO);
+            BigDecimal[] values = {
+                    open,
+                    m.getOrDefault(JournalSourceType.ACQUISITION, BigDecimal.ZERO),
+                    m.getOrDefault(JournalSourceType.CAPITAL_ADDITION, BigDecimal.ZERO),
+                    m.getOrDefault(JournalSourceType.DEPRECIATION_RUN, BigDecimal.ZERO),
+                    m.getOrDefault(JournalSourceType.REVALUATION, BigDecimal.ZERO),
+                    m.getOrDefault(JournalSourceType.IMPAIRMENT, BigDecimal.ZERO),
+                    m.getOrDefault(JournalSourceType.DISPOSAL, BigDecimal.ZERO),
+                    BigDecimal.ZERO};
+            values[7] = values[0].add(values[1]).add(values[2]).add(values[3]).add(values[4]).add(values[5]).add(values[6]);
+            for (int i = 0; i < values.length; i++) {
+                sums[i] = sums[i].add(values[i]);
+            }
+            rows.add(movementRow(category, values));
+        }
+        rows.sort(java.util.Comparator.comparing((Map<String, Object> r) -> String.valueOf(r.get("category"))));
+
+        List<Column> columns = List.of(new Column("category", "Category", "text"),
+                new Column("opening", "Opening Carrying Amount", "money"), new Column("additions", "Additions", "money"),
+                new Column("capital", "Capital Additions", "money"), new Column("depreciation", "Depreciation", "money"),
+                new Column("revaluation", "Revaluation", "money"), new Column("impairment", "Impairment", "money"),
+                new Column("disposals", "Disposals", "money"), new Column("closing", "Closing Carrying Amount", "money"));
+        return new TabularReport("Carrying Amount Movement",
+                "Movement in carrying amount by asset category from " + start + " to " + end + ".",
+                AppClock.today(), columns, rows, rows.isEmpty() ? Map.<String, Object>of() : movementRow("Totals", sums),
+                Map.<String, Object>of(),
+                List.of("Derived from posted journal lines, so it is complete from when journal generation started.",
+                        "Decreases (depreciation, impairment, disposals) are shown as negatives."),
+                rows.isEmpty());
+    }
+
+    private String categoryOf(JournalLine line) {
+        Asset asset = line.getAsset();
+        return asset == null || asset.getCategory() == null || asset.getCategory().isBlank()
+                ? "Uncategorised" : asset.getCategory();
+    }
+
+    private Map<String, Object> movementRow(String category, BigDecimal[] v) {
+        Map<String, Object> row = new LinkedHashMap<>();
+        row.put("category", category);
+        row.put("opening", money(v[0]));
+        row.put("additions", money(v[1]));
+        row.put("capital", money(v[2]));
+        row.put("depreciation", money(v[3]));
+        row.put("revaluation", money(v[4]));
+        row.put("impairment", money(v[5]));
+        row.put("disposals", money(v[6]));
+        row.put("closing", money(v[7]));
+        return row;
     }
 
     private void addId(Set<Long> ids, GLAccount account) {

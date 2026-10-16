@@ -2,6 +2,7 @@ package com.example.fams.gl;
 
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
+import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.ui.Model;
@@ -19,9 +20,14 @@ public class GLAccountingController {
     private final GLAccountRepository accountRepository;
     private final GLAccountMappingRepository mappingRepository;
     private final GLAccountingService glAccountingService;
+    private final com.example.fams.core.config.AuthenticationManager authenticationManager;
+
+    private static final int JOURNAL_DISPLAY_LIMIT = 200;
 
     public GLAccountingController(GLAccountRepository accountRepository, GLAccountMappingRepository mappingRepository,
-                                   GLAccountingService glAccountingService) {
+                                   GLAccountingService glAccountingService,
+                                   com.example.fams.core.config.AuthenticationManager authenticationManager) {
+        this.authenticationManager = authenticationManager;
         this.accountRepository = accountRepository;
         this.mappingRepository = mappingRepository;
         this.glAccountingService = glAccountingService;
@@ -115,11 +121,12 @@ public class GLAccountingController {
 
     @GetMapping("/journals")
     public String journals(@RequestParam(required = false) String status, Model model) {
-        if (status != null && !status.isBlank()) {
-            model.addAttribute("journals", glAccountingService.findByStatus(parseStatus(status)));
-        } else {
-            model.addAttribute("journals", glAccountingService.findAll());
-        }
+        List<JournalEntry> all = status != null && !status.isBlank()
+                ? glAccountingService.findByStatus(parseStatus(status))
+                : glAccountingService.findAll();
+        model.addAttribute("journalTotal", all.size());
+        model.addAttribute("journals", all.size() > JOURNAL_DISPLAY_LIMIT ? all.subList(0, JOURNAL_DISPLAY_LIMIT) : all);
+        model.addAttribute("canBackfill", authenticationManager.isAdmin());
         model.addAttribute("statuses", JournalStatus.values());
         return "gl/journals";
     }

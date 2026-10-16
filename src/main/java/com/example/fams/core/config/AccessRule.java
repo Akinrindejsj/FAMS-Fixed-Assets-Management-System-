@@ -26,6 +26,7 @@ public enum AccessRule {
 
     // General ledger: posting and account setup are restricted to finance-capable roles
     GL("gl", "/gl", List.of("admin", "assetManager", "financialOfficers")),
+    GL_BACKFILL("gl-backfill", "/gl/backfill", List.of("admin")),
     // Ledger-based reports also open to auditors (read-only)
     GL_REPORTS("gl-reports", "/api/reports/gl", List.of("admin", "assetManager", "financialOfficers", "auditor")),
 
