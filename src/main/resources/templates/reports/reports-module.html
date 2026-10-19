@@ -232,6 +232,32 @@
                         <li th:if="${canManageLedger}"><a th:href="@{/insurance}" class="w-full block text-left px-3 py-1.5 text-body-default text-primary rounded-lg hover:bg-surface-canvas transition-colors">Manage Insurance &amp; Certifications</a></li>
                     </ul>
                 </div>
+                <!-- Lifecycle & Exception Reports -->
+                <div>
+                    <div class="flex items-center gap-2 mb-2 px-2">
+                        <span class="material-symbols-outlined text-[18px] text-primary">rule</span>
+                        <h4 class="font-body-medium text-on-surface">Lifecycle &amp; Exception Reports</h4>
+                    </div>
+                    <ul class="space-y-1">
+                        <li><button onclick="loadReport('exc-custodian')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Assets Without Custodian</button></li>
+                        <li><button onclick="loadReport('exc-location')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Assets Without Location</button></li>
+                        <li><button onclick="loadReport('exc-serial')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Assets Without Serial Number</button></li>
+                        <li><button onclick="loadReport('exc-policy')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Assets Without Depreciation Policy</button></li>
+                        <li><button onclick="loadReport('exc-gl')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Assets Without GL Mapping</button></li>
+                        <li><button onclick="loadReport('exc-cost')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Assets Missing Acquisition Cost</button></li>
+                        <li><button onclick="loadReport('exc-life')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Invalid Useful Life</button></li>
+                        <li><button onclick="loadReport('exc-beyond')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Beyond Useful Life</button></li>
+                        <li><button onclick="loadReport('exc-fully')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Fully Depreciated but Active</button></li>
+                        <li><button onclick="loadReport('exc-idle')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Idle Assets</button></li>
+                        <li><button onclick="loadReport('exc-dormant')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Dormant Assets</button></li>
+                        <li><button onclick="loadReport('exc-replace')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Due for Replacement</button></li>
+                        <li><button onclick="loadReport('exc-maint')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Excessive Maintenance Period</button></li>
+                        <li><button onclick="loadReport('exc-verify')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Not Physically Verified</button></li>
+                        <li><button onclick="loadReport('exc-dup')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Duplicate Asset / Serial Number</button></li>
+                        <li><button onclick="loadReport('exc-incomplete')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Incomplete Asset Records</button></li>
+                        <li><button onclick="loadReport('exc-quality')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Asset Data Quality</button></li>
+                    </ul>
+                </div>
                 <!-- Financial Reports -->
                 <div>
                     <div class="flex items-center gap-2 mb-2 px-2">
@@ -365,6 +391,10 @@
                     <div id="periodFilterWrapper" class="hidden space-y-1.5">
                         <label class="text-label-small text-secondary uppercase tracking-wide">Period</label>
                         <input id="periodFilter" type="text" placeholder="e.g. 2026-03" onchange="reloadCurrentReport()" class="w-full h-[38px] px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                    </div>
+                    <div id="thresholdWrapper" class="hidden space-y-1.5">
+                        <label id="thresholdLabel" class="text-label-small text-secondary uppercase tracking-wide">Threshold</label>
+                        <input id="thresholdFilter" type="number" min="1" step="1" onchange="reloadCurrentReport()" class="w-full h-[38px] px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none">
                     </div>
                     <div id="auditSessionWrapper" class="hidden space-y-1.5">
                         <label class="text-label-small text-secondary uppercase tracking-wide">Audit Session</label>
@@ -1673,6 +1703,191 @@
                 canExport: true,
                 hasDateRange: true
             },
+            'exc-custodian': {
+                name: 'Assets Without Custodian',
+                description: 'Active assets in use that have no responsible custodian',
+                apiEndpoint: '/api/reports/exceptions/no-custodian',
+                ledger: true,
+                ledgerBase: '/api/reports/exceptions',
+                ledgerType: 'no-custodian',
+                hasFilters: true,
+                canExport: true
+            },
+            'exc-location': {
+                name: 'Assets Without Location',
+                description: 'Active assets with no valid physical location',
+                apiEndpoint: '/api/reports/exceptions/no-location',
+                ledger: true,
+                ledgerBase: '/api/reports/exceptions',
+                ledgerType: 'no-location',
+                hasFilters: true,
+                canExport: true
+            },
+            'exc-serial': {
+                name: 'Assets Without Serial Number',
+                description: 'Active assets missing a serial number or manufacturer identification',
+                apiEndpoint: '/api/reports/exceptions/no-serial',
+                ledger: true,
+                ledgerBase: '/api/reports/exceptions',
+                ledgerType: 'no-serial',
+                hasFilters: true,
+                canExport: true
+            },
+            'exc-policy': {
+                name: 'Assets Without Depreciation Policy',
+                description: 'Depreciable assets with no applicable depreciation rule',
+                apiEndpoint: '/api/reports/exceptions/no-depreciation-policy',
+                ledger: true,
+                ledgerBase: '/api/reports/exceptions',
+                ledgerType: 'no-depreciation-policy',
+                hasFilters: true,
+                canExport: true
+            },
+            'exc-gl': {
+                name: 'Assets Without GL Mapping',
+                description: 'Assets whose category lacks the ledger mapping needed to post journals',
+                apiEndpoint: '/api/reports/exceptions/no-gl-mapping',
+                ledger: true,
+                ledgerBase: '/api/reports/exceptions',
+                ledgerType: 'no-gl-mapping',
+                hasFilters: true,
+                canExport: true
+            },
+            'exc-cost': {
+                name: 'Assets Missing Acquisition Cost',
+                description: 'Assets without a valid acquisition or capitalised cost',
+                apiEndpoint: '/api/reports/exceptions/missing-cost',
+                ledger: true,
+                ledgerBase: '/api/reports/exceptions',
+                ledgerType: 'missing-cost',
+                hasFilters: true,
+                canExport: true
+            },
+            'exc-life': {
+                name: 'Assets with Invalid Useful Life',
+                description: 'Assets whose depreciation policy has a missing or invalid useful life',
+                apiEndpoint: '/api/reports/exceptions/invalid-useful-life',
+                ledger: true,
+                ledgerBase: '/api/reports/exceptions',
+                ledgerType: 'invalid-useful-life',
+                hasFilters: true,
+                canExport: true
+            },
+            'exc-beyond': {
+                name: 'Assets Beyond Useful Life',
+                description: 'Active assets that have outlived their configured useful life',
+                apiEndpoint: '/api/reports/exceptions/beyond-useful-life',
+                ledger: true,
+                ledgerBase: '/api/reports/exceptions',
+                ledgerType: 'beyond-useful-life',
+                hasFilters: true,
+                canExport: true
+            },
+            'exc-fully': {
+                name: 'Fully Depreciated but Active Assets',
+                description: 'Operational assets that have completed depreciation',
+                apiEndpoint: '/api/reports/exceptions/fully-depreciated-active',
+                ledger: true,
+                ledgerBase: '/api/reports/exceptions',
+                ledgerType: 'fully-depreciated-active',
+                hasFilters: true,
+                canExport: true
+            },
+            'exc-idle': {
+                name: 'Idle Assets',
+                description: 'Unassigned assets with no recent use or movement',
+                apiEndpoint: '/api/reports/exceptions/idle',
+                ledger: true,
+                ledgerBase: '/api/reports/exceptions',
+                ledgerType: 'idle',
+                hasFilters: true,
+                canExport: true,
+                hasThreshold: true,
+                thresholdLabel: 'Inactive for at least (days)',
+                thresholdDefault: 90
+            },
+            'exc-dormant': {
+                name: 'Dormant Assets',
+                description: 'Assets with no meaningful activity over the period',
+                apiEndpoint: '/api/reports/exceptions/dormant',
+                ledger: true,
+                ledgerBase: '/api/reports/exceptions',
+                ledgerType: 'dormant',
+                hasFilters: true,
+                canExport: true,
+                hasThreshold: true,
+                thresholdLabel: 'Inactive for at least (days)',
+                thresholdDefault: 365
+            },
+            'exc-replace': {
+                name: 'Assets Due for Replacement',
+                description: 'Assets meeting age, condition or maintenance-cost replacement criteria',
+                apiEndpoint: '/api/reports/exceptions/replacement',
+                ledger: true,
+                ledgerBase: '/api/reports/exceptions',
+                ledgerType: 'replacement',
+                hasFilters: true,
+                canExport: true,
+                hasThreshold: true,
+                thresholdLabel: 'Maintenance cost at least (% of cost)',
+                thresholdDefault: 50
+            },
+            'exc-maint': {
+                name: 'Assets Under Maintenance for Excessive Period',
+                description: 'Assets whose maintenance has stayed open beyond the threshold',
+                apiEndpoint: '/api/reports/exceptions/excessive-maintenance',
+                ledger: true,
+                ledgerBase: '/api/reports/exceptions',
+                ledgerType: 'excessive-maintenance',
+                hasFilters: true,
+                canExport: true,
+                hasThreshold: true,
+                thresholdLabel: 'Open for at least (days)',
+                thresholdDefault: 30
+            },
+            'exc-verify': {
+                name: 'Assets Not Physically Verified',
+                description: 'Assets without a successful verification within the required interval',
+                apiEndpoint: '/api/reports/exceptions/not-verified',
+                ledger: true,
+                ledgerBase: '/api/reports/exceptions',
+                ledgerType: 'not-verified',
+                hasFilters: true,
+                canExport: true,
+                hasThreshold: true,
+                thresholdLabel: 'Not verified for at least (days)',
+                thresholdDefault: 365
+            },
+            'exc-dup': {
+                name: 'Duplicate Asset / Serial Number Report',
+                description: 'Asset codes, serial numbers and barcodes shared by more than one asset',
+                apiEndpoint: '/api/reports/exceptions/duplicates',
+                ledger: true,
+                ledgerBase: '/api/reports/exceptions',
+                ledgerType: 'duplicates',
+                hasFilters: true,
+                canExport: true
+            },
+            'exc-incomplete': {
+                name: 'Incomplete Asset Records',
+                description: 'Assets missing mandatory master-data fields',
+                apiEndpoint: '/api/reports/exceptions/incomplete-records',
+                ledger: true,
+                ledgerBase: '/api/reports/exceptions',
+                ledgerType: 'incomplete-records',
+                hasFilters: true,
+                canExport: true
+            },
+            'exc-quality': {
+                name: 'Asset Data Quality Report',
+                description: 'Consolidated assessment of data completeness, validity and consistency',
+                apiEndpoint: '/api/reports/exceptions/data-quality',
+                ledger: true,
+                ledgerBase: '/api/reports/exceptions',
+                ledgerType: 'data-quality',
+                hasFilters: true,
+                canExport: true
+            },
             'impairment-report': {
                 name: 'Impairment Report',
                 description: 'Impairment losses and reversals recorded within a selected reporting period',
@@ -2243,6 +2458,10 @@
 
         // Filters shared by the on-screen ledger reports and their exports.
         function ledgerParams(config, params) {
+            if (config.hasThreshold) {
+                const threshold = document.getElementById('thresholdFilter')?.value;
+                if (threshold) params.append('threshold', threshold);
+            }
             if (config.hasAuditSession) {
                 const sessionId = document.getElementById('auditSessionFilter')?.value;
                 if (sessionId) params.append('sessionId', sessionId);
@@ -2300,6 +2519,11 @@
             document.getElementById('glAccountWrapper').classList.toggle('hidden', !config.hasGlAccount);
             document.getElementById('auditSessionWrapper').classList.toggle('hidden', !config.hasAuditSession || config.ledgerType === 'last-verification');
             document.getElementById('glStatusWrapper').classList.toggle('hidden', !config.hasGlStatus);
+            document.getElementById('thresholdWrapper').classList.toggle('hidden', !config.hasThreshold);
+            if (config.hasThreshold && switchedReport) {
+                document.getElementById('thresholdLabel').textContent = config.thresholdLabel;
+                document.getElementById('thresholdFilter').value = config.thresholdDefault;
+            }
             if (config.hasGlStatus && switchedReport && config.glStatusDefault) {
                 document.getElementById('glStatusFilter').value = config.glStatusDefault;
             }
