@@ -235,6 +235,16 @@
                                class="w-full h-11 px-4 bg-surface-canvas border border-border-default rounded-xl font-technical-data focus:ring-2 focus:ring-primary focus:border-primary outline-none"
                                placeholder="departmentHead">
 
+                        <input th:if="${parameter.keyName == 'insurance.underinsured.threshold.percent'}" th:id="${parameter.keyName}" th:name="${parameter.keyName}" th:value="${parameter.value}"
+                               type="number" min="1" max="500" step="any" required
+                               class="w-full h-11 px-4 bg-surface-canvas border border-border-default rounded-xl font-technical-data focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+
+                        <select th:if="${parameter.keyName == 'insurance.valuation.basis'}" th:id="${parameter.keyName}" th:name="${parameter.keyName}"
+                                class="w-full h-11 px-4 bg-surface-canvas border border-border-default rounded-xl focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                            <option value="COST" th:selected="${parameter.value == 'COST'}">Original cost</option>
+                            <option value="NBV" th:selected="${parameter.value == 'NBV'}">Net book value</option>
+                        </select>
+
                         <p class="text-label-small text-secondary" th:text="${parameter.description}">Description</p>
                     </div>
                     <button type="submit" class="w-full h-11 bg-primary text-on-primary rounded-xl hover:bg-brand-primary-dark transition-colors font-body-medium flex items-center justify-center gap-2">

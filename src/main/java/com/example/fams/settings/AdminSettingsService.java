@@ -15,6 +15,8 @@ import java.util.Set;
 public class AdminSettingsService {
 
     public static final String DEFAULT_ASSET_STATUS_KEY = "asset.default.status";
+    public static final String INSURANCE_THRESHOLD_KEY = "insurance.underinsured.threshold.percent";
+    public static final String INSURANCE_BASIS_KEY = "insurance.valuation.basis";
 
     private static final Set<String> DEPRECIATION_METHODS = Set.of("SL", "RB", "DDB");
     private static final Set<String> PARAMETER_KEYS = Set.of(
@@ -24,7 +26,9 @@ public class AdminSettingsService {
             "asset.tag.type",
             "asset.disposal.requires.approval",
             "asset.lifecycle.approval.firstGroup",
-            "asset.lifecycle.approval.finalGroup"
+            "asset.lifecycle.approval.finalGroup",
+            INSURANCE_THRESHOLD_KEY,
+            INSURANCE_BASIS_KEY
     );
 
     private final AssetCategoryRepository assetCategoryRepository;
@@ -75,6 +79,8 @@ public class AdminSettingsService {
         createParameterIfMissing("asset.disposal.requires.approval", "Disposal requires approval", "true", "Requires administrator approval before asset disposal is finalized.", "boolean");
         createParameterIfMissing("asset.lifecycle.approval.firstGroup", "Lifecycle first approval group", "departmentHead", "First Flowable candidate group for asset lifecycle workflows.", "text");
         createParameterIfMissing("asset.lifecycle.approval.finalGroup", "Lifecycle final approval group", "admin", "Final Flowable candidate group for asset lifecycle workflows.", "text");
+        createParameterIfMissing(INSURANCE_THRESHOLD_KEY, "Underinsured threshold (%)", "100", "An insured asset is reported as underinsured when its insured amount is below this percentage of its value.", "number");
+        createParameterIfMissing(INSURANCE_BASIS_KEY, "Insurance valuation basis", "COST", "Whether insured amounts are compared with an asset's original cost or its net book value.", "select");
     }
 
     @Transactional
@@ -224,6 +230,24 @@ public class AdminSettingsService {
             case "asset.lifecycle.approval.firstGroup", "asset.lifecycle.approval.finalGroup" -> {
                 if (!clean.matches("[A-Za-z0-9_-]{2,60}")) {
                     throw new IllegalArgumentException("Approval group must be 2-60 letters, numbers, underscores or hyphens.");
+                }
+                yield clean;
+            }
+            case INSURANCE_THRESHOLD_KEY -> {
+                java.math.BigDecimal percent;
+                try {
+                    percent = new java.math.BigDecimal(clean);
+                } catch (NumberFormatException ex) {
+                    throw new IllegalArgumentException("Underinsured threshold must be a number.");
+                }
+                if (percent.signum() <= 0 || percent.compareTo(java.math.BigDecimal.valueOf(500)) > 0) {
+                    throw new IllegalArgumentException("Underinsured threshold must be above 0 and at most 500.");
+                }
+                yield percent.stripTrailingZeros().toPlainString();
+            }
+            case INSURANCE_BASIS_KEY -> {
+                if (!Set.of("COST", "NBV").contains(clean)) {
+                    throw new IllegalArgumentException("Insurance valuation basis is invalid.");
                 }
                 yield clean;
             }

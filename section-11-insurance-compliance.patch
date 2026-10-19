@@ -1,0 +1,1981 @@
+diff --git a/src/main/java/com/example/fams/core/config/AccessRule.java b/src/main/java/com/example/fams/core/config/AccessRule.java
+index a956ebe..a0b56a8 100644
+--- a/src/main/java/com/example/fams/core/config/AccessRule.java
++++ b/src/main/java/com/example/fams/core/config/AccessRule.java
+@@ -27,6 +27,8 @@ public enum AccessRule {
+     // General ledger: posting and account setup are restricted to finance-capable roles
+     GL("gl", "/gl", List.of("admin", "assetManager", "financialOfficers")),
+     GL_BACKFILL("gl-backfill", "/gl/backfill", List.of("admin")),
++    INSURANCE("insurance", "/insurance", List.of("admin", "assetManager", "financialOfficers")),
++    INSURANCE_REPORTS("insurance-reports", "/api/reports/insurance", List.of("admin", "assetManager", "financialOfficers", "auditor")),
+     // Ledger-based reports also open to auditors (read-only)
+     GL_REPORTS("gl-reports", "/api/reports/gl", List.of("admin", "assetManager", "financialOfficers", "auditor")),
+ 
+diff --git a/src/main/java/com/example/fams/insurance/AssetCertification.java b/src/main/java/com/example/fams/insurance/AssetCertification.java
+new file mode 100644
+index 0000000..fad0b9f
+--- /dev/null
++++ b/src/main/java/com/example/fams/insurance/AssetCertification.java
+@@ -0,0 +1,114 @@
++package com.example.fams.insurance;
++
++import com.example.fams.assets.Asset;
++import jakarta.persistence.Column;
++import jakarta.persistence.Entity;
++import jakarta.persistence.FetchType;
++import jakarta.persistence.GeneratedValue;
++import jakarta.persistence.GenerationType;
++import jakarta.persistence.Id;
++import jakarta.persistence.JoinColumn;
++import jakarta.persistence.ManyToOne;
++import jakarta.persistence.Table;
++
++import java.time.LocalDate;
++import java.time.LocalDateTime;
++
++/** A statutory, technical or operational certification held for an asset. */
++@Entity
++@Table(name = "asset_certifications")
++public class AssetCertification {
++
++    @Id
++    @GeneratedValue(strategy = GenerationType.IDENTITY)
++    private Long id;
++
++    @ManyToOne(fetch = FetchType.LAZY, optional = false)
++    @JoinColumn(name = "asset_id", nullable = false)
++    private Asset asset;
++
++    @Column(nullable = false, length = 160)
++    private String certificationType;
++
++    @Column(length = 160)
++    private String issuingAuthority;
++
++    @Column(length = 80)
++    private String certificateNumber;
++
++    @Column(nullable = false)
++    private LocalDate issueDate;
++
++    @Column(nullable = false)
++    private LocalDate expiryDate;
++
++    @Column(columnDefinition = "text")
++    private String notes;
++
++    @Column(nullable = false)
++    private LocalDateTime createdAt = LocalDateTime.now();
++
++    public Long getId() {
++        return id;
++    }
++
++    public Asset getAsset() {
++        return asset;
++    }
++
++    public void setAsset(Asset asset) {
++        this.asset = asset;
++    }
++
++    public String getCertificationType() {
++        return certificationType;
++    }
++
++    public void setCertificationType(String certificationType) {
++        this.certificationType = certificationType;
++    }
++
++    public String getIssuingAuthority() {
++        return issuingAuthority;
++    }
++
++    public void setIssuingAuthority(String issuingAuthority) {
++        this.issuingAuthority = issuingAuthority;
++    }
++
++    public String getCertificateNumber() {
++        return certificateNumber;
++    }
++
++    public void setCertificateNumber(String certificateNumber) {
++        this.certificateNumber = certificateNumber;
++    }
++
++    public LocalDate getIssueDate() {
++        return issueDate;
++    }
++
++    public void setIssueDate(LocalDate issueDate) {
++        this.issueDate = issueDate;
++    }
++
++    public LocalDate getExpiryDate() {
++        return expiryDate;
++    }
++
++    public void setExpiryDate(LocalDate expiryDate) {
++        this.expiryDate = expiryDate;
++    }
++
++    public String getNotes() {
++        return notes;
++    }
++
++    public void setNotes(String notes) {
++        this.notes = notes;
++    }
++
++    public LocalDateTime getCreatedAt() {
++        return createdAt;
++    }
++}
+diff --git a/src/main/java/com/example/fams/insurance/AssetCertificationRepository.java b/src/main/java/com/example/fams/insurance/AssetCertificationRepository.java
+new file mode 100644
+index 0000000..63c9db8
+--- /dev/null
++++ b/src/main/java/com/example/fams/insurance/AssetCertificationRepository.java
+@@ -0,0 +1,12 @@
++package com.example.fams.insurance;
++
++import org.springframework.data.jpa.repository.EntityGraph;
++import org.springframework.data.jpa.repository.JpaRepository;
++
++import java.util.List;
++
++public interface AssetCertificationRepository extends JpaRepository<AssetCertification, Long> {
++
++    @EntityGraph(attributePaths = "asset")
++    List<AssetCertification> findAllByOrderByExpiryDateAsc();
++}
+diff --git a/src/main/java/com/example/fams/insurance/ClaimStatus.java b/src/main/java/com/example/fams/insurance/ClaimStatus.java
+new file mode 100644
+index 0000000..dd57cb2
+--- /dev/null
++++ b/src/main/java/com/example/fams/insurance/ClaimStatus.java
+@@ -0,0 +1,9 @@
++package com.example.fams.insurance;
++
++public enum ClaimStatus {
++    SUBMITTED,
++    UNDER_REVIEW,
++    APPROVED,
++    REJECTED,
++    SETTLED
++}
+diff --git a/src/main/java/com/example/fams/insurance/InsuranceClaim.java b/src/main/java/com/example/fams/insurance/InsuranceClaim.java
+new file mode 100644
+index 0000000..d5244ed
+--- /dev/null
++++ b/src/main/java/com/example/fams/insurance/InsuranceClaim.java
+@@ -0,0 +1,141 @@
++package com.example.fams.insurance;
++
++import com.example.fams.assets.Asset;
++import jakarta.persistence.Column;
++import jakarta.persistence.Entity;
++import jakarta.persistence.EnumType;
++import jakarta.persistence.Enumerated;
++import jakarta.persistence.FetchType;
++import jakarta.persistence.GeneratedValue;
++import jakarta.persistence.GenerationType;
++import jakarta.persistence.Id;
++import jakarta.persistence.JoinColumn;
++import jakarta.persistence.ManyToOne;
++import jakarta.persistence.Table;
++
++import java.math.BigDecimal;
++import java.time.LocalDate;
++import java.time.LocalDateTime;
++
++/** A claim raised under a policy, optionally for a specific asset. */
++@Entity
++@Table(name = "insurance_claims")
++public class InsuranceClaim {
++
++    @Id
++    @GeneratedValue(strategy = GenerationType.IDENTITY)
++    private Long id;
++
++    @ManyToOne(fetch = FetchType.LAZY, optional = false)
++    @JoinColumn(name = "policy_id", nullable = false)
++    private InsurancePolicy policy;
++
++    @ManyToOne(fetch = FetchType.LAZY)
++    @JoinColumn(name = "asset_id")
++    private Asset asset;
++
++    @Column(nullable = false, length = 80)
++    private String claimNumber;
++
++    @Column(nullable = false)
++    private LocalDate incidentDate;
++
++    @Column(nullable = false)
++    private LocalDate claimDate;
++
++    @Column(columnDefinition = "text")
++    private String description;
++
++    @Column(nullable = false, precision = 19, scale = 2)
++    private BigDecimal claimedAmount;
++
++    @Column(precision = 19, scale = 2)
++    private BigDecimal settledAmount;
++
++    @Enumerated(EnumType.STRING)
++    @Column(nullable = false, length = 20)
++    private ClaimStatus status;
++
++    @Column(nullable = false)
++    private LocalDateTime createdAt = LocalDateTime.now();
++
++    public Long getId() {
++        return id;
++    }
++
++    public InsurancePolicy getPolicy() {
++        return policy;
++    }
++
++    public void setPolicy(InsurancePolicy policy) {
++        this.policy = policy;
++    }
++
++    public Asset getAsset() {
++        return asset;
++    }
++
++    public void setAsset(Asset asset) {
++        this.asset = asset;
++    }
++
++    public String getClaimNumber() {
++        return claimNumber;
++    }
++
++    public void setClaimNumber(String claimNumber) {
++        this.claimNumber = claimNumber;
++    }
++
++    public LocalDate getIncidentDate() {
++        return incidentDate;
++    }
++
++    public void setIncidentDate(LocalDate incidentDate) {
++        this.incidentDate = incidentDate;
++    }
++
++    public LocalDate getClaimDate() {
++        return claimDate;
++    }
++
++    public void setClaimDate(LocalDate claimDate) {
++        this.claimDate = claimDate;
++    }
++
++    public String getDescription() {
++        return description;
++    }
++
++    public void setDescription(String description) {
++        this.description = description;
++    }
++
++    public BigDecimal getClaimedAmount() {
++        return claimedAmount;
++    }
++
++    public void setClaimedAmount(BigDecimal claimedAmount) {
++        this.claimedAmount = claimedAmount;
++    }
++
++    public BigDecimal getSettledAmount() {
++        return settledAmount;
++    }
++
++    public void setSettledAmount(BigDecimal settledAmount) {
++        this.settledAmount = settledAmount;
++    }
++
++    public ClaimStatus getStatus() {
++        return status;
++    }
++
++    public void setStatus(ClaimStatus status) {
++        this.status = status;
++    }
++
++    public LocalDateTime getCreatedAt() {
++        return createdAt;
++    }
++}
+diff --git a/src/main/java/com/example/fams/insurance/InsuranceClaimRepository.java b/src/main/java/com/example/fams/insurance/InsuranceClaimRepository.java
+new file mode 100644
+index 0000000..5603e5b
+--- /dev/null
++++ b/src/main/java/com/example/fams/insurance/InsuranceClaimRepository.java
+@@ -0,0 +1,14 @@
++package com.example.fams.insurance;
++
++import org.springframework.data.jpa.repository.EntityGraph;
++import org.springframework.data.jpa.repository.JpaRepository;
++
++import java.util.List;
++
++public interface InsuranceClaimRepository extends JpaRepository<InsuranceClaim, Long> {
++
++    @EntityGraph(attributePaths = {"policy", "asset"})
++    List<InsuranceClaim> findAllByOrderByIncidentDateDesc();
++
++    long countByPolicyId(Long policyId);
++}
+diff --git a/src/main/java/com/example/fams/insurance/InsuranceController.java b/src/main/java/com/example/fams/insurance/InsuranceController.java
+new file mode 100644
+index 0000000..69646cc
+--- /dev/null
++++ b/src/main/java/com/example/fams/insurance/InsuranceController.java
+@@ -0,0 +1,130 @@
++package com.example.fams.insurance;
++
++import com.example.fams.assets.AssetService;
++import org.slf4j.Logger;
++import org.slf4j.LoggerFactory;
++import org.springframework.format.annotation.DateTimeFormat;
++import org.springframework.stereotype.Controller;
++import org.springframework.ui.Model;
++import org.springframework.web.bind.annotation.GetMapping;
++import org.springframework.web.bind.annotation.PathVariable;
++import org.springframework.web.bind.annotation.PostMapping;
++import org.springframework.web.bind.annotation.RequestMapping;
++import org.springframework.web.bind.annotation.RequestParam;
++import org.springframework.web.servlet.mvc.support.RedirectAttributes;
++
++import java.math.BigDecimal;
++import java.time.LocalDate;
++
++/** Management page for insurance policies, coverage, claims and certifications. */
++@Controller
++@RequestMapping("/insurance")
++public class InsuranceController {
++
++    private static final Logger log = LoggerFactory.getLogger(InsuranceController.class);
++
++    private final InsuranceService insuranceService;
++    private final AssetService assetService;
++
++    public InsuranceController(InsuranceService insuranceService, AssetService assetService) {
++        this.insuranceService = insuranceService;
++        this.assetService = assetService;
++    }
++
++    @GetMapping
++    public String page(Model model) {
++        model.addAttribute("policies", insuranceService.findPolicies());
++        model.addAttribute("coverages", insuranceService.findCoverages());
++        model.addAttribute("claims", insuranceService.findClaims());
++        model.addAttribute("certifications", insuranceService.findCertifications());
++        model.addAttribute("categories", insuranceService.findCategories());
++        model.addAttribute("assets", assetService.findAll());
++        model.addAttribute("claimStatuses", ClaimStatus.values());
++        model.addAttribute("today", LocalDate.now());
++        return "insurance/insurance-management";
++    }
++
++    private String done(RedirectAttributes redirect, String success, Runnable action) {
++        try {
++            action.run();
++            redirect.addFlashAttribute("successMessage", success);
++        } catch (Exception ex) {
++            log.warn("Insurance action failed: {}", ex.getMessage());
++            redirect.addFlashAttribute("errorMessage", ex.getMessage() == null ? "The action could not be completed." : ex.getMessage());
++        }
++        return "redirect:/insurance";
++    }
++
++    @PostMapping("/policies")
++    public String createPolicy(@RequestParam String policyNumber, @RequestParam String insurer,
++                               @RequestParam(required = false) String coverageType,
++                               @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
++                               @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
++                               @RequestParam(required = false) BigDecimal premium,
++                               @RequestParam(required = false) String notes,
++                               RedirectAttributes redirect) {
++        return done(redirect, "Policy saved.",
++                () -> insuranceService.createPolicy(policyNumber, insurer, coverageType, startDate, endDate, premium, notes));
++    }
++
++    @PostMapping("/policies/{id}/delete")
++    public String deletePolicy(@PathVariable Long id, RedirectAttributes redirect) {
++        return done(redirect, "Policy removed.", () -> insuranceService.deletePolicy(id));
++    }
++
++    @PostMapping("/coverages")
++    public String addCoverage(@RequestParam Long policyId, @RequestParam Long assetId,
++                              @RequestParam BigDecimal insuredAmount, RedirectAttributes redirect) {
++        return done(redirect, "Coverage added.", () -> insuranceService.addCoverage(policyId, assetId, insuredAmount));
++    }
++
++    @PostMapping("/coverages/{id}/delete")
++    public String deleteCoverage(@PathVariable Long id, RedirectAttributes redirect) {
++        return done(redirect, "Coverage removed.", () -> insuranceService.deleteCoverage(id));
++    }
++
++    @PostMapping("/claims")
++    public String createClaim(@RequestParam Long policyId, @RequestParam(required = false) Long assetId,
++                              @RequestParam String claimNumber,
++                              @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate incidentDate,
++                              @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate claimDate,
++                              @RequestParam(required = false) String description,
++                              @RequestParam BigDecimal claimedAmount,
++                              @RequestParam(required = false) BigDecimal settledAmount,
++                              @RequestParam(required = false) ClaimStatus status,
++                              RedirectAttributes redirect) {
++        return done(redirect, "Claim recorded.", () -> insuranceService.createClaim(policyId, assetId, claimNumber,
++                incidentDate, claimDate, description, claimedAmount, settledAmount, status));
++    }
++
++    @PostMapping("/claims/{id}/delete")
++    public String deleteClaim(@PathVariable Long id, RedirectAttributes redirect) {
++        return done(redirect, "Claim removed.", () -> insuranceService.deleteClaim(id));
++    }
++
++    @PostMapping("/certifications")
++    public String createCertification(@RequestParam Long assetId, @RequestParam String certificationType,
++                                      @RequestParam(required = false) String issuingAuthority,
++                                      @RequestParam(required = false) String certificateNumber,
++                                      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate issueDate,
++                                      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate expiryDate,
++                                      @RequestParam(required = false) String notes,
++                                      RedirectAttributes redirect) {
++        return done(redirect, "Certification recorded.", () -> insuranceService.createCertification(assetId,
++                certificationType, issuingAuthority, certificateNumber, issueDate, expiryDate, notes));
++    }
++
++    @PostMapping("/certifications/{id}/delete")
++    public String deleteCertification(@PathVariable Long id, RedirectAttributes redirect) {
++        return done(redirect, "Certification removed.", () -> insuranceService.deleteCertification(id));
++    }
++
++    @PostMapping("/categories/{id}")
++    public String updateCategory(@PathVariable Long id,
++                                 @RequestParam(defaultValue = "false") boolean insuranceRequired,
++                                 @RequestParam(defaultValue = "false") boolean certificationRequired,
++                                 RedirectAttributes redirect) {
++        return done(redirect, "Category requirements saved.",
++                () -> insuranceService.updateCategoryRequirements(id, insuranceRequired, certificationRequired));
++    }
++}
+diff --git a/src/main/java/com/example/fams/insurance/InsuranceCoverage.java b/src/main/java/com/example/fams/insurance/InsuranceCoverage.java
+new file mode 100644
+index 0000000..013e6cc
+--- /dev/null
++++ b/src/main/java/com/example/fams/insurance/InsuranceCoverage.java
+@@ -0,0 +1,73 @@
++package com.example.fams.insurance;
++
++import com.example.fams.assets.Asset;
++import jakarta.persistence.Column;
++import jakarta.persistence.Entity;
++import jakarta.persistence.FetchType;
++import jakarta.persistence.GeneratedValue;
++import jakarta.persistence.GenerationType;
++import jakarta.persistence.Id;
++import jakarta.persistence.JoinColumn;
++import jakarta.persistence.ManyToOne;
++import jakarta.persistence.Table;
++import jakarta.persistence.UniqueConstraint;
++
++import java.math.BigDecimal;
++import java.time.LocalDateTime;
++
++/** One asset covered by a policy, with the amount insured for it. */
++@Entity
++@Table(name = "insurance_coverages",
++       uniqueConstraints = @UniqueConstraint(name = "uk_insurance_coverage_policy_asset", columnNames = {"policy_id", "asset_id"}))
++public class InsuranceCoverage {
++
++    @Id
++    @GeneratedValue(strategy = GenerationType.IDENTITY)
++    private Long id;
++
++    @ManyToOne(fetch = FetchType.LAZY, optional = false)
++    @JoinColumn(name = "policy_id", nullable = false)
++    private InsurancePolicy policy;
++
++    @ManyToOne(fetch = FetchType.LAZY, optional = false)
++    @JoinColumn(name = "asset_id", nullable = false)
++    private Asset asset;
++
++    @Column(nullable = false, precision = 19, scale = 2)
++    private BigDecimal insuredAmount;
++
++    @Column(nullable = false)
++    private LocalDateTime createdAt = LocalDateTime.now();
++
++    public Long getId() {
++        return id;
++    }
++
++    public InsurancePolicy getPolicy() {
++        return policy;
++    }
++
++    public void setPolicy(InsurancePolicy policy) {
++        this.policy = policy;
++    }
++
++    public Asset getAsset() {
++        return asset;
++    }
++
++    public void setAsset(Asset asset) {
++        this.asset = asset;
++    }
++
++    public BigDecimal getInsuredAmount() {
++        return insuredAmount;
++    }
++
++    public void setInsuredAmount(BigDecimal insuredAmount) {
++        this.insuredAmount = insuredAmount;
++    }
++
++    public LocalDateTime getCreatedAt() {
++        return createdAt;
++    }
++}
+diff --git a/src/main/java/com/example/fams/insurance/InsuranceCoverageRepository.java b/src/main/java/com/example/fams/insurance/InsuranceCoverageRepository.java
+new file mode 100644
+index 0000000..be27fdb
+--- /dev/null
++++ b/src/main/java/com/example/fams/insurance/InsuranceCoverageRepository.java
+@@ -0,0 +1,18 @@
++package com.example.fams.insurance;
++
++import org.springframework.data.jpa.repository.EntityGraph;
++import org.springframework.data.jpa.repository.JpaRepository;
++
++import java.util.List;
++
++public interface InsuranceCoverageRepository extends JpaRepository<InsuranceCoverage, Long> {
++
++    @EntityGraph(attributePaths = {"policy", "asset"})
++    List<InsuranceCoverage> findAllByOrderByIdAsc();
++
++    boolean existsByPolicyIdAndAssetId(Long policyId, Long assetId);
++
++    long countByPolicyId(Long policyId);
++
++    void deleteByPolicyId(Long policyId);
++}
+diff --git a/src/main/java/com/example/fams/insurance/InsurancePolicy.java b/src/main/java/com/example/fams/insurance/InsurancePolicy.java
+new file mode 100644
+index 0000000..9fffb23
+--- /dev/null
++++ b/src/main/java/com/example/fams/insurance/InsurancePolicy.java
+@@ -0,0 +1,110 @@
++package com.example.fams.insurance;
++
++import jakarta.persistence.Column;
++import jakarta.persistence.Entity;
++import jakarta.persistence.GeneratedValue;
++import jakarta.persistence.GenerationType;
++import jakarta.persistence.Id;
++import jakarta.persistence.Table;
++
++import java.math.BigDecimal;
++import java.time.LocalDate;
++import java.time.LocalDateTime;
++
++/** An insurance policy; the assets it covers are held as {@link InsuranceCoverage} rows. */
++@Entity
++@Table(name = "insurance_policies")
++public class InsurancePolicy {
++
++    @Id
++    @GeneratedValue(strategy = GenerationType.IDENTITY)
++    private Long id;
++
++    @Column(nullable = false, unique = true, length = 80)
++    private String policyNumber;
++
++    @Column(nullable = false, length = 160)
++    private String insurer;
++
++    @Column(length = 160)
++    private String coverageType;
++
++    @Column(nullable = false)
++    private LocalDate startDate;
++
++    @Column(nullable = false)
++    private LocalDate endDate;
++
++    @Column(precision = 19, scale = 2)
++    private BigDecimal premium;
++
++    @Column(columnDefinition = "text")
++    private String notes;
++
++    @Column(nullable = false)
++    private LocalDateTime createdAt = LocalDateTime.now();
++
++    public Long getId() {
++        return id;
++    }
++
++    public String getPolicyNumber() {
++        return policyNumber;
++    }
++
++    public void setPolicyNumber(String policyNumber) {
++        this.policyNumber = policyNumber;
++    }
++
++    public String getInsurer() {
++        return insurer;
++    }
++
++    public void setInsurer(String insurer) {
++        this.insurer = insurer;
++    }
++
++    public String getCoverageType() {
++        return coverageType;
++    }
++
++    public void setCoverageType(String coverageType) {
++        this.coverageType = coverageType;
++    }
++
++    public LocalDate getStartDate() {
++        return startDate;
++    }
++
++    public void setStartDate(LocalDate startDate) {
++        this.startDate = startDate;
++    }
++
++    public LocalDate getEndDate() {
++        return endDate;
++    }
++
++    public void setEndDate(LocalDate endDate) {
++        this.endDate = endDate;
++    }
++
++    public BigDecimal getPremium() {
++        return premium;
++    }
++
++    public void setPremium(BigDecimal premium) {
++        this.premium = premium;
++    }
++
++    public String getNotes() {
++        return notes;
++    }
++
++    public void setNotes(String notes) {
++        this.notes = notes;
++    }
++
++    public LocalDateTime getCreatedAt() {
++        return createdAt;
++    }
++}
+diff --git a/src/main/java/com/example/fams/insurance/InsurancePolicyRepository.java b/src/main/java/com/example/fams/insurance/InsurancePolicyRepository.java
+new file mode 100644
+index 0000000..d6a432d
+--- /dev/null
++++ b/src/main/java/com/example/fams/insurance/InsurancePolicyRepository.java
+@@ -0,0 +1,12 @@
++package com.example.fams.insurance;
++
++import org.springframework.data.jpa.repository.JpaRepository;
++
++import java.util.List;
++
++public interface InsurancePolicyRepository extends JpaRepository<InsurancePolicy, Long> {
++
++    boolean existsByPolicyNumberIgnoreCase(String policyNumber);
++
++    List<InsurancePolicy> findAllByOrderByEndDateAsc();
++}
+diff --git a/src/main/java/com/example/fams/insurance/InsuranceService.java b/src/main/java/com/example/fams/insurance/InsuranceService.java
+new file mode 100644
+index 0000000..b54a8a6
+--- /dev/null
++++ b/src/main/java/com/example/fams/insurance/InsuranceService.java
+@@ -0,0 +1,225 @@
++package com.example.fams.insurance;
++
++import com.example.fams.assets.AssetService;
++import com.example.fams.settings.AssetCategory;
++import com.example.fams.settings.AssetCategoryRepository;
++import org.springframework.stereotype.Service;
++import org.springframework.transaction.annotation.Transactional;
++
++import java.math.BigDecimal;
++import java.time.LocalDate;
++import java.util.List;
++import java.util.NoSuchElementException;
++
++/** Records insurance policies, the assets they cover, claims and asset certifications. */
++@Service
++public class InsuranceService {
++
++    private final InsurancePolicyRepository policyRepository;
++    private final InsuranceCoverageRepository coverageRepository;
++    private final InsuranceClaimRepository claimRepository;
++    private final AssetCertificationRepository certificationRepository;
++    private final AssetCategoryRepository categoryRepository;
++    private final AssetService assetService;
++
++    public InsuranceService(InsurancePolicyRepository policyRepository,
++                            InsuranceCoverageRepository coverageRepository,
++                            InsuranceClaimRepository claimRepository,
++                            AssetCertificationRepository certificationRepository,
++                            AssetCategoryRepository categoryRepository,
++                            AssetService assetService) {
++        this.policyRepository = policyRepository;
++        this.coverageRepository = coverageRepository;
++        this.claimRepository = claimRepository;
++        this.certificationRepository = certificationRepository;
++        this.categoryRepository = categoryRepository;
++        this.assetService = assetService;
++    }
++
++    @Transactional(readOnly = true)
++    public List<InsurancePolicy> findPolicies() {
++        return policyRepository.findAllByOrderByEndDateAsc();
++    }
++
++    @Transactional(readOnly = true)
++    public List<InsuranceCoverage> findCoverages() {
++        return coverageRepository.findAllByOrderByIdAsc();
++    }
++
++    @Transactional(readOnly = true)
++    public List<InsuranceClaim> findClaims() {
++        return claimRepository.findAllByOrderByIncidentDateDesc();
++    }
++
++    @Transactional(readOnly = true)
++    public List<AssetCertification> findCertifications() {
++        return certificationRepository.findAllByOrderByExpiryDateAsc();
++    }
++
++    @Transactional(readOnly = true)
++    public List<AssetCategory> findCategories() {
++        return categoryRepository.findAll().stream()
++                .sorted(java.util.Comparator.comparing(AssetCategory::getName, String.CASE_INSENSITIVE_ORDER))
++                .toList();
++    }
++
++    private String required(String value, String label) {
++        if (value == null || value.isBlank()) {
++            throw new IllegalArgumentException(label + " is required.");
++        }
++        return value.trim();
++    }
++
++    private String optional(String value) {
++        return value == null || value.isBlank() ? null : value.trim();
++    }
++
++    // ---------------------------------------------------------------- policies
++
++    @Transactional
++    public InsurancePolicy createPolicy(String policyNumber, String insurer, String coverageType, LocalDate startDate,
++                                        LocalDate endDate, BigDecimal premium, String notes) {
++        String number = required(policyNumber, "Policy number");
++        if (policyRepository.existsByPolicyNumberIgnoreCase(number)) {
++            throw new IllegalArgumentException("A policy with number " + number + " already exists.");
++        }
++        if (startDate == null || endDate == null) {
++            throw new IllegalArgumentException("Start and end dates are required.");
++        }
++        if (endDate.isBefore(startDate)) {
++            throw new IllegalArgumentException("The policy end date cannot be before its start date.");
++        }
++        if (premium != null && premium.signum() < 0) {
++            throw new IllegalArgumentException("The premium cannot be negative.");
++        }
++        InsurancePolicy policy = new InsurancePolicy();
++        policy.setPolicyNumber(number);
++        policy.setInsurer(required(insurer, "Insurer"));
++        policy.setCoverageType(optional(coverageType));
++        policy.setStartDate(startDate);
++        policy.setEndDate(endDate);
++        policy.setPremium(premium);
++        policy.setNotes(optional(notes));
++        return policyRepository.save(policy);
++    }
++
++    @Transactional
++    public void deletePolicy(Long id) {
++        if (claimRepository.countByPolicyId(id) > 0) {
++            throw new IllegalArgumentException("This policy has claims recorded against it and cannot be removed.");
++        }
++        coverageRepository.deleteByPolicyId(id);
++        policyRepository.deleteById(id);
++    }
++
++    // ---------------------------------------------------------------- coverage
++
++    @Transactional
++    public InsuranceCoverage addCoverage(Long policyId, Long assetId, BigDecimal insuredAmount) {
++        if (policyId == null || assetId == null) {
++            throw new IllegalArgumentException("Choose a policy and an asset.");
++        }
++        if (insuredAmount == null || insuredAmount.signum() <= 0) {
++            throw new IllegalArgumentException("The insured amount must be greater than zero.");
++        }
++        if (coverageRepository.existsByPolicyIdAndAssetId(policyId, assetId)) {
++            throw new IllegalArgumentException("That asset is already covered by this policy.");
++        }
++        InsuranceCoverage coverage = new InsuranceCoverage();
++        coverage.setPolicy(policyRepository.findById(policyId)
++                .orElseThrow(() -> new NoSuchElementException("Policy not found.")));
++        coverage.setAsset(assetService.findById(assetId));
++        coverage.setInsuredAmount(insuredAmount);
++        return coverageRepository.save(coverage);
++    }
++
++    @Transactional
++    public void deleteCoverage(Long id) {
++        coverageRepository.deleteById(id);
++    }
++
++    // ------------------------------------------------------------------ claims
++
++    @Transactional
++    public InsuranceClaim createClaim(Long policyId, Long assetId, String claimNumber, LocalDate incidentDate,
++                                      LocalDate claimDate, String description, BigDecimal claimedAmount,
++                                      BigDecimal settledAmount, ClaimStatus status) {
++        if (policyId == null) {
++            throw new IllegalArgumentException("Choose the policy the claim is made under.");
++        }
++        if (incidentDate == null || claimDate == null) {
++            throw new IllegalArgumentException("Incident and claim dates are required.");
++        }
++        if (claimDate.isBefore(incidentDate)) {
++            throw new IllegalArgumentException("The claim date cannot be before the incident date.");
++        }
++        if (claimedAmount == null || claimedAmount.signum() <= 0) {
++            throw new IllegalArgumentException("The claimed amount must be greater than zero.");
++        }
++        if (settledAmount != null && settledAmount.signum() < 0) {
++            throw new IllegalArgumentException("The settled amount cannot be negative.");
++        }
++        InsuranceClaim claim = new InsuranceClaim();
++        claim.setPolicy(policyRepository.findById(policyId)
++                .orElseThrow(() -> new NoSuchElementException("Policy not found.")));
++        if (assetId != null) {
++            claim.setAsset(assetService.findById(assetId));
++        }
++        claim.setClaimNumber(required(claimNumber, "Claim number"));
++        claim.setIncidentDate(incidentDate);
++        claim.setClaimDate(claimDate);
++        claim.setDescription(optional(description));
++        claim.setClaimedAmount(claimedAmount);
++        claim.setSettledAmount(settledAmount);
++        claim.setStatus(status == null ? ClaimStatus.SUBMITTED : status);
++        return claimRepository.save(claim);
++    }
++
++    @Transactional
++    public void deleteClaim(Long id) {
++        claimRepository.deleteById(id);
++    }
++
++    // ---------------------------------------------------------- certifications
++
++    @Transactional
++    public AssetCertification createCertification(Long assetId, String certificationType, String issuingAuthority,
++                                                  String certificateNumber, LocalDate issueDate, LocalDate expiryDate,
++                                                  String notes) {
++        if (assetId == null) {
++            throw new IllegalArgumentException("Choose an asset.");
++        }
++        if (issueDate == null || expiryDate == null) {
++            throw new IllegalArgumentException("Issue and expiry dates are required.");
++        }
++        if (expiryDate.isBefore(issueDate)) {
++            throw new IllegalArgumentException("The expiry date cannot be before the issue date.");
++        }
++        AssetCertification certification = new AssetCertification();
++        certification.setAsset(assetService.findById(assetId));
++        certification.setCertificationType(required(certificationType, "Certification type"));
++        certification.setIssuingAuthority(optional(issuingAuthority));
++        certification.setCertificateNumber(optional(certificateNumber));
++        certification.setIssueDate(issueDate);
++        certification.setExpiryDate(expiryDate);
++        certification.setNotes(optional(notes));
++        return certificationRepository.save(certification);
++    }
++
++    @Transactional
++    public void deleteCertification(Long id) {
++        certificationRepository.deleteById(id);
++    }
++
++    // ------------------------------------------------------------ requirements
++
++    /** Marks whether a category's assets are expected to be insured and/or certified. */
++    @Transactional
++    public void updateCategoryRequirements(Long categoryId, boolean insuranceRequired, boolean certificationRequired) {
++        AssetCategory category = categoryRepository.findById(categoryId)
++                .orElseThrow(() -> new NoSuchElementException("Asset category not found."));
++        category.setInsuranceRequired(insuranceRequired);
++        category.setCertificationRequired(certificationRequired);
++        categoryRepository.save(category);
++    }
++}
+diff --git a/src/main/java/com/example/fams/reports/InsuranceReportController.java b/src/main/java/com/example/fams/reports/InsuranceReportController.java
+new file mode 100644
+index 0000000..5d58fde
+--- /dev/null
++++ b/src/main/java/com/example/fams/reports/InsuranceReportController.java
+@@ -0,0 +1,108 @@
++package com.example.fams.reports;
++
++import com.example.fams.core.config.AuthenticationManager;
++import org.springframework.format.annotation.DateTimeFormat;
++import org.springframework.http.HttpHeaders;
++import org.springframework.http.HttpStatus;
++import org.springframework.http.MediaType;
++import org.springframework.http.ResponseEntity;
++import org.springframework.web.bind.annotation.GetMapping;
++import org.springframework.web.bind.annotation.PathVariable;
++import org.springframework.web.bind.annotation.RequestMapping;
++import org.springframework.web.bind.annotation.RequestParam;
++import org.springframework.web.bind.annotation.RestController;
++
++import java.time.LocalDate;
++import java.util.HashMap;
++import java.util.Map;
++
++/**
++ * Insurance and compliance reports. Restricted to admin, asset manager, financial officer
++ * and auditor roles; these reports are not department-scoped.
++ */
++@RestController
++@RequestMapping("/api/reports/insurance")
++public class InsuranceReportController {
++
++    private final InsuranceReportService reportService;
++    private final TabularExportService exportService;
++    private final AuthenticationManager authenticationManager;
++
++    public InsuranceReportController(InsuranceReportService reportService, TabularExportService exportService,
++                                     AuthenticationManager authenticationManager) {
++        this.reportService = reportService;
++        this.exportService = exportService;
++        this.authenticationManager = authenticationManager;
++    }
++
++    private boolean allowed() {
++        return authenticationManager.isAdmin() || authenticationManager.isAuditor()
++                || authenticationManager.isAssetManager() || authenticationManager.isFinancialOfficer();
++    }
++
++    private ResponseEntity<Map<String, Object>> failure(HttpStatus status, String message) {
++        Map<String, Object> body = new HashMap<>();
++        body.put("success", false);
++        body.put("message", message);
++        return ResponseEntity.status(status).body(body);
++    }
++
++    @GetMapping("/{type}")
++    public ResponseEntity<Map<String, Object>> report(
++            @PathVariable String type,
++            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
++            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
++        if (!allowed()) return failure(HttpStatus.FORBIDDEN, "You do not have access to insurance reports.");
++        try {
++            TabularReport report = build(type, startDate, endDate);
++            if (report == null) return failure(HttpStatus.NOT_FOUND, "Unknown insurance report: " + type);
++            Map<String, Object> body = new HashMap<>();
++            body.put("success", true);
++            body.put("data", report);
++            return ResponseEntity.ok(body);
++        } catch (Exception e) {
++            return failure(HttpStatus.BAD_REQUEST, "Error generating insurance report: " + e.getMessage());
++        }
++    }
++
++    @GetMapping("/{type}/export")
++    public ResponseEntity<byte[]> export(
++            @PathVariable String type,
++            @RequestParam(defaultValue = "excel") String format,
++            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
++            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
++        if (!allowed()) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
++        TabularReport report;
++        try {
++            report = build(type, startDate, endDate);
++        } catch (Exception e) {
++            return ResponseEntity.badRequest().build();
++        }
++        if (report == null) return ResponseEntity.notFound().build();
++
++        boolean pdf = "pdf".equalsIgnoreCase(format);
++        byte[] bytes = pdf ? exportService.toPdf(report) : exportService.toExcel(report);
++        String filename = type + "-" + report.generatedDate() + (pdf ? ".pdf" : ".xlsx");
++        return ResponseEntity.ok()
++                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
++                .contentType(pdf ? MediaType.APPLICATION_PDF
++                        : MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
++                .body(bytes);
++    }
++
++    private TabularReport build(String type, LocalDate from, LocalDate to) {
++        return switch (type) {
++            case "insured-assets" -> reportService.insuredAssets();
++            case "uninsured-assets" -> reportService.uninsuredAssets();
++            case "policy-register" -> reportService.policyRegister();
++            case "coverage-by-asset" -> reportService.coverageByAsset();
++            case "insurance-expiry" -> reportService.insuranceExpiry(from, to);
++            case "value-vs-coverage" -> reportService.valueVsCoverage();
++            case "underinsured-assets" -> reportService.underinsured();
++            case "compliance" -> reportService.certificationCompliance();
++            case "certification-expiry" -> reportService.certificationExpiry(from, to);
++            case "claim-history" -> reportService.claimHistory(from, to);
++            default -> null;
++        };
++    }
++}
+diff --git a/src/main/java/com/example/fams/reports/InsuranceReportService.java b/src/main/java/com/example/fams/reports/InsuranceReportService.java
+new file mode 100644
+index 0000000..92e4c95
+--- /dev/null
++++ b/src/main/java/com/example/fams/reports/InsuranceReportService.java
+@@ -0,0 +1,485 @@
++package com.example.fams.reports;
++
++import com.example.fams.assets.Asset;
++import com.example.fams.assets.AssetRepository;
++import com.example.fams.common.AppClock;
++import com.example.fams.depreciation.DepreciationPosting;
++import com.example.fams.depreciation.DepreciationService;
++import com.example.fams.insurance.AssetCertification;
++import com.example.fams.insurance.AssetCertificationRepository;
++import com.example.fams.insurance.InsuranceClaim;
++import com.example.fams.insurance.InsuranceClaimRepository;
++import com.example.fams.insurance.InsuranceCoverage;
++import com.example.fams.insurance.InsuranceCoverageRepository;
++import com.example.fams.insurance.InsurancePolicy;
++import com.example.fams.insurance.InsurancePolicyRepository;
++import com.example.fams.reports.TabularReport.Column;
++import com.example.fams.settings.AdminSettingsService;
++import com.example.fams.settings.AssetCategory;
++import com.example.fams.settings.AssetCategoryRepository;
++import org.springframework.stereotype.Service;
++import org.springframework.transaction.annotation.Transactional;
++
++import java.math.BigDecimal;
++import java.math.RoundingMode;
++import java.time.LocalDate;
++import java.time.temporal.ChronoUnit;
++import java.util.ArrayList;
++import java.util.Comparator;
++import java.util.HashMap;
++import java.util.HashSet;
++import java.util.LinkedHashMap;
++import java.util.List;
++import java.util.Map;
++import java.util.Set;
++import java.util.stream.Collectors;
++
++/**
++ * Insurance and compliance reports: insured and uninsured assets, policies, coverage,
++ * expiry, value against cover, underinsurance, certifications and claims.
++ *
++ * <p>A policy is active between its start and end dates inclusive. Assets are "expected" to
++ * be insured or certified when their category is flagged that way on the Insurance &amp;
++ * Compliance page. Not department-scoped: callers must be restricted to finance-capable
++ * roles and auditors.
++ */
++@Service
++@Transactional(readOnly = true)
++public class InsuranceReportService {
++
++    private static final LocalDate MIN_DATE = LocalDate.of(1900, 1, 1);
++    private static final LocalDate MAX_DATE = LocalDate.of(2999, 12, 31);
++    private static final int EXPIRING_SOON_DAYS = 30;
++    private static final int EXPIRING_WITHIN_DAYS = 90;
++
++    private final InsurancePolicyRepository policyRepository;
++    private final InsuranceCoverageRepository coverageRepository;
++    private final InsuranceClaimRepository claimRepository;
++    private final AssetCertificationRepository certificationRepository;
++    private final AssetCategoryRepository categoryRepository;
++    private final AssetRepository assetRepository;
++    private final DepreciationService depreciationService;
++    private final AdminSettingsService settingsService;
++
++    public InsuranceReportService(InsurancePolicyRepository policyRepository,
++                                  InsuranceCoverageRepository coverageRepository,
++                                  InsuranceClaimRepository claimRepository,
++                                  AssetCertificationRepository certificationRepository,
++                                  AssetCategoryRepository categoryRepository,
++                                  AssetRepository assetRepository,
++                                  DepreciationService depreciationService,
++                                  AdminSettingsService settingsService) {
++        this.policyRepository = policyRepository;
++        this.coverageRepository = coverageRepository;
++        this.claimRepository = claimRepository;
++        this.certificationRepository = certificationRepository;
++        this.categoryRepository = categoryRepository;
++        this.assetRepository = assetRepository;
++        this.depreciationService = depreciationService;
++        this.settingsService = settingsService;
++    }
++
++    // ------------------------------------------------------------------ helpers
++
++    private BigDecimal money(BigDecimal value) {
++        return (value == null ? BigDecimal.ZERO : value).setScale(2, RoundingMode.HALF_UP);
++    }
++
++    private String nz(Object value) {
++        return value == null ? "" : String.valueOf(value);
++    }
++
++    private Map<String, Object> row(Object... keyValues) {
++        Map<String, Object> row = new LinkedHashMap<>();
++        for (int i = 0; i < keyValues.length; i += 2) {
++            row.put((String) keyValues[i], keyValues[i + 1]);
++        }
++        return row;
++    }
++
++    private Map<String, Object> summary(Object... keyValues) {
++        Map<String, Object> map = new LinkedHashMap<>();
++        for (int i = 0; i < keyValues.length; i += 2) {
++            map.put((String) keyValues[i], String.valueOf(keyValues[i + 1]));
++        }
++        return map;
++    }
++
++    private TabularReport table(String title, String description, List<Column> columns, List<Map<String, Object>> rows,
++                                Map<String, Object> totals, Map<String, Object> summary, List<String> notes) {
++        return new TabularReport(title, description, AppClock.today(), columns, rows,
++                totals == null ? Map.<String, Object>of() : totals,
++                summary == null ? Map.<String, Object>of() : summary,
++                notes == null ? List.<String>of() : notes, rows.isEmpty());
++    }
++
++    private Column text(String key, String label) {
++        return new Column(key, label, "text");
++    }
++
++    private Column date(String key, String label) {
++        return new Column(key, label, "date");
++    }
++
++    private Column moneyCol(String key, String label) {
++        return new Column(key, label, "money");
++    }
++
++    private Column number(String key, String label) {
++        return new Column(key, label, "number");
++    }
++
++    private boolean isActive(InsurancePolicy policy, LocalDate today) {
++        return !policy.getStartDate().isAfter(today) && !policy.getEndDate().isBefore(today);
++    }
++
++    private String policyStatus(InsurancePolicy policy, LocalDate today) {
++        if (policy.getEndDate().isBefore(today)) return "Expired";
++        if (policy.getStartDate().isAfter(today)) return "Not started";
++        return "Active";
++    }
++
++    private String expiryStatus(long days) {
++        if (days < 0) return "Expired";
++        if (days <= EXPIRING_SOON_DAYS) return "Expires within 30 days";
++        if (days <= EXPIRING_WITHIN_DAYS) return "Expires within 90 days";
++        return "Valid";
++    }
++
++    private boolean live(Asset asset) {
++        return !"Disposed".equalsIgnoreCase(asset.getStatus());
++    }
++
++    private Set<String> categoriesWhere(java.util.function.Predicate<AssetCategory> flag) {
++        return categoryRepository.findAll().stream().filter(flag)
++                .map(c -> c.getName().trim().toLowerCase()).collect(Collectors.toSet());
++    }
++
++    private boolean inCategories(Asset asset, Set<String> names) {
++        return asset.getCategory() != null && names.contains(asset.getCategory().trim().toLowerCase());
++    }
++
++    private List<InsuranceCoverage> activeCoverages(LocalDate today) {
++        return coverageRepository.findAllByOrderByIdAsc().stream()
++                .filter(c -> isActive(c.getPolicy(), today)).toList();
++    }
++
++    private Map<Long, BigDecimal> insuredByAsset(List<InsuranceCoverage> coverages) {
++        Map<Long, BigDecimal> insured = new HashMap<>();
++        for (InsuranceCoverage c : coverages) {
++            insured.merge(c.getAsset().getId(), c.getInsuredAmount(), BigDecimal::add);
++        }
++        return insured;
++    }
++
++    /** Value of an asset for insurance comparison, on the configured basis (cost or net book value). */
++    private BigDecimal valueOf(Asset asset, Map<Long, DepreciationPosting> postings, boolean nbvBasis) {
++        BigDecimal cost = asset.getPurchaseCost() == null ? BigDecimal.ZERO : asset.getPurchaseCost();
++        if (!nbvBasis) return cost;
++        DepreciationPosting posting = postings.get(asset.getId());
++        return posting != null && posting.getBookValue() != null ? posting.getBookValue() : cost;
++    }
++
++    private BigDecimal threshold() {
++        try {
++            return new BigDecimal(settingsService.getParameterValue(AdminSettingsService.INSURANCE_THRESHOLD_KEY, "100"));
++        } catch (NumberFormatException ex) {
++            return BigDecimal.valueOf(100);
++        }
++    }
++
++    private boolean nbvBasis() {
++        return "NBV".equalsIgnoreCase(settingsService.getParameterValue(AdminSettingsService.INSURANCE_BASIS_KEY, "COST"));
++    }
++
++    private String percent(BigDecimal part, BigDecimal whole) {
++        if (whole == null || whole.signum() == 0) return "—";
++        return part.multiply(BigDecimal.valueOf(100)).divide(whole, 1, RoundingMode.HALF_UP) + "%";
++    }
++
++    // ------------------------------------------------------------------ reports
++
++    /** Insured Assets Register: assets with cover in force today. */
++    public TabularReport insuredAssets() {
++        LocalDate today = AppClock.today();
++        List<Map<String, Object>> rows = new ArrayList<>();
++        BigDecimal total = BigDecimal.ZERO;
++        Set<Long> assets = new HashSet<>();
++        for (InsuranceCoverage c : activeCoverages(today)) {
++            Asset a = c.getAsset();
++            InsurancePolicy p = c.getPolicy();
++            assets.add(a.getId());
++            total = total.add(c.getInsuredAmount());
++            rows.add(row("assetCode", a.getAssetCode(), "assetName", a.getName(), "category", nz(a.getCategory()),
++                    "policy", p.getPolicyNumber(), "insurer", p.getInsurer(), "coverageType", nz(p.getCoverageType()),
++                    "insured", money(c.getInsuredAmount()), "end", p.getEndDate().toString(),
++                    "days", ChronoUnit.DAYS.between(today, p.getEndDate())));
++        }
++        rows.sort(Comparator.comparing(m -> String.valueOf(m.get("assetCode"))));
++        List<Column> cols = List.of(text("assetCode", "Asset Code"), text("assetName", "Asset"), text("category", "Category"),
++                text("policy", "Policy"), text("insurer", "Insurer"), text("coverageType", "Coverage Type"),
++                moneyCol("insured", "Insured Amount"), date("end", "Policy Expires"), number("days", "Days to Expiry"));
++        return table("Insured Assets Register", "Assets with insurance cover in force today.", cols, rows,
++                rows.isEmpty() ? null : row("assetName", "Total insured", "insured", money(total)),
++                summary("Insured assets", assets.size(), "Total insured", money(total)), null);
++    }
++
++    /** Uninsured Assets: assets in categories expected to be insured that have no cover in force. */
++    public TabularReport uninsuredAssets() {
++        LocalDate today = AppClock.today();
++        Set<String> required = categoriesWhere(AssetCategory::isInsuranceRequired);
++        Set<Long> covered = activeCoverages(today).stream().map(c -> c.getAsset().getId()).collect(Collectors.toSet());
++        Map<Long, LocalDate> lastCoverEnd = new HashMap<>();
++        for (InsuranceCoverage c : coverageRepository.findAllByOrderByIdAsc()) {
++            lastCoverEnd.merge(c.getAsset().getId(), c.getPolicy().getEndDate(), (x, y) -> x.isAfter(y) ? x : y);
++        }
++        List<Map<String, Object>> rows = new ArrayList<>();
++        for (Asset a : assetRepository.findAll()) {
++            if (!live(a) || !inCategories(a, required) || covered.contains(a.getId())) continue;
++            LocalDate last = lastCoverEnd.get(a.getId());
++            rows.add(row("assetCode", a.getAssetCode(), "assetName", a.getName(), "category", nz(a.getCategory()),
++                    "department", nz(a.getDepartment()), "status", nz(a.getStatus()),
++                    "cost", money(a.getPurchaseCost()), "lastCover", last == null ? "Never insured" : "Expired " + last));
++        }
++        rows.sort(Comparator.comparing(m -> String.valueOf(m.get("assetCode"))));
++        List<String> notes = new ArrayList<>();
++        if (required.isEmpty()) {
++            notes.add("No categories are marked as requiring insurance. Set this on the Insurance & Compliance page.");
++        }
++        List<Column> cols = List.of(text("assetCode", "Asset Code"), text("assetName", "Asset"), text("category", "Category"),
++                text("department", "Department"), text("status", "Status"), moneyCol("cost", "Cost"),
++                text("lastCover", "Last Cover"));
++        return table("Uninsured Assets Report", "Assets in categories that should be insured but have no cover in force.",
++                cols, rows, null, summary("Uninsured assets", rows.size()), notes);
++    }
++
++    /** Insurance Policy Register: every policy with its covered assets, premium and claims. */
++    public TabularReport policyRegister() {
++        LocalDate today = AppClock.today();
++        Map<Long, List<InsuranceCoverage>> byPolicy = coverageRepository.findAllByOrderByIdAsc().stream()
++                .collect(Collectors.groupingBy(c -> c.getPolicy().getId()));
++        Map<Long, Long> claimsByPolicy = claimRepository.findAllByOrderByIncidentDateDesc().stream()
++                .collect(Collectors.groupingBy(c -> c.getPolicy().getId(), Collectors.counting()));
++        List<Map<String, Object>> rows = new ArrayList<>();
++        BigDecimal premium = BigDecimal.ZERO, insured = BigDecimal.ZERO;
++        for (InsurancePolicy p : policyRepository.findAllByOrderByEndDateAsc()) {
++            List<InsuranceCoverage> covers = byPolicy.getOrDefault(p.getId(), List.of());
++            BigDecimal policyInsured = covers.stream().map(InsuranceCoverage::getInsuredAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
++            premium = premium.add(p.getPremium() == null ? BigDecimal.ZERO : p.getPremium());
++            insured = insured.add(policyInsured);
++            rows.add(row("policy", p.getPolicyNumber(), "insurer", p.getInsurer(), "coverageType", nz(p.getCoverageType()),
++                    "start", p.getStartDate().toString(), "end", p.getEndDate().toString(),
++                    "premium", money(p.getPremium()), "assets", covers.size(), "insured", money(policyInsured),
++                    "claims", claimsByPolicy.getOrDefault(p.getId(), 0L), "status", policyStatus(p, today)));
++        }
++        List<Column> cols = List.of(text("policy", "Policy"), text("insurer", "Insurer"), text("coverageType", "Coverage Type"),
++                date("start", "Start"), date("end", "End"), moneyCol("premium", "Premium"), number("assets", "Assets Covered"),
++                moneyCol("insured", "Total Insured"), number("claims", "Claims"), text("status", "Status"));
++        return table("Insurance Policy Register", "Insurance policies with the assets they cover.", cols, rows,
++                rows.isEmpty() ? null : row("insurer", "Totals", "premium", money(premium), "insured", money(insured)),
++                summary("Policies", rows.size()), null);
++    }
++
++    /** Insurance Coverage by Asset: policy and cover details for each asset that has ever been covered. */
++    public TabularReport coverageByAsset() {
++        LocalDate today = AppClock.today();
++        List<Map<String, Object>> rows = new ArrayList<>();
++        for (InsuranceCoverage c : coverageRepository.findAllByOrderByIdAsc()) {
++            Asset a = c.getAsset();
++            InsurancePolicy p = c.getPolicy();
++            rows.add(row("assetCode", a.getAssetCode(), "assetName", a.getName(), "category", nz(a.getCategory()),
++                    "policy", p.getPolicyNumber(), "insurer", p.getInsurer(), "coverageType", nz(p.getCoverageType()),
++                    "insured", money(c.getInsuredAmount()), "period", p.getStartDate() + " to " + p.getEndDate(),
++                    "status", policyStatus(p, today)));
++        }
++        rows.sort(Comparator.comparing((Map<String, Object> m) -> String.valueOf(m.get("assetCode")))
++                .thenComparing(m -> String.valueOf(m.get("period"))));
++        List<Column> cols = List.of(text("assetCode", "Asset Code"), text("assetName", "Asset"), text("category", "Category"),
++                text("policy", "Policy"), text("insurer", "Insurer"), text("coverageType", "Coverage Type"),
++                moneyCol("insured", "Insured Amount"), text("period", "Policy Period"), text("status", "Status"));
++        return table("Insurance Coverage by Asset", "Policy and cover details for each insured asset, current and past.",
++                cols, rows, null, summary("Coverage records", rows.size()), null);
++    }
++
++    /** Insurance Expiry: policies by days to expiry, optionally limited to an expiry-date range. */
++    public TabularReport insuranceExpiry(LocalDate from, LocalDate to) {
++        LocalDate today = AppClock.today();
++        Map<Long, Long> assetsByPolicy = coverageRepository.findAllByOrderByIdAsc().stream()
++                .collect(Collectors.groupingBy(c -> c.getPolicy().getId(), Collectors.counting()));
++        List<Map<String, Object>> rows = new ArrayList<>();
++        for (InsurancePolicy p : policyRepository.findAllByOrderByEndDateAsc()) {
++            if (p.getEndDate().isBefore(from == null ? MIN_DATE : from) || p.getEndDate().isAfter(to == null ? MAX_DATE : to)) continue;
++            long days = ChronoUnit.DAYS.between(today, p.getEndDate());
++            rows.add(row("policy", p.getPolicyNumber(), "insurer", p.getInsurer(), "coverageType", nz(p.getCoverageType()),
++                    "end", p.getEndDate().toString(), "days", days, "assets", assetsByPolicy.getOrDefault(p.getId(), 0L),
++                    "status", expiryStatus(days)));
++        }
++        List<Column> cols = List.of(text("policy", "Policy"), text("insurer", "Insurer"), text("coverageType", "Coverage Type"),
++                date("end", "Expires"), number("days", "Days to Expiry"), number("assets", "Assets Covered"), text("status", "Status"));
++        return table("Insurance Expiry Report", "Policies approaching or past expiry, soonest first.", cols, rows, null,
++                summary("Policies", rows.size()), List.of("Negative days mean the policy has already expired."));
++    }
++
++    private record ValueRow(Asset asset, BigDecimal value, BigDecimal insured) {
++    }
++
++    private List<ValueRow> valueRows() {
++        LocalDate today = AppClock.today();
++        boolean nbv = nbvBasis();
++        List<InsuranceCoverage> active = activeCoverages(today);
++        Map<Long, BigDecimal> insured = insuredByAsset(active);
++        Map<Long, Asset> assets = new LinkedHashMap<>();
++        active.forEach(c -> assets.putIfAbsent(c.getAsset().getId(), c.getAsset()));
++        Map<Long, DepreciationPosting> postings = nbv && !assets.isEmpty()
++                ? depreciationService.getLatestPostingsForAssets(new ArrayList<>(assets.keySet())) : Map.of();
++        List<ValueRow> rows = new ArrayList<>();
++        for (Asset a : assets.values()) {
++            rows.add(new ValueRow(a, valueOf(a, postings, nbv), insured.get(a.getId())));
++        }
++        rows.sort(Comparator.comparing(r -> nz(r.asset().getAssetCode())));
++        return rows;
++    }
++
++    /** Asset Value vs Insurance Coverage: insured amount against value for assets with cover. */
++    public TabularReport valueVsCoverage() {
++        boolean nbv = nbvBasis();
++        List<Map<String, Object>> rows = new ArrayList<>();
++        BigDecimal value = BigDecimal.ZERO, insured = BigDecimal.ZERO;
++        for (ValueRow r : valueRows()) {
++            value = value.add(r.value());
++            insured = insured.add(r.insured());
++            rows.add(row("assetCode", r.asset().getAssetCode(), "assetName", r.asset().getName(),
++                    "category", nz(r.asset().getCategory()), "value", money(r.value()), "insured", money(r.insured()),
++                    "difference", money(r.insured().subtract(r.value())), "coverage", percent(r.insured(), r.value())));
++        }
++        List<Column> cols = List.of(text("assetCode", "Asset Code"), text("assetName", "Asset"), text("category", "Category"),
++                moneyCol("value", nbv ? "Net Book Value" : "Original Cost"), moneyCol("insured", "Insured Amount"),
++                moneyCol("difference", "Insured − Value"), text("coverage", "Cover %"));
++        return table("Asset Value vs Insurance Coverage", "Insured amount compared with asset value for assets with cover in force.",
++                cols, rows,
++                rows.isEmpty() ? null : row("assetName", "Totals", "value", money(value), "insured", money(insured),
++                        "difference", money(insured.subtract(value)), "coverage", percent(insured, value)),
++                summary("Valuation basis", nbv ? "Net book value" : "Original cost"), null);
++    }
++
++    /** Underinsured Assets: cover in force but below the configured percentage of asset value. */
++    public TabularReport underinsured() {
++        BigDecimal threshold = threshold();
++        boolean nbv = nbvBasis();
++        List<Map<String, Object>> rows = new ArrayList<>();
++        BigDecimal shortfallTotal = BigDecimal.ZERO;
++        for (ValueRow r : valueRows()) {
++            if (r.value().signum() == 0) continue;
++            BigDecimal required = r.value().multiply(threshold).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
++            if (r.insured().compareTo(required) >= 0) continue;
++            BigDecimal shortfall = required.subtract(r.insured());
++            shortfallTotal = shortfallTotal.add(shortfall);
++            rows.add(row("assetCode", r.asset().getAssetCode(), "assetName", r.asset().getName(),
++                    "category", nz(r.asset().getCategory()), "value", money(r.value()), "insured", money(r.insured()),
++                    "required", money(required), "shortfall", money(shortfall), "coverage", percent(r.insured(), r.value())));
++        }
++        rows.sort(Comparator.comparing((Map<String, Object> m) -> (BigDecimal) m.get("shortfall")).reversed());
++        List<Column> cols = List.of(text("assetCode", "Asset Code"), text("assetName", "Asset"), text("category", "Category"),
++                moneyCol("value", nbv ? "Net Book Value" : "Original Cost"), moneyCol("insured", "Insured Amount"),
++                moneyCol("required", "Required Cover"), moneyCol("shortfall", "Shortfall"), text("coverage", "Cover %"));
++        return table("Underinsured Assets Report", "Assets whose cover is below the configured share of their value.", cols, rows,
++                rows.isEmpty() ? null : row("assetName", "Total shortfall", "shortfall", money(shortfallTotal)),
++                summary("Threshold", threshold.stripTrailingZeros().toPlainString() + "% of "
++                        + (nbv ? "net book value" : "original cost"), "Underinsured assets", rows.size()),
++                List.of("Change the threshold and valuation basis in Admin settings. Only assets with cover in force are assessed; "
++                        + "assets with no cover appear in the Uninsured Assets Report."));
++    }
++
++    /**
++     * Asset Compliance/Certification: assets expected to hold certification (their category
++     * is flagged, or they already have a certification record) with their certification status.
++     */
++    public TabularReport certificationCompliance() {
++        LocalDate today = AppClock.today();
++        Set<String> required = categoriesWhere(AssetCategory::isCertificationRequired);
++        Map<Long, List<AssetCertification>> certs = certificationRepository.findAllByOrderByExpiryDateAsc().stream()
++                .collect(Collectors.groupingBy(c -> c.getAsset().getId()));
++        List<Map<String, Object>> rows = new ArrayList<>();
++        Map<String, Integer> statusCounts = new LinkedHashMap<>();
++        for (Asset a : assetRepository.findAll()) {
++            if (!live(a)) continue;
++            List<AssetCertification> own = certs.getOrDefault(a.getId(), List.of());
++            boolean categoryRequires = inCategories(a, required);
++            if (!categoryRequires && own.isEmpty()) continue;
++
++            List<AssetCertification> valid = own.stream().filter(c -> !c.getExpiryDate().isBefore(today)).toList();
++            String status;
++            LocalDate relevantExpiry;
++            if (own.isEmpty()) {
++                status = "Missing";
++                relevantExpiry = null;
++            } else if (valid.isEmpty()) {
++                status = "Expired";
++                relevantExpiry = own.stream().map(AssetCertification::getExpiryDate).max(LocalDate::compareTo).orElse(null);
++            } else {
++                relevantExpiry = valid.stream().map(AssetCertification::getExpiryDate).min(LocalDate::compareTo).orElse(null);
++                status = ChronoUnit.DAYS.between(today, relevantExpiry) <= EXPIRING_WITHIN_DAYS ? "Expiring soon" : "Valid";
++            }
++            statusCounts.merge(status, 1, Integer::sum);
++            rows.add(row("assetCode", a.getAssetCode(), "assetName", a.getName(), "category", nz(a.getCategory()),
++                    "requirement", categoryRequires ? "Required by category" : "Has certification record",
++                    "total", own.size(), "valid", valid.size(), "expiry", relevantExpiry == null ? "" : relevantExpiry.toString(),
++                    "status", status));
++        }
++        rows.sort(Comparator.comparing((Map<String, Object> m) -> String.valueOf(m.get("status")).equals("Missing") ? 0
++                : String.valueOf(m.get("status")).equals("Expired") ? 1 : 2).thenComparing(m -> String.valueOf(m.get("assetCode"))));
++        List<String> notes = new ArrayList<>();
++        notes.add("An asset is treated as compliant when it holds at least one unexpired certification. Required certification types per category are not modelled.");
++        if (required.isEmpty()) {
++            notes.add("No categories are marked as requiring certification, so only assets with a certification record are listed.");
++        }
++        List<Column> cols = List.of(text("assetCode", "Asset Code"), text("assetName", "Asset"), text("category", "Category"),
++                text("requirement", "Why Listed"), number("total", "Certifications"), number("valid", "Valid"),
++                date("expiry", "Next Expiry / Last Expired"), text("status", "Status"));
++        Map<String, Object> summary = new LinkedHashMap<>();
++        statusCounts.forEach((k, v) -> summary.put(k, String.valueOf(v)));
++        return table("Asset Compliance / Certification Report", "Assets requiring certification and whether they hold a valid one.",
++                cols, rows, null, summary, notes);
++    }
++
++    /** Certification Expiry: each certification by days to expiry, optionally limited to an expiry-date range. */
++    public TabularReport certificationExpiry(LocalDate from, LocalDate to) {
++        LocalDate today = AppClock.today();
++        List<Map<String, Object>> rows = new ArrayList<>();
++        for (AssetCertification c : certificationRepository.findAllByOrderByExpiryDateAsc()) {
++            if (c.getExpiryDate().isBefore(from == null ? MIN_DATE : from) || c.getExpiryDate().isAfter(to == null ? MAX_DATE : to)) continue;
++            long days = ChronoUnit.DAYS.between(today, c.getExpiryDate());
++            rows.add(row("assetCode", c.getAsset().getAssetCode(), "assetName", c.getAsset().getName(),
++                    "type", c.getCertificationType(), "authority", nz(c.getIssuingAuthority()),
++                    "number", nz(c.getCertificateNumber()), "issued", c.getIssueDate().toString(),
++                    "expiry", c.getExpiryDate().toString(), "days", days, "status", expiryStatus(days)));
++        }
++        List<Column> cols = List.of(text("assetCode", "Asset Code"), text("assetName", "Asset"), text("type", "Certification"),
++                text("authority", "Authority"), text("number", "Certificate No."), date("issued", "Issued"),
++                date("expiry", "Expires"), number("days", "Days to Expiry"), text("status", "Status"));
++        return table("Certification Expiry Report", "Certifications approaching or past expiry, soonest first.", cols, rows,
++                null, summary("Certifications", rows.size()), List.of("Negative days mean the certification has already expired."));
++    }
++
++    /** Insurance Claim History: claims raised, optionally limited to an incident-date range. */
++    public TabularReport claimHistory(LocalDate from, LocalDate to) {
++        List<Map<String, Object>> rows = new ArrayList<>();
++        BigDecimal claimed = BigDecimal.ZERO, settled = BigDecimal.ZERO;
++        for (InsuranceClaim c : claimRepository.findAllByOrderByIncidentDateDesc()) {
++            if (c.getIncidentDate().isBefore(from == null ? MIN_DATE : from) || c.getIncidentDate().isAfter(to == null ? MAX_DATE : to)) continue;
++            claimed = claimed.add(c.getClaimedAmount());
++            settled = settled.add(c.getSettledAmount() == null ? BigDecimal.ZERO : c.getSettledAmount());
++            rows.add(row("claim", c.getClaimNumber(), "policy", c.getPolicy().getPolicyNumber(), "insurer", c.getPolicy().getInsurer(),
++                    "asset", c.getAsset() == null ? "Not asset-specific" : c.getAsset().getAssetCode() + " — " + c.getAsset().getName(),
++                    "incident", c.getIncidentDate().toString(), "claimDate", c.getClaimDate().toString(),
++                    "status", c.getStatus().name(), "claimed", money(c.getClaimedAmount()),
++                    "settled", c.getSettledAmount() == null ? null : money(c.getSettledAmount()), "description", nz(c.getDescription())));
++        }
++        List<Column> cols = List.of(text("claim", "Claim"), text("policy", "Policy"), text("insurer", "Insurer"),
++                text("asset", "Asset"), date("incident", "Incident"), date("claimDate", "Claimed On"), text("status", "Status"),
++                moneyCol("claimed", "Claimed"), moneyCol("settled", "Settled"), text("description", "Description"));
++        return table("Insurance Claim History", "Claims raised in relation to insured assets.", cols, rows,
++                rows.isEmpty() ? null : row("insurer", "Totals", "claimed", money(claimed), "settled", money(settled)),
++                summary("Claims", rows.size()), null);
++    }
++}
+diff --git a/src/main/java/com/example/fams/settings/AdminSettingsService.java b/src/main/java/com/example/fams/settings/AdminSettingsService.java
+index e2f5526..9b5ea62 100644
+--- a/src/main/java/com/example/fams/settings/AdminSettingsService.java
++++ b/src/main/java/com/example/fams/settings/AdminSettingsService.java
+@@ -15,6 +15,8 @@ import java.util.Set;
+ public class AdminSettingsService {
+ 
+     public static final String DEFAULT_ASSET_STATUS_KEY = "asset.default.status";
++    public static final String INSURANCE_THRESHOLD_KEY = "insurance.underinsured.threshold.percent";
++    public static final String INSURANCE_BASIS_KEY = "insurance.valuation.basis";
+ 
+     private static final Set<String> DEPRECIATION_METHODS = Set.of("SL", "RB", "DDB");
+     private static final Set<String> PARAMETER_KEYS = Set.of(
+@@ -24,7 +26,9 @@ public class AdminSettingsService {
+             "asset.tag.type",
+             "asset.disposal.requires.approval",
+             "asset.lifecycle.approval.firstGroup",
+-            "asset.lifecycle.approval.finalGroup"
++            "asset.lifecycle.approval.finalGroup",
++            INSURANCE_THRESHOLD_KEY,
++            INSURANCE_BASIS_KEY
+     );
+ 
+     private final AssetCategoryRepository assetCategoryRepository;
+@@ -75,6 +79,8 @@ public class AdminSettingsService {
+         createParameterIfMissing("asset.disposal.requires.approval", "Disposal requires approval", "true", "Requires administrator approval before asset disposal is finalized.", "boolean");
+         createParameterIfMissing("asset.lifecycle.approval.firstGroup", "Lifecycle first approval group", "departmentHead", "First Flowable candidate group for asset lifecycle workflows.", "text");
+         createParameterIfMissing("asset.lifecycle.approval.finalGroup", "Lifecycle final approval group", "admin", "Final Flowable candidate group for asset lifecycle workflows.", "text");
++        createParameterIfMissing(INSURANCE_THRESHOLD_KEY, "Underinsured threshold (%)", "100", "An insured asset is reported as underinsured when its insured amount is below this percentage of its value.", "number");
++        createParameterIfMissing(INSURANCE_BASIS_KEY, "Insurance valuation basis", "COST", "Whether insured amounts are compared with an asset's original cost or its net book value.", "select");
+     }
+ 
+     @Transactional
+@@ -227,6 +233,24 @@ public class AdminSettingsService {
+                 }
+                 yield clean;
+             }
++            case INSURANCE_THRESHOLD_KEY -> {
++                java.math.BigDecimal percent;
++                try {
++                    percent = new java.math.BigDecimal(clean);
++                } catch (NumberFormatException ex) {
++                    throw new IllegalArgumentException("Underinsured threshold must be a number.");
++                }
++                if (percent.signum() <= 0 || percent.compareTo(java.math.BigDecimal.valueOf(500)) > 0) {
++                    throw new IllegalArgumentException("Underinsured threshold must be above 0 and at most 500.");
++                }
++                yield percent.stripTrailingZeros().toPlainString();
++            }
++            case INSURANCE_BASIS_KEY -> {
++                if (!Set.of("COST", "NBV").contains(clean)) {
++                    throw new IllegalArgumentException("Insurance valuation basis is invalid.");
++                }
++                yield clean;
++            }
+             case "asset.tag.type" -> {
+                 if (!Set.of("QR_AND_BARCODE", "QR_ONLY", "BARCODE_ONLY").contains(clean)) {
+                     throw new IllegalArgumentException("Default tag type is invalid.");
+diff --git a/src/main/java/com/example/fams/settings/AssetCategory.java b/src/main/java/com/example/fams/settings/AssetCategory.java
+index f1ab682..35744d8 100644
+--- a/src/main/java/com/example/fams/settings/AssetCategory.java
++++ b/src/main/java/com/example/fams/settings/AssetCategory.java
+@@ -51,6 +51,12 @@ public class AssetCategory {
+     @Column(nullable = false)
+     private boolean active = true;
+ 
++    /** Assets in this category are expected to carry insurance. Null (older rows) means no. */
++    private Boolean insuranceRequired;
++
++    /** Assets in this category are expected to hold certifications. Null (older rows) means no. */
++    private Boolean certificationRequired;
++
+     @Column(nullable = false)
+     private LocalDateTime createdAt;
+ 
+@@ -141,6 +147,22 @@ public class AssetCategory {
+         this.defaultDepreciationMethod = defaultDepreciationMethod;
+     }
+ 
++    public boolean isInsuranceRequired() {
++        return Boolean.TRUE.equals(insuranceRequired);
++    }
++
++    public void setInsuranceRequired(boolean insuranceRequired) {
++        this.insuranceRequired = insuranceRequired;
++    }
++
++    public boolean isCertificationRequired() {
++        return Boolean.TRUE.equals(certificationRequired);
++    }
++
++    public void setCertificationRequired(boolean certificationRequired) {
++        this.certificationRequired = certificationRequired;
++    }
++
+     public String getDefaultStatus() {
+         return defaultStatus;
+     }
+diff --git a/src/main/resources/templates/admin/settings.html b/src/main/resources/templates/admin/settings.html
+index ae8191a..a4573ed 100644
+--- a/src/main/resources/templates/admin/settings.html
++++ b/src/main/resources/templates/admin/settings.html
+@@ -235,6 +235,16 @@
+                                class="w-full h-11 px-4 bg-surface-canvas border border-border-default rounded-xl font-technical-data focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                                placeholder="departmentHead">
+ 
++                        <input th:if="${parameter.keyName == 'insurance.underinsured.threshold.percent'}" th:id="${parameter.keyName}" th:name="${parameter.keyName}" th:value="${parameter.value}"
++                               type="number" min="1" max="500" step="any" required
++                               class="w-full h-11 px-4 bg-surface-canvas border border-border-default rounded-xl font-technical-data focus:ring-2 focus:ring-primary focus:border-primary outline-none">
++
++                        <select th:if="${parameter.keyName == 'insurance.valuation.basis'}" th:id="${parameter.keyName}" th:name="${parameter.keyName}"
++                                class="w-full h-11 px-4 bg-surface-canvas border border-border-default rounded-xl focus:ring-2 focus:ring-primary focus:border-primary outline-none">
++                            <option value="COST" th:selected="${parameter.value == 'COST'}">Original cost</option>
++                            <option value="NBV" th:selected="${parameter.value == 'NBV'}">Net book value</option>
++                        </select>
++
+                         <p class="text-label-small text-secondary" th:text="${parameter.description}">Description</p>
+                     </div>
+                     <button type="submit" class="w-full h-11 bg-primary text-on-primary rounded-xl hover:bg-brand-primary-dark transition-colors font-body-medium flex items-center justify-center gap-2">
+diff --git a/src/main/resources/templates/insurance/insurance-management.html b/src/main/resources/templates/insurance/insurance-management.html
+new file mode 100644
+index 0000000..f376a46
+--- /dev/null
++++ b/src/main/resources/templates/insurance/insurance-management.html
+@@ -0,0 +1,173 @@
++<!DOCTYPE html>
++<html class="light" lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layouts/app}">
++<head>
++    <title>Insurance &amp; Compliance | JustJava FAMS</title>
++</head>
++<body>
++<main id="main-content" class="space-y-6 px-4 sm:px-6 lg:px-8" layout:fragment="content">
++    <nav class="flex items-center gap-2 text-secondary font-label-small text-label-small">
++        <a class="hover:text-primary transition-colors" th:href="@{/reports}">Reports</a>
++        <span class="material-symbols-outlined text-[14px]">chevron_right</span>
++        <span class="text-on-surface font-medium">Insurance &amp; Compliance</span>
++    </nav>
++
++    <div th:if="${successMessage}" class="bg-status-success/10 border border-status-success/30 text-status-success rounded-lg px-4 py-3 text-body-default" th:text="${successMessage}"></div>
++    <div th:if="${errorMessage}" class="bg-status-error/10 border border-status-error/30 text-status-error rounded-lg px-4 py-3 text-body-default" th:text="${errorMessage}"></div>
++
++    <section class="bg-surface-card border border-border-default rounded-xl overflow-hidden card-shadow">
++        <div class="p-5 border-b border-border-default">
++            <h3 class="font-card-header text-card-header text-on-surface">Category requirements</h3>
++            <p class="text-body-default text-secondary mt-1">Mark the categories whose assets should be insured or certified. The Uninsured Assets and Compliance reports use these.</p>
++        </div>
++        <div class="overflow-x-auto p-5"><table class="w-full text-left border-collapse">
++<thead><tr class="border-b border-border-default"><th class="py-2 pr-4 text-label-small text-secondary uppercase tracking-wider">Category</th><th class="py-2 pr-4 text-label-small text-secondary uppercase tracking-wider">Insurance expected</th><th class="py-2 pr-4 text-label-small text-secondary uppercase tracking-wider">Certification expected</th><th></th></tr></thead>
++<tbody class="divide-y divide-border-default">
++<tr th:each="c : ${categories}">
++  <td class="py-2 pr-4 text-body-default text-on-surface" th:text="${c.name}">Category</td>
++  <td colspan="3" class="py-2">
++    <form th:action="@{/insurance/categories/{id}(id=${c.id})}" method="post" class="flex items-center gap-6">
++      <label class="flex items-center gap-2 text-body-default text-on-surface"><input type="checkbox" name="insuranceRequired" value="true" th:checked="${c.insuranceRequired}"> Insured</label>
++      <label class="flex items-center gap-2 text-body-default text-on-surface"><input type="checkbox" name="certificationRequired" value="true" th:checked="${c.certificationRequired}"> Certified</label>
++      <button type="submit" class="px-3 py-1 border border-border-default rounded-lg text-label-small text-primary hover:bg-surface-canvas transition-colors">Save</button>
++    </form>
++  </td>
++</tr>
++</tbody></table></div>
++    </section>
++
++    <section class="bg-surface-card border border-border-default rounded-xl overflow-hidden card-shadow">
++        <div class="p-5 border-b border-border-default flex items-center justify-between">
++            <h3 class="font-card-header text-card-header text-on-surface">Insurance policies</h3>
++            <span class="px-2.5 py-0.5 bg-surface-container-high text-on-secondary-fixed-variant rounded-full text-badge-label font-badge-label" th:text="${#lists.size(policies)} + ' records'">0 records</span>
++        </div>
++        <details class="border-b border-border-default">
++            <summary class="px-5 py-3 cursor-pointer text-primary text-body-default font-medium">Add a policy</summary>
++            <div class="p-5 pt-2"><form th:action="@{/insurance/policies}" method="post" class="grid grid-cols-1 md:grid-cols-3 gap-4">
++<div><label class="block text-label-small text-secondary mb-1">Policy number *</label><input name="policyNumber" type="text" required maxlength="80" class="w-full h-10 px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none"></div>
++<div><label class="block text-label-small text-secondary mb-1">Insurer *</label><input name="insurer" type="text" required maxlength="160" class="w-full h-10 px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none"></div>
++<div><label class="block text-label-small text-secondary mb-1">Coverage type</label><input name="coverageType" type="text"  maxlength="160" placeholder="e.g. All risks" class="w-full h-10 px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none"></div>
++<div><label class="block text-label-small text-secondary mb-1">Start date *</label><input name="startDate" type="date" required  class="w-full h-10 px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none"></div>
++<div><label class="block text-label-small text-secondary mb-1">End date *</label><input name="endDate" type="date" required  class="w-full h-10 px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none"></div>
++<div><label class="block text-label-small text-secondary mb-1">Premium</label><input name="premium" type="number"  min="0" step="0.01" class="w-full h-10 px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none"></div>
++<div class="md:col-span-3"><div><label class="block text-label-small text-secondary mb-1">Notes</label><input name="notes" type="text"  maxlength="500" class="w-full h-10 px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none"></div></div>
++<div class="md:col-span-3"><button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg text-body-default hover:opacity-90 transition-opacity">Save policy</button></div>
++</form></div>
++        </details>
++        <div th:if="${#lists.isEmpty(policies)}" class="p-8 text-center text-secondary">No policies recorded yet.</div>
++        <div th:unless="${#lists.isEmpty(policies)}" class="overflow-x-auto p-5"><table class="w-full text-left border-collapse">
++<thead><tr class="border-b border-border-default"><th class="py-2 pr-4 text-label-small text-secondary uppercase tracking-wider">Policy</th><th class="py-2 pr-4 text-label-small text-secondary uppercase tracking-wider">Insurer</th><th class="py-2 pr-4 text-label-small text-secondary uppercase tracking-wider">Coverage</th><th class="py-2 pr-4 text-label-small text-secondary uppercase tracking-wider">Period</th><th class="py-2 pr-4 text-label-small text-secondary uppercase tracking-wider text-right">Premium</th><th class="py-2 pr-4 text-label-small text-secondary uppercase tracking-wider">Status</th><th></th></tr></thead>
++<tbody class="divide-y divide-border-default">
++<tr th:each="p : ${policies}">
++  <td class="py-2 pr-4 text-body-default text-on-surface font-technical-data" th:text="${p.policyNumber}">POL-1</td>
++  <td class="py-2 pr-4 text-body-default text-on-surface" th:text="${p.insurer}">Insurer</td>
++  <td class="py-2 pr-4 text-body-default text-on-surface" th:text="${p.coverageType ?: '—'}">All risks</td>
++  <td class="py-2 pr-4 text-body-default text-on-surface" th:text="${p.startDate + ' to ' + p.endDate}">2026-01-01 to 2026-12-31</td>
++  <td class="py-2 pr-4 text-body-default text-on-surface text-right" th:text="${p.premium != null ? #numbers.formatDecimal(p.premium, 1, 'COMMA', 2, 'POINT') : '—'}">0.00</td>
++  <td class="py-2 pr-4 text-body-default text-on-surface" th:text="${p.endDate.isBefore(today) ? 'Expired' : (p.startDate.isAfter(today) ? 'Not started' : 'Active')}">Active</td>
++  <td><form th:action="@{/insurance/policies/{id}/delete(id=${p.id})}" method="post" onsubmit="return confirm('Remove this policy and its coverage?');"><button type="submit" class="px-3 py-1 border border-border-default rounded-lg text-label-small text-status-error hover:bg-surface-canvas transition-colors">Remove</button></form></td>
++</tr>
++</tbody></table></div>
++    </section>
++
++    <section class="bg-surface-card border border-border-default rounded-xl overflow-hidden card-shadow">
++        <div class="p-5 border-b border-border-default flex items-center justify-between">
++            <h3 class="font-card-header text-card-header text-on-surface">Asset coverage</h3>
++            <span class="px-2.5 py-0.5 bg-surface-container-high text-on-secondary-fixed-variant rounded-full text-badge-label font-badge-label" th:text="${#lists.size(coverages)} + ' records'">0 records</span>
++        </div>
++        <details class="border-b border-border-default">
++            <summary class="px-5 py-3 cursor-pointer text-primary text-body-default font-medium">Cover an asset under a policy</summary>
++            <div class="p-5 pt-2"><form th:action="@{/insurance/coverages}" method="post" class="grid grid-cols-1 md:grid-cols-3 gap-4">
++<div><label class="block text-label-small text-secondary mb-1">Policy *</label><select name="policyId" required class="w-full h-10 px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none"><option value="">Select policy</option><option th:each="p : ${policies}" th:value="${p.id}" th:text="${p.policyNumber + ' - ' + p.insurer}">Policy</option></select></div>
++<div><label class="block text-label-small text-secondary mb-1">Asset *</label><select name="assetId" required class="w-full h-10 px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none"><option value="">Select asset</option><option th:each="a : ${assets}" th:value="${a.id}" th:text="${a.assetCode + ' - ' + a.name}">Asset</option></select></div>
++<div><label class="block text-label-small text-secondary mb-1">Insured amount *</label><input name="insuredAmount" type="number" required min="0.01" step="0.01" class="w-full h-10 px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none"></div>
++<div class="md:col-span-3"><button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg text-body-default hover:opacity-90 transition-opacity">Add coverage</button></div>
++</form></div>
++        </details>
++        <div th:if="${#lists.isEmpty(coverages)}" class="p-8 text-center text-secondary">No assets are covered yet.</div>
++        <div th:unless="${#lists.isEmpty(coverages)}" class="overflow-x-auto p-5"><table class="w-full text-left border-collapse">
++<thead><tr class="border-b border-border-default"><th class="py-2 pr-4 text-label-small text-secondary uppercase tracking-wider">Policy</th><th class="py-2 pr-4 text-label-small text-secondary uppercase tracking-wider">Asset</th><th class="py-2 pr-4 text-label-small text-secondary uppercase tracking-wider text-right">Insured amount</th><th></th></tr></thead>
++<tbody class="divide-y divide-border-default">
++<tr th:each="c : ${coverages}">
++  <td class="py-2 pr-4 text-body-default text-on-surface font-technical-data" th:text="${c.policy.policyNumber}">POL-1</td>
++  <td class="py-2 pr-4 text-body-default text-on-surface" th:text="${c.asset.assetCode + ' - ' + c.asset.name}">Asset</td>
++  <td class="py-2 pr-4 text-body-default text-on-surface text-right" th:text="${c.insuredAmount != null ? #numbers.formatDecimal(c.insuredAmount, 1, 'COMMA', 2, 'POINT') : '—'}">0.00</td>
++  <td><form th:action="@{/insurance/coverages/{id}/delete(id=${c.id})}" method="post" onsubmit="return confirm('Remove this coverage?');"><button type="submit" class="px-3 py-1 border border-border-default rounded-lg text-label-small text-status-error hover:bg-surface-canvas transition-colors">Remove</button></form></td>
++</tr>
++</tbody></table></div>
++    </section>
++
++    <section class="bg-surface-card border border-border-default rounded-xl overflow-hidden card-shadow">
++        <div class="p-5 border-b border-border-default flex items-center justify-between">
++            <h3 class="font-card-header text-card-header text-on-surface">Insurance claims</h3>
++            <span class="px-2.5 py-0.5 bg-surface-container-high text-on-secondary-fixed-variant rounded-full text-badge-label font-badge-label" th:text="${#lists.size(claims)} + ' records'">0 records</span>
++        </div>
++        <details class="border-b border-border-default">
++            <summary class="px-5 py-3 cursor-pointer text-primary text-body-default font-medium">Record a claim</summary>
++            <div class="p-5 pt-2"><form th:action="@{/insurance/claims}" method="post" class="grid grid-cols-1 md:grid-cols-3 gap-4">
++<div><label class="block text-label-small text-secondary mb-1">Policy *</label><select name="policyId" required class="w-full h-10 px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none"><option value="">Select policy</option><option th:each="p : ${policies}" th:value="${p.id}" th:text="${p.policyNumber + ' - ' + p.insurer}">Policy</option></select></div>
++<div><label class="block text-label-small text-secondary mb-1">Asset</label><select name="assetId"  class="w-full h-10 px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none"><option value="">No specific asset</option><option th:each="a : ${assets}" th:value="${a.id}" th:text="${a.assetCode + ' - ' + a.name}">Asset</option></select></div>
++<div><label class="block text-label-small text-secondary mb-1">Claim number *</label><input name="claimNumber" type="text" required maxlength="80" class="w-full h-10 px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none"></div>
++<div><label class="block text-label-small text-secondary mb-1">Incident date *</label><input name="incidentDate" type="date" required  class="w-full h-10 px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none"></div>
++<div><label class="block text-label-small text-secondary mb-1">Claim date *</label><input name="claimDate" type="date" required  class="w-full h-10 px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none"></div>
++<div><label class="block text-label-small text-secondary mb-1">Claimed amount *</label><input name="claimedAmount" type="number" required min="0.01" step="0.01" class="w-full h-10 px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none"></div>
++<div><label class="block text-label-small text-secondary mb-1">Settled amount</label><input name="settledAmount" type="number"  min="0" step="0.01" class="w-full h-10 px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none"></div>
++<div><label class="block text-label-small text-secondary mb-1">Status</label><select name="status" class="w-full h-10 px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none"><option th:each="s : ${claimStatuses}" th:value="${s}" th:text="${s}">SUBMITTED</option></select></div>
++<div><label class="block text-label-small text-secondary mb-1">Description</label><input name="description" type="text"  maxlength="500" class="w-full h-10 px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none"></div>
++<div class="md:col-span-3"><button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg text-body-default hover:opacity-90 transition-opacity">Record claim</button></div>
++</form></div>
++        </details>
++        <div th:if="${#lists.isEmpty(claims)}" class="p-8 text-center text-secondary">No claims recorded.</div>
++        <div th:unless="${#lists.isEmpty(claims)}" class="overflow-x-auto p-5"><table class="w-full text-left border-collapse">
++<thead><tr class="border-b border-border-default"><th class="py-2 pr-4 text-label-small text-secondary uppercase tracking-wider">Claim</th><th class="py-2 pr-4 text-label-small text-secondary uppercase tracking-wider">Policy</th><th class="py-2 pr-4 text-label-small text-secondary uppercase tracking-wider">Asset</th><th class="py-2 pr-4 text-label-small text-secondary uppercase tracking-wider">Incident</th><th class="py-2 pr-4 text-label-small text-secondary uppercase tracking-wider text-right">Claimed</th><th class="py-2 pr-4 text-label-small text-secondary uppercase tracking-wider text-right">Settled</th><th class="py-2 pr-4 text-label-small text-secondary uppercase tracking-wider">Status</th><th></th></tr></thead>
++<tbody class="divide-y divide-border-default">
++<tr th:each="c : ${claims}">
++  <td class="py-2 pr-4 text-body-default text-on-surface font-technical-data" th:text="${c.claimNumber}">CL-1</td>
++  <td class="py-2 pr-4 text-body-default text-on-surface" th:text="${c.policy.policyNumber}">POL-1</td>
++  <td class="py-2 pr-4 text-body-default text-on-surface" th:text="${c.asset != null ? c.asset.assetCode : '—'}">—</td>
++  <td class="py-2 pr-4 text-body-default text-on-surface" th:text="${c.incidentDate}">2026-01-01</td>
++  <td class="py-2 pr-4 text-body-default text-on-surface text-right" th:text="${c.claimedAmount != null ? #numbers.formatDecimal(c.claimedAmount, 1, 'COMMA', 2, 'POINT') : '—'}">0.00</td>
++  <td class="py-2 pr-4 text-body-default text-on-surface text-right" th:text="${c.settledAmount != null ? #numbers.formatDecimal(c.settledAmount, 1, 'COMMA', 2, 'POINT') : '—'}">—</td>
++  <td class="py-2 pr-4 text-body-default text-on-surface" th:text="${c.status}">SUBMITTED</td>
++  <td><form th:action="@{/insurance/claims/{id}/delete(id=${c.id})}" method="post" onsubmit="return confirm('Remove this claim?');"><button type="submit" class="px-3 py-1 border border-border-default rounded-lg text-label-small text-status-error hover:bg-surface-canvas transition-colors">Remove</button></form></td>
++</tr>
++</tbody></table></div>
++    </section>
++
++    <section class="bg-surface-card border border-border-default rounded-xl overflow-hidden card-shadow">
++        <div class="p-5 border-b border-border-default flex items-center justify-between">
++            <h3 class="font-card-header text-card-header text-on-surface">Certifications</h3>
++            <span class="px-2.5 py-0.5 bg-surface-container-high text-on-secondary-fixed-variant rounded-full text-badge-label font-badge-label" th:text="${#lists.size(certifications)} + ' records'">0 records</span>
++        </div>
++        <details class="border-b border-border-default">
++            <summary class="px-5 py-3 cursor-pointer text-primary text-body-default font-medium">Record a certification</summary>
++            <div class="p-5 pt-2"><form th:action="@{/insurance/certifications}" method="post" class="grid grid-cols-1 md:grid-cols-3 gap-4">
++<div><label class="block text-label-small text-secondary mb-1">Asset *</label><select name="assetId" required class="w-full h-10 px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none"><option value="">Select asset</option><option th:each="a : ${assets}" th:value="${a.id}" th:text="${a.assetCode + ' - ' + a.name}">Asset</option></select></div>
++<div><label class="block text-label-small text-secondary mb-1">Certification type *</label><input name="certificationType" type="text" required maxlength="160" placeholder="e.g. Fire safety, Roadworthiness" class="w-full h-10 px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none"></div>
++<div><label class="block text-label-small text-secondary mb-1">Issuing authority</label><input name="issuingAuthority" type="text"  maxlength="160" class="w-full h-10 px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none"></div>
++<div><label class="block text-label-small text-secondary mb-1">Certificate number</label><input name="certificateNumber" type="text"  maxlength="80" class="w-full h-10 px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none"></div>
++<div><label class="block text-label-small text-secondary mb-1">Issue date *</label><input name="issueDate" type="date" required  class="w-full h-10 px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none"></div>
++<div><label class="block text-label-small text-secondary mb-1">Expiry date *</label><input name="expiryDate" type="date" required  class="w-full h-10 px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none"></div>
++<div class="md:col-span-3"><div><label class="block text-label-small text-secondary mb-1">Notes</label><input name="notes" type="text"  maxlength="500" class="w-full h-10 px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none"></div></div>
++<div class="md:col-span-3"><button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg text-body-default hover:opacity-90 transition-opacity">Record certification</button></div>
++</form></div>
++        </details>
++        <div th:if="${#lists.isEmpty(certifications)}" class="p-8 text-center text-secondary">No certifications recorded.</div>
++        <div th:unless="${#lists.isEmpty(certifications)}" class="overflow-x-auto p-5"><table class="w-full text-left border-collapse">
++<thead><tr class="border-b border-border-default"><th class="py-2 pr-4 text-label-small text-secondary uppercase tracking-wider">Asset</th><th class="py-2 pr-4 text-label-small text-secondary uppercase tracking-wider">Certification</th><th class="py-2 pr-4 text-label-small text-secondary uppercase tracking-wider">Authority</th><th class="py-2 pr-4 text-label-small text-secondary uppercase tracking-wider">Number</th><th class="py-2 pr-4 text-label-small text-secondary uppercase tracking-wider">Issued</th><th class="py-2 pr-4 text-label-small text-secondary uppercase tracking-wider">Expires</th><th class="py-2 pr-4 text-label-small text-secondary uppercase tracking-wider">Status</th><th></th></tr></thead>
++<tbody class="divide-y divide-border-default">
++<tr th:each="c : ${certifications}">
++  <td class="py-2 pr-4 text-body-default text-on-surface" th:text="${c.asset.assetCode + ' - ' + c.asset.name}">Asset</td>
++  <td class="py-2 pr-4 text-body-default text-on-surface" th:text="${c.certificationType}">Type</td>
++  <td class="py-2 pr-4 text-body-default text-on-surface" th:text="${c.issuingAuthority ?: '—'}">Authority</td>
++  <td class="py-2 pr-4 text-body-default text-on-surface font-technical-data" th:text="${c.certificateNumber ?: '—'}">—</td>
++  <td class="py-2 pr-4 text-body-default text-on-surface" th:text="${c.issueDate}">2026-01-01</td>
++  <td class="py-2 pr-4 text-body-default text-on-surface" th:text="${c.expiryDate}">2026-12-31</td>
++  <td class="py-2 pr-4 text-body-default text-on-surface" th:text="${c.expiryDate.isBefore(today) ? 'Expired' : 'Valid'}">Valid</td>
++  <td><form th:action="@{/insurance/certifications/{id}/delete(id=${c.id})}" method="post" onsubmit="return confirm('Remove this certification?');"><button type="submit" class="px-3 py-1 border border-border-default rounded-lg text-label-small text-status-error hover:bg-surface-canvas transition-colors">Remove</button></form></td>
++</tr>
++</tbody></table></div>
++    </section>
++
++</main>
++</body>
++</html>
+diff --git a/src/main/resources/templates/reports/reports-module.html b/src/main/resources/templates/reports/reports-module.html
+index 20df5df..52082c0 100644
+--- a/src/main/resources/templates/reports/reports-module.html
++++ b/src/main/resources/templates/reports/reports-module.html
+@@ -212,6 +212,26 @@
+                         <li><button onclick="loadReport('audit-last')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Last Verification Date</button></li>
+                     </ul>
+                 </div>
++                <!-- Insurance & Compliance Reports -->
++                <div th:if="${canViewLedgerReports}">
++                    <div class="flex items-center gap-2 mb-2 px-2">
++                        <span class="material-symbols-outlined text-[18px] text-primary">verified_user</span>
++                        <h4 class="font-body-medium text-on-surface">Insurance &amp; Compliance Reports</h4>
++                    </div>
++                    <ul class="space-y-1">
++                        <li><button onclick="loadReport('ins-insured')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Insured Assets Register</button></li>
++                        <li><button onclick="loadReport('ins-uninsured')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Uninsured Assets</button></li>
++                        <li><button onclick="loadReport('ins-policies')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Insurance Policy Register</button></li>
++                        <li><button onclick="loadReport('ins-coverage')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Coverage by Asset</button></li>
++                        <li><button onclick="loadReport('ins-expiry')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Insurance Expiry</button></li>
++                        <li><button onclick="loadReport('ins-value')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Asset Value vs Coverage</button></li>
++                        <li><button onclick="loadReport('ins-under')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Underinsured Assets</button></li>
++                        <li><button onclick="loadReport('ins-compliance')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Asset Compliance / Certification</button></li>
++                        <li><button onclick="loadReport('ins-cert-expiry')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Certification Expiry</button></li>
++                        <li><button onclick="loadReport('ins-claims')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Insurance Claim History</button></li>
++                        <li th:if="${canManageLedger}"><a th:href="@{/insurance}" class="w-full block text-left px-3 py-1.5 text-body-default text-primary rounded-lg hover:bg-surface-canvas transition-colors">Manage Insurance &amp; Certifications</a></li>
++                    </ul>
++                </div>
+                 <!-- Financial Reports -->
+                 <div>
+                     <div class="flex items-center gap-2 mb-2 px-2">
+@@ -1550,6 +1570,109 @@
+                 hasAuditSession: true,
+                 canExport: true
+             },
++            'ins-insured': {
++                name: 'Insured Assets Register',
++                description: 'Assets with insurance cover in force today',
++                apiEndpoint: '/api/reports/insurance/insured-assets',
++                ledger: true,
++                ledgerBase: '/api/reports/insurance',
++                ledgerType: 'insured-assets',
++                hasFilters: false,
++                canExport: true
++            },
++            'ins-uninsured': {
++                name: 'Uninsured Assets Report',
++                description: 'Assets in categories that should be insured but have no cover in force',
++                apiEndpoint: '/api/reports/insurance/uninsured-assets',
++                ledger: true,
++                ledgerBase: '/api/reports/insurance',
++                ledgerType: 'uninsured-assets',
++                hasFilters: false,
++                canExport: true
++            },
++            'ins-policies': {
++                name: 'Insurance Policy Register',
++                description: 'Insurance policies with the assets they cover',
++                apiEndpoint: '/api/reports/insurance/policy-register',
++                ledger: true,
++                ledgerBase: '/api/reports/insurance',
++                ledgerType: 'policy-register',
++                hasFilters: false,
++                canExport: true
++            },
++            'ins-coverage': {
++                name: 'Insurance Coverage by Asset',
++                description: 'Policy and cover details for each insured asset, current and past',
++                apiEndpoint: '/api/reports/insurance/coverage-by-asset',
++                ledger: true,
++                ledgerBase: '/api/reports/insurance',
++                ledgerType: 'coverage-by-asset',
++                hasFilters: false,
++                canExport: true
++            },
++            'ins-expiry': {
++                name: 'Insurance Expiry Report',
++                description: 'Policies approaching or past expiry (filter by expiry date)',
++                apiEndpoint: '/api/reports/insurance/insurance-expiry',
++                ledger: true,
++                ledgerBase: '/api/reports/insurance',
++                ledgerType: 'insurance-expiry',
++                hasFilters: false,
++                canExport: true,
++                hasDateRange: true
++            },
++            'ins-value': {
++                name: 'Asset Value vs Insurance Coverage',
++                description: 'Insured amount compared with asset value for assets with cover in force',
++                apiEndpoint: '/api/reports/insurance/value-vs-coverage',
++                ledger: true,
++                ledgerBase: '/api/reports/insurance',
++                ledgerType: 'value-vs-coverage',
++                hasFilters: false,
++                canExport: true
++            },
++            'ins-under': {
++                name: 'Underinsured Assets Report',
++                description: 'Assets whose cover is below the configured share of their value',
++                apiEndpoint: '/api/reports/insurance/underinsured-assets',
++                ledger: true,
++                ledgerBase: '/api/reports/insurance',
++                ledgerType: 'underinsured-assets',
++                hasFilters: false,
++                canExport: true
++            },
++            'ins-compliance': {
++                name: 'Asset Compliance / Certification Report',
++                description: 'Assets requiring certification and whether they hold a valid one',
++                apiEndpoint: '/api/reports/insurance/compliance',
++                ledger: true,
++                ledgerBase: '/api/reports/insurance',
++                ledgerType: 'compliance',
++                hasFilters: false,
++                canExport: true
++            },
++            'ins-cert-expiry': {
++                name: 'Certification Expiry Report',
++                description: 'Certifications approaching or past expiry (filter by expiry date)',
++                apiEndpoint: '/api/reports/insurance/certification-expiry',
++                ledger: true,
++                ledgerBase: '/api/reports/insurance',
++                ledgerType: 'certification-expiry',
++                hasFilters: false,
++                canExport: true,
++                hasDateRange: true
++            },
++            'ins-claims': {
++                name: 'Insurance Claim History',
++                description: 'Claims raised in relation to insured assets (filter by incident date)',
++                apiEndpoint: '/api/reports/insurance/claim-history',
++                ledger: true,
++                ledgerBase: '/api/reports/insurance',
++                ledgerType: 'claim-history',
++                hasFilters: false,
++                canExport: true,
++                hasDateRange: true
++            },
+             'impairment-report': {
+                 name: 'Impairment Report',
+                 description: 'Impairment losses and reversals recorded within a selected reporting period',

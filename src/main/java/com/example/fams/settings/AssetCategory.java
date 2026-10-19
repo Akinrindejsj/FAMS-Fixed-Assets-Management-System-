@@ -51,6 +51,12 @@ public class AssetCategory {
     @Column(nullable = false)
     private boolean active = true;
 
+    /** Assets in this category are expected to carry insurance. Null (older rows) means no. */
+    private Boolean insuranceRequired;
+
+    /** Assets in this category are expected to hold certifications. Null (older rows) means no. */
+    private Boolean certificationRequired;
+
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
@@ -139,6 +145,22 @@ public class AssetCategory {
 
     public void setDefaultDepreciationMethod(String defaultDepreciationMethod) {
         this.defaultDepreciationMethod = defaultDepreciationMethod;
+    }
+
+    public boolean isInsuranceRequired() {
+        return Boolean.TRUE.equals(insuranceRequired);
+    }
+
+    public void setInsuranceRequired(boolean insuranceRequired) {
+        this.insuranceRequired = insuranceRequired;
+    }
+
+    public boolean isCertificationRequired() {
+        return Boolean.TRUE.equals(certificationRequired);
+    }
+
+    public void setCertificationRequired(boolean certificationRequired) {
+        this.certificationRequired = certificationRequired;
     }
 
     public String getDefaultStatus() {

@@ -212,6 +212,26 @@
                         <li><button onclick="loadReport('audit-last')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Last Verification Date</button></li>
                     </ul>
                 </div>
+                <!-- Insurance & Compliance Reports -->
+                <div th:if="${canViewLedgerReports}">
+                    <div class="flex items-center gap-2 mb-2 px-2">
+                        <span class="material-symbols-outlined text-[18px] text-primary">verified_user</span>
+                        <h4 class="font-body-medium text-on-surface">Insurance &amp; Compliance Reports</h4>
+                    </div>
+                    <ul class="space-y-1">
+                        <li><button onclick="loadReport('ins-insured')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Insured Assets Register</button></li>
+                        <li><button onclick="loadReport('ins-uninsured')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Uninsured Assets</button></li>
+                        <li><button onclick="loadReport('ins-policies')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Insurance Policy Register</button></li>
+                        <li><button onclick="loadReport('ins-coverage')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Coverage by Asset</button></li>
+                        <li><button onclick="loadReport('ins-expiry')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Insurance Expiry</button></li>
+                        <li><button onclick="loadReport('ins-value')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Asset Value vs Coverage</button></li>
+                        <li><button onclick="loadReport('ins-under')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Underinsured Assets</button></li>
+                        <li><button onclick="loadReport('ins-compliance')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Asset Compliance / Certification</button></li>
+                        <li><button onclick="loadReport('ins-cert-expiry')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Certification Expiry</button></li>
+                        <li><button onclick="loadReport('ins-claims')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Insurance Claim History</button></li>
+                        <li th:if="${canManageLedger}"><a th:href="@{/insurance}" class="w-full block text-left px-3 py-1.5 text-body-default text-primary rounded-lg hover:bg-surface-canvas transition-colors">Manage Insurance &amp; Certifications</a></li>
+                    </ul>
+                </div>
                 <!-- Financial Reports -->
                 <div>
                     <div class="flex items-center gap-2 mb-2 px-2">
@@ -1549,6 +1569,109 @@
                 hasFilters: false,
                 hasAuditSession: true,
                 canExport: true
+            },
+            'ins-insured': {
+                name: 'Insured Assets Register',
+                description: 'Assets with insurance cover in force today',
+                apiEndpoint: '/api/reports/insurance/insured-assets',
+                ledger: true,
+                ledgerBase: '/api/reports/insurance',
+                ledgerType: 'insured-assets',
+                hasFilters: false,
+                canExport: true
+            },
+            'ins-uninsured': {
+                name: 'Uninsured Assets Report',
+                description: 'Assets in categories that should be insured but have no cover in force',
+                apiEndpoint: '/api/reports/insurance/uninsured-assets',
+                ledger: true,
+                ledgerBase: '/api/reports/insurance',
+                ledgerType: 'uninsured-assets',
+                hasFilters: false,
+                canExport: true
+            },
+            'ins-policies': {
+                name: 'Insurance Policy Register',
+                description: 'Insurance policies with the assets they cover',
+                apiEndpoint: '/api/reports/insurance/policy-register',
+                ledger: true,
+                ledgerBase: '/api/reports/insurance',
+                ledgerType: 'policy-register',
+                hasFilters: false,
+                canExport: true
+            },
+            'ins-coverage': {
+                name: 'Insurance Coverage by Asset',
+                description: 'Policy and cover details for each insured asset, current and past',
+                apiEndpoint: '/api/reports/insurance/coverage-by-asset',
+                ledger: true,
+                ledgerBase: '/api/reports/insurance',
+                ledgerType: 'coverage-by-asset',
+                hasFilters: false,
+                canExport: true
+            },
+            'ins-expiry': {
+                name: 'Insurance Expiry Report',
+                description: 'Policies approaching or past expiry (filter by expiry date)',
+                apiEndpoint: '/api/reports/insurance/insurance-expiry',
+                ledger: true,
+                ledgerBase: '/api/reports/insurance',
+                ledgerType: 'insurance-expiry',
+                hasFilters: false,
+                canExport: true,
+                hasDateRange: true
+            },
+            'ins-value': {
+                name: 'Asset Value vs Insurance Coverage',
+                description: 'Insured amount compared with asset value for assets with cover in force',
+                apiEndpoint: '/api/reports/insurance/value-vs-coverage',
+                ledger: true,
+                ledgerBase: '/api/reports/insurance',
+                ledgerType: 'value-vs-coverage',
+                hasFilters: false,
+                canExport: true
+            },
+            'ins-under': {
+                name: 'Underinsured Assets Report',
+                description: 'Assets whose cover is below the configured share of their value',
+                apiEndpoint: '/api/reports/insurance/underinsured-assets',
+                ledger: true,
+                ledgerBase: '/api/reports/insurance',
+                ledgerType: 'underinsured-assets',
+                hasFilters: false,
+                canExport: true
+            },
+            'ins-compliance': {
+                name: 'Asset Compliance / Certification Report',
+                description: 'Assets requiring certification and whether they hold a valid one',
+                apiEndpoint: '/api/reports/insurance/compliance',
+                ledger: true,
+                ledgerBase: '/api/reports/insurance',
+                ledgerType: 'compliance',
+                hasFilters: false,
+                canExport: true
+            },
+            'ins-cert-expiry': {
+                name: 'Certification Expiry Report',
+                description: 'Certifications approaching or past expiry (filter by expiry date)',
+                apiEndpoint: '/api/reports/insurance/certification-expiry',
+                ledger: true,
+                ledgerBase: '/api/reports/insurance',
+                ledgerType: 'certification-expiry',
+                hasFilters: false,
+                canExport: true,
+                hasDateRange: true
+            },
+            'ins-claims': {
+                name: 'Insurance Claim History',
+                description: 'Claims raised in relation to insured assets (filter by incident date)',
+                apiEndpoint: '/api/reports/insurance/claim-history',
+                ledger: true,
+                ledgerBase: '/api/reports/insurance',
+                ledgerType: 'claim-history',
+                hasFilters: false,
+                canExport: true,
+                hasDateRange: true
             },
             'impairment-report': {
                 name: 'Impairment Report',
