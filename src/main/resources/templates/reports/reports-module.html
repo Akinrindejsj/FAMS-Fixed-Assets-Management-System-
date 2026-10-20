@@ -258,6 +258,31 @@
                         <li><button onclick="loadReport('exc-quality')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Asset Data Quality</button></li>
                     </ul>
                 </div>
+                <!-- Management & Executive Reports -->
+                <div>
+                    <div class="flex items-center gap-2 mb-2 px-2">
+                        <span class="material-symbols-outlined text-[18px] text-primary">monitoring</span>
+                        <h4 class="font-body-medium text-on-surface">Management &amp; Executive Reports</h4>
+                    </div>
+                    <ul class="space-y-1">
+                        <li><button onclick="loadReport('mgmt-executive')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Executive Summary</button></li>
+                        <li><button onclick="loadReport('nbv-by-category')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Asset Value by Category</button></li>
+                        <li><button onclick="loadReport('nbv-by-location')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Asset Value by Location</button></li>
+                        <li><button onclick="loadReport('nbv-by-department')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Asset Value by Department</button></li>
+                        <li><button onclick="loadReport('asset-ageing')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Asset Portfolio Ageing</button></li>
+                        <li><button onclick="loadReport('mgmt-capex')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">CAPEX Summary</button></li>
+                        <li><button onclick="loadReport('mgmt-additions')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Monthly Asset Additions</button></li>
+                        <li><button onclick="loadReport('mgmt-disposals')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Monthly Disposals</button></li>
+                        <li><button onclick="loadReport('mgmt-depreciation')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Monthly Depreciation Trend</button></li>
+                        <li><button onclick="loadReport('mgmt-maintenance')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Maintenance Cost Trend</button></li>
+                        <li><button onclick="loadReport('mgmt-growth')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Asset Growth Trend</button></li>
+                        <li><button onclick="loadReport('mgmt-utilisation')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Asset Utilisation</button></li>
+                        <li><button onclick="loadReport('mgmt-condition')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Asset Condition Summary</button></li>
+                        <li><button onclick="loadReport('mgmt-forecast')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Replacement Forecast</button></li>
+                        <li><button onclick="loadReport('mgmt-top-cost')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Top 10 Assets by Cost</button></li>
+                        <li><button onclick="loadReport('mgmt-top-nbv')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Top 10 Assets by Net Book Value</button></li>
+                    </ul>
+                </div>
                 <!-- Financial Reports -->
                 <div>
                     <div class="flex items-center gap-2 mb-2 px-2">
@@ -1885,6 +1910,137 @@
                 ledger: true,
                 ledgerBase: '/api/reports/exceptions',
                 ledgerType: 'data-quality',
+                hasFilters: true,
+                canExport: true
+            },
+            'mgmt-executive': {
+                name: 'Fixed Asset Executive Summary',
+                description: 'Asset population, value, activity and key exceptions at a glance',
+                apiEndpoint: '/api/reports/management/executive-summary',
+                ledger: true,
+                ledgerBase: '/api/reports/management',
+                ledgerType: 'executive-summary',
+                hasFilters: true,
+                canExport: true,
+                hasDateRange: true
+            },
+            'mgmt-capex': {
+                name: 'CAPEX Summary',
+                description: 'Capital expenditure by category for the period (defaults to this year to date)',
+                apiEndpoint: '/api/reports/management/capex',
+                ledger: true,
+                ledgerBase: '/api/reports/management',
+                ledgerType: 'capex',
+                hasFilters: true,
+                canExport: true,
+                hasDateRange: true
+            },
+            'mgmt-additions': {
+                name: 'Monthly Asset Additions',
+                description: 'Newly capitalised assets and capital additions by month (defaults to the last 12 months)',
+                apiEndpoint: '/api/reports/management/monthly-additions',
+                ledger: true,
+                ledgerBase: '/api/reports/management',
+                ledgerType: 'monthly-additions',
+                hasFilters: true,
+                canExport: true,
+                hasDateRange: true
+            },
+            'mgmt-disposals': {
+                name: 'Monthly Disposals',
+                description: 'Completed disposals, proceeds and gain or loss by month (defaults to the last 12 months)',
+                apiEndpoint: '/api/reports/management/monthly-disposals',
+                ledger: true,
+                ledgerBase: '/api/reports/management',
+                ledgerType: 'monthly-disposals',
+                hasFilters: true,
+                canExport: true,
+                hasDateRange: true
+            },
+            'mgmt-depreciation': {
+                name: 'Monthly Depreciation Trend',
+                description: 'Depreciation expense by month (defaults to the last 12 months)',
+                apiEndpoint: '/api/reports/management/monthly-depreciation',
+                ledger: true,
+                ledgerBase: '/api/reports/management',
+                ledgerType: 'monthly-depreciation',
+                hasFilters: true,
+                canExport: true,
+                hasDateRange: true
+            },
+            'mgmt-maintenance': {
+                name: 'Maintenance Cost Trend',
+                description: 'Maintenance expenditure by month (defaults to the last 12 months)',
+                apiEndpoint: '/api/reports/management/maintenance-trend',
+                ledger: true,
+                ledgerBase: '/api/reports/management',
+                ledgerType: 'maintenance-trend',
+                hasFilters: true,
+                canExport: true,
+                hasDateRange: true
+            },
+            'mgmt-growth': {
+                name: 'Asset Growth Trend',
+                description: 'Growth in asset population and cost, month by month (defaults to the last 24 months)',
+                apiEndpoint: '/api/reports/management/growth-trend',
+                ledger: true,
+                ledgerBase: '/api/reports/management',
+                ledgerType: 'growth-trend',
+                hasFilters: true,
+                canExport: true,
+                hasDateRange: true
+            },
+            'mgmt-utilisation': {
+                name: 'Asset Utilisation',
+                description: 'Share of active assets in use, by category',
+                apiEndpoint: '/api/reports/management/utilisation',
+                ledger: true,
+                ledgerBase: '/api/reports/management',
+                ledgerType: 'utilisation',
+                hasFilters: true,
+                canExport: true,
+                hasDateRange: true
+            },
+            'mgmt-condition': {
+                name: 'Asset Condition Summary',
+                description: 'Condition of active assets at their latest verification, by category',
+                apiEndpoint: '/api/reports/management/condition-summary',
+                ledger: true,
+                ledgerBase: '/api/reports/management',
+                ledgerType: 'condition-summary',
+                hasFilters: true,
+                canExport: true
+            },
+            'mgmt-forecast': {
+                name: 'Asset Replacement Forecast',
+                description: 'Assets expected to reach the end of their useful life, by year',
+                apiEndpoint: '/api/reports/management/replacement-forecast',
+                ledger: true,
+                ledgerBase: '/api/reports/management',
+                ledgerType: 'replacement-forecast',
+                hasFilters: true,
+                canExport: true,
+                hasThreshold: true,
+                thresholdLabel: 'Years ahead',
+                thresholdDefault: 5
+            },
+            'mgmt-top-cost': {
+                name: 'Top 10 Assets by Cost',
+                description: 'The ten active assets with the highest original cost',
+                apiEndpoint: '/api/reports/management/top-cost',
+                ledger: true,
+                ledgerBase: '/api/reports/management',
+                ledgerType: 'top-cost',
+                hasFilters: true,
+                canExport: true
+            },
+            'mgmt-top-nbv': {
+                name: 'Top 10 Assets by Net Book Value',
+                description: 'The ten active assets with the highest carrying amount',
+                apiEndpoint: '/api/reports/management/top-nbv',
+                ledger: true,
+                ledgerBase: '/api/reports/management',
+                ledgerType: 'top-nbv',
                 hasFilters: true,
                 canExport: true
             },
