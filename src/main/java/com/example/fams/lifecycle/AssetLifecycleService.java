@@ -64,9 +64,9 @@ public class AssetLifecycleService {
                                  RuntimeService runtimeService,
                                  TaskService taskService,
                                  AdminSettingsService adminSettingsService,
-                                AuthenticationManager authenticationManager,
-                                SyncedUserRepository syncedUserRepository,
-                                EmailService emailService) {
+                                 AuthenticationManager authenticationManager,
+                                 SyncedUserRepository syncedUserRepository,
+                                 EmailService emailService) {
         this.assetRepository = assetRepository;
         this.workflowRepository = workflowRepository;
         this.approvalActionRepository = approvalActionRepository;
@@ -158,6 +158,43 @@ public class AssetLifecycleService {
             }
         } catch (Exception ex) {
             System.err.println("Failed to notify asset managers of lifecycle request: " + ex.getMessage());
+        }
+
+        // Notify department head(s) for the asset's current department when this is a TRANSFER
+        try {
+            if (workflow.getType() == LifecycleWorkflowType.TRANSFER && hasText(workflow.getFromDepartment())) {
+                String deptKey = clean(workflow.getFromDepartment());
+                List<DepartmentHead> heads = departmentHeadRepository.findAllActiveDepartmentHeads();
+                if (heads != null && !heads.isEmpty()) {
+                    String subject = "Transfer request awaiting your approval: " + asset.getName();
+                    StringBuilder body = new StringBuilder();
+                    body.append("Hello,\n\n");
+                    body.append("A transfer request for the following asset requires your review and decision:\n\n");
+                    body.append("Asset: ").append(asset.getName()).append(" (ID: ").append(asset.getId()).append(")\n");
+                    body.append("From Department: ").append(workflow.getFromDepartment()).append("\n");
+                    body.append("Requested Effective Date: ").append(workflow.getRequestedEffectiveDate()).append("\n");
+                    if (workflow.getReason() != null && !workflow.getReason().isBlank()) {
+                        body.append("Reason: ").append(workflow.getReason()).append("\n");
+                    }
+                    body.append("\nYou can review and action this request here: ")
+                            .append(appBaseUrl.replaceAll("/+$", ""))
+                            .append("/admin/dashboard")
+                            .append("\n\nRegards,\nFAMS Notification Service\n");
+
+                    for (DepartmentHead head : heads) {
+                        if (!departmentMatches(head, deptKey)) continue;
+                        String to = head.getUserEmail();
+                        if (to == null || to.isBlank()) continue;
+                        try {
+                            emailService.sendEmail(to, subject, body.toString());
+                        } catch (Exception ex) {
+                            System.err.println("Failed to send transfer request notification to department head " + to + ": " + ex.getMessage());
+                        }
+                    }
+                }
+            }
+        } catch (Exception ex) {
+            System.err.println("Failed to notify department heads of transfer request: " + ex.getMessage());
         }
 
         return saved;
@@ -456,6 +493,12 @@ public class AssetLifecycleService {
         addHistory(asset, eventFor(workflow.getType()), actor,
                 workflow.getType().name().replace('_', ' ') + " completed",
                 describeCompletion(workflow), workflow.getFromEmployee(), targetSummary(workflow));
+        // Send transfer completion emails when applicable
+        try {
+            sendTransferCompletionEmails(workflow, asset, actor);
+        } catch (Exception ex) {
+            log.warn("Failed to send transfer completion emails for workflow {}: {}", workflow.getId(), ex.getMessage());
+        }
     }
 
     private void validate(LifecycleWorkflowForm form, Asset asset) {
@@ -492,6 +535,93 @@ public class AssetLifecycleService {
         history.setFromValue(from);
         history.setToValue(to);
         historyRepository.save(history);
+    }
+
+    /**
+     * Try to resolve an email address for a user identifier. The identifier may be a username,
+     * a Keycloak id, or an email address. Returns null if no email could be determined.
+     */
+    private String findEmailForUserIdentifier(String identifier) {
+        if (!hasText(identifier)) return null;
+        try {
+            java.util.Optional<SyncedUser> opt = syncedUserRepository.findByUsername(identifier);
+            if (opt.isPresent() && hasText(opt.get().getEmail())) return opt.get().getEmail();
+            opt = syncedUserRepository.findByKeycloakId(identifier);
+            if (opt.isPresent() && hasText(opt.get().getEmail())) return opt.get().getEmail();
+            List<SyncedUser> all = syncedUserRepository.findAll();
+            if (all != null) {
+                for (SyncedUser u : all) {
+                    if (u.getEmail() != null && u.getEmail().equalsIgnoreCase(identifier)) return u.getEmail();
+                    if (u.getUsername() != null && u.getUsername().equalsIgnoreCase(identifier) && hasText(u.getEmail())) return u.getEmail();
+                }
+            }
+        } catch (Exception ex) {
+            log.warn("Failed to resolve email for identifier {}: {}", identifier, ex.getMessage());
+        }
+        return null;
+    }
+
+    /**
+     * Send notification emails to the previous and new custodians when a TRANSFER workflow completes.
+     */
+    private void sendTransferCompletionEmails(AssetLifecycleWorkflow workflow, Asset asset, String actor) {
+        if (workflow == null || asset == null) return;
+        if (workflow.getType() != LifecycleWorkflowType.TRANSFER) return;
+
+        String fromUser = workflow.getFromEmployee();
+        String toUser = workflow.getToEmployee();
+
+        String subject = "Transfer completed: " + (asset != null ? asset.getName() : "Asset");
+
+        // Notify previous custodian
+        try {
+            String fromEmail = findEmailForUserIdentifier(fromUser);
+            if (hasText(fromEmail)) {
+                StringBuilder body = new StringBuilder();
+                body.append("Hello,\n\n");
+                body.append("The transfer for the following asset has been completed and you are no longer the custodian:\n\n");
+                body.append("Asset: ").append(asset.getName()).append(" (ID: ").append(asset.getId()).append(")\n");
+                body.append("Previous Custodian: ").append(defaultText(fromUser, "N/A")).append("\n");
+                body.append("New Custodian: ").append(defaultText(toUser, "N/A")).append("\n");
+                body.append("Effective Date: ").append(workflow.getRequestedEffectiveDate()).append("\n\n");
+                body.append("You can view details here: ")
+                        .append(appBaseUrl.replaceAll("/+$", ""))
+                        .append("/employee/dashboard")
+                        .append("\n\nRegards,\nFAMS Notification Service\n");
+                try {
+                    emailService.sendEmail(fromEmail, subject, body.toString());
+                } catch (Exception ex) {
+                    log.warn("Failed to send transfer-complete email to {}: {}", fromEmail, ex.getMessage());
+                }
+            }
+        } catch (Exception ex) {
+            log.warn("Error while notifying previous custodian: {}", ex.getMessage());
+        }
+
+        // Notify new custodian
+        try {
+            String toEmail = findEmailForUserIdentifier(toUser);
+            if (hasText(toEmail)) {
+                StringBuilder body = new StringBuilder();
+                body.append("Hello,\n\n");
+                body.append("Good news — a transfer has been completed and you are now the custodian for the following asset:\n\n");
+                body.append("Asset: ").append(asset.getName()).append(" (ID: ").append(asset.getId()).append(")\n");
+                body.append("Previous Custodian: ").append(defaultText(fromUser, "N/A")).append("\n");
+                body.append("New Custodian: ").append(defaultText(toUser, "N/A")).append("\n");
+                body.append("Effective Date: ").append(workflow.getRequestedEffectiveDate()).append("\n\n");
+                body.append("You can view details here: ")
+                        .append(appBaseUrl.replaceAll("/+$", ""))
+                        .append("/employee/dashboard")
+                        .append("\n\nRegards,\nFAMS Notification Service\n");
+                try {
+                    emailService.sendEmail(toEmail, subject, body.toString());
+                } catch (Exception ex) {
+                    log.warn("Failed to send transfer-complete email to {}: {}", toEmail, ex.getMessage());
+                }
+            }
+        } catch (Exception ex) {
+            log.warn("Error while notifying new custodian: {}", ex.getMessage());
+        }
     }
 
     private String describeSubmission(AssetLifecycleWorkflow workflow) {
