@@ -283,6 +283,30 @@
                         <li><button onclick="loadReport('mgmt-top-nbv')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Top 10 Assets by Net Book Value</button></li>
                     </ul>
                 </div>
+                <!-- Audit & Governance Reports -->
+                <div th:if="${canViewLedgerReports}">
+                    <div class="flex items-center gap-2 mb-2 px-2">
+                        <span class="material-symbols-outlined text-[18px] text-primary">policy</span>
+                        <h4 class="font-body-medium text-on-surface">Audit &amp; Governance Reports</h4>
+                    </div>
+                    <ul class="space-y-1">
+                        <li><button onclick="loadReport('gov-trail')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Asset Transaction Audit Trail</button></li>
+                        <li><button onclick="loadReport('gov-changes')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Asset Master Change History</button></li>
+                        <li><button onclick="loadReport('gov-activity')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">User Activity</button></li>
+                        <li><button onclick="loadReport('gov-approvals')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Approval History</button></li>
+                        <li><button onclick="loadReport('gov-dep-approvals')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Depreciation Approvals</button></li>
+                        <li><button onclick="loadReport('gov-disposal-approvals')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Disposal Approvals</button></li>
+                        <li><button onclick="loadReport('gov-transfer-approvals')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Transfer Approvals</button></li>
+                        <li><button onclick="loadReport('gov-reval-approvals')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Revaluation Approvals</button></li>
+                        <li><button onclick="loadReport('gov-creation')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Asset Creation / Modification</button></li>
+                        <li><button onclick="loadReport('gov-deactivated')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Deleted / Deactivated Assets</button></li>
+                        <li><button onclick="loadReport('gov-backdated')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Backdated Transactions</button></li>
+                        <li><button onclick="loadReport('gov-manual')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Manual Adjustments</button></li>
+                        <li><button onclick="loadReport('gov-overrides')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Overrides</button></li>
+                        <li><button onclick="loadReport('gov-sod')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Segregation of Duties Exceptions</button></li>
+                        <li><button onclick="loadReport('gov-period-close')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Period Close Audit</button></li>
+                    </ul>
+                </div>
                 <!-- Financial Reports -->
                 <div>
                     <div class="flex items-center gap-2 mb-2 px-2">
@@ -2042,6 +2066,174 @@
                 ledgerBase: '/api/reports/management',
                 ledgerType: 'top-nbv',
                 hasFilters: true,
+                canExport: true
+            },
+            'gov-trail': {
+                name: 'Asset Transaction Audit Trail',
+                description: 'Chronological history of asset transactions and workflow events',
+                apiEndpoint: '/api/reports/governance/transaction-trail',
+                ledger: true,
+                ledgerBase: '/api/reports/governance',
+                ledgerType: 'transaction-trail',
+                hasFilters: false,
+                hasDateRange: true,
+                canExport: true
+            },
+            'gov-changes': {
+                name: 'Asset Master Change History',
+                description: 'Before-and-after history of changes to asset master information',
+                apiEndpoint: '/api/reports/governance/master-changes',
+                ledger: true,
+                ledgerBase: '/api/reports/governance',
+                ledgerType: 'master-changes',
+                hasFilters: false,
+                hasDateRange: true,
+                canExport: true
+            },
+            'gov-activity': {
+                name: 'User Activity Report',
+                description: 'State-changing actions performed by users in the system',
+                apiEndpoint: '/api/reports/governance/user-activity',
+                ledger: true,
+                ledgerBase: '/api/reports/governance',
+                ledgerType: 'user-activity',
+                hasFilters: false,
+                hasDateRange: true,
+                canExport: true
+            },
+            'gov-approvals': {
+                name: 'Approval History Report',
+                description: 'Approval decisions across asset workflows',
+                apiEndpoint: '/api/reports/governance/approvals',
+                ledger: true,
+                ledgerBase: '/api/reports/governance',
+                ledgerType: 'approvals',
+                hasFilters: false,
+                hasDateRange: true,
+                canExport: true
+            },
+            'gov-dep-approvals': {
+                name: 'Depreciation Approval Report',
+                description: 'Review and approval history for depreciation runs',
+                apiEndpoint: '/api/reports/governance/depreciation-approvals',
+                ledger: true,
+                ledgerBase: '/api/reports/governance',
+                ledgerType: 'depreciation-approvals',
+                hasFilters: false,
+                hasDateRange: true,
+                canExport: true
+            },
+            'gov-disposal-approvals': {
+                name: 'Disposal Approval Report',
+                description: 'Approval trail for disposals',
+                apiEndpoint: '/api/reports/governance/disposal-approvals',
+                ledger: true,
+                ledgerBase: '/api/reports/governance',
+                ledgerType: 'disposal-approvals',
+                hasFilters: false,
+                hasDateRange: true,
+                canExport: true
+            },
+            'gov-transfer-approvals': {
+                name: 'Transfer Approval Report',
+                description: 'Approval trail for transfers',
+                apiEndpoint: '/api/reports/governance/transfer-approvals',
+                ledger: true,
+                ledgerBase: '/api/reports/governance',
+                ledgerType: 'transfer-approvals',
+                hasFilters: false,
+                hasDateRange: true,
+                canExport: true
+            },
+            'gov-reval-approvals': {
+                name: 'Revaluation Approval Report',
+                description: 'Approval trail for revaluations',
+                apiEndpoint: '/api/reports/governance/revaluation-approvals',
+                ledger: true,
+                ledgerBase: '/api/reports/governance',
+                ledgerType: 'revaluation-approvals',
+                hasFilters: false,
+                hasDateRange: true,
+                canExport: true
+            },
+            'gov-creation': {
+                name: 'Asset Creation/Modification Report',
+                description: 'Assets created or modified within the period',
+                apiEndpoint: '/api/reports/governance/creation-modification',
+                ledger: true,
+                ledgerBase: '/api/reports/governance',
+                ledgerType: 'creation-modification',
+                hasFilters: false,
+                hasDateRange: true,
+                canExport: true
+            },
+            'gov-deactivated': {
+                name: 'Deleted/Deactivated Asset Report',
+                description: 'Assets that have been disposed of, retired or otherwise deactivated',
+                apiEndpoint: '/api/reports/governance/deactivated-assets',
+                ledger: true,
+                ledgerBase: '/api/reports/governance',
+                ledgerType: 'deactivated-assets',
+                hasFilters: false,
+                hasDateRange: true,
+                canExport: true
+            },
+            'gov-backdated': {
+                name: 'Backdated Transaction Report',
+                description: 'Transactions entered with effective dates earlier than their entry dates',
+                apiEndpoint: '/api/reports/governance/backdated',
+                ledger: true,
+                ledgerBase: '/api/reports/governance',
+                ledgerType: 'backdated',
+                hasFilters: false,
+                hasDateRange: true,
+                canExport: true,
+                hasThreshold: true,
+                thresholdLabel: 'Entered at least (days) after effective date',
+                thresholdDefault: 1
+            },
+            'gov-manual': {
+                name: 'Manual Adjustment Report',
+                description: 'Manual accounting and asset adjustments',
+                apiEndpoint: '/api/reports/governance/manual-adjustments',
+                ledger: true,
+                ledgerBase: '/api/reports/governance',
+                ledgerType: 'manual-adjustments',
+                hasFilters: false,
+                hasDateRange: true,
+                canExport: true
+            },
+            'gov-overrides': {
+                name: 'Override Report',
+                description: 'Transactions where calculated values were overridden',
+                apiEndpoint: '/api/reports/governance/overrides',
+                ledger: true,
+                ledgerBase: '/api/reports/governance',
+                ledgerType: 'overrides',
+                hasFilters: false,
+                hasDateRange: true,
+                canExport: true
+            },
+            'gov-sod': {
+                name: 'Segregation-of-Duties Exception Report',
+                description: 'Potential conflicts where initiation, approval or posting are not independent',
+                apiEndpoint: '/api/reports/governance/sod-exceptions',
+                ledger: true,
+                ledgerBase: '/api/reports/governance',
+                ledgerType: 'sod-exceptions',
+                hasFilters: false,
+                hasDateRange: true,
+                canExport: true
+            },
+            'gov-period-close': {
+                name: 'Period Close Audit Report',
+                description: 'Evidence and exceptions for fixed asset accounting periods',
+                apiEndpoint: '/api/reports/governance/period-close',
+                ledger: true,
+                ledgerBase: '/api/reports/governance',
+                ledgerType: 'period-close',
+                hasFilters: false,
+                hasDateRange: true,
                 canExport: true
             },
             'impairment-report': {

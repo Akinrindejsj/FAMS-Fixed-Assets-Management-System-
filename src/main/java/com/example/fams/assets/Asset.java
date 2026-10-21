@@ -1,19 +1,24 @@
 package com.example.fams.assets;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Map;
 
 @Entity
+@EntityListeners(com.example.fams.governance.AssetChangeListener.class)
 @Table(name = "assets")
 public class Asset {
 
@@ -123,6 +128,10 @@ public class Asset {
 
     @Column(nullable = false)
     private LocalDateTime updatedAt;
+
+    /** Field values as loaded, used to work out what changed on update. Not persisted. */
+    @Transient
+    private Map<String, String> auditSnapshot;
 
     @PrePersist
     void beforeCreate() {
@@ -349,5 +358,15 @@ public class Asset {
 
     public LocalDateTime getUpdatedAt() {
         return updatedAt;
+    }
+
+    @JsonIgnore
+    public Map<String, String> getAuditSnapshot() {
+        return auditSnapshot;
+    }
+
+    @JsonIgnore
+    public void setAuditSnapshot(Map<String, String> auditSnapshot) {
+        this.auditSnapshot = auditSnapshot;
     }
 }

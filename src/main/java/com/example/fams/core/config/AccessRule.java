@@ -29,6 +29,7 @@ public enum AccessRule {
     GL_BACKFILL("gl-backfill", "/gl/backfill", List.of("admin")),
     INSURANCE("insurance", "/insurance", List.of("admin", "assetManager", "financialOfficers")),
     INSURANCE_REPORTS("insurance-reports", "/api/reports/insurance", List.of("admin", "assetManager", "financialOfficers", "auditor")),
+    GOVERNANCE_REPORTS("governance-reports", "/api/reports/governance", List.of("admin", "assetManager", "financialOfficers", "auditor")),
     // Ledger-based reports also open to auditors (read-only)
     GL_REPORTS("gl-reports", "/api/reports/gl", List.of("admin", "assetManager", "financialOfficers", "auditor")),
 
