@@ -307,6 +307,26 @@
                         <li><button onclick="loadReport('gov-period-close')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Period Close Audit</button></li>
                     </ul>
                 </div>
+                <!-- Forecasting & Analytical Reports -->
+                <div>
+                    <div class="flex items-center gap-2 mb-2 px-2">
+                        <span class="material-symbols-outlined text-[18px] text-primary">query_stats</span>
+                        <h4 class="font-body-medium text-on-surface">Forecasting &amp; Analytical Reports</h4>
+                    </div>
+                    <ul class="space-y-1">
+                        <li><button onclick="loadReport('fc-dep-12')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Depreciation Forecast — 12 Months</button></li>
+                        <li><button onclick="loadReport('fc-dep-3y')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Depreciation Forecast — 3 Years</button></li>
+                        <li><button onclick="loadReport('fc-dep-5y')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Depreciation Forecast — 5 Years</button></li>
+                        <li><button onclick="loadReport('mgmt-forecast')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Asset Replacement Forecast</button></li>
+                        <li><button onclick="loadReport('fc-capex')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">CAPEX Forecast</button></li>
+                        <li><button onclick="loadReport('fc-eol')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Assets Reaching End-of-Life</button></li>
+                        <li><button onclick="loadReport('fc-nbv')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Future NBV Projection</button></li>
+                        <li><button onclick="loadReport('fc-maintenance')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Maintenance Cost Forecast</button></li>
+                        <li><button onclick="loadReport('fc-exposure')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Replacement Cost Exposure</button></li>
+                        <li><button onclick="loadReport('fc-age')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Asset Age Distribution</button></li>
+                        <li><button onclick="loadReport('fc-costbenefit')" class="w-full text-left px-3 py-1.5 text-body-default text-secondary rounded-lg hover:bg-surface-canvas transition-colors">Asset Cost/Benefit Analysis</button></li>
+                    </ul>
+                </div>
                 <!-- Financial Reports -->
                 <div>
                     <div class="flex items-center gap-2 mb-2 px-2">
@@ -444,6 +464,10 @@
                     <div id="thresholdWrapper" class="hidden space-y-1.5">
                         <label id="thresholdLabel" class="text-label-small text-secondary uppercase tracking-wide">Threshold</label>
                         <input id="thresholdFilter" type="number" min="1" step="1" onchange="reloadCurrentReport()" class="w-full h-[38px] px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                    </div>
+                    <div id="rateWrapper" class="hidden space-y-1.5">
+                        <label id="rateLabel" class="text-label-small text-secondary uppercase tracking-wide">Rate</label>
+                        <input id="rateFilter" type="number" min="0" max="100" step="0.1" onchange="reloadCurrentReport()" class="w-full h-[38px] px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none">
                     </div>
                     <div id="auditSessionWrapper" class="hidden space-y-1.5">
                         <label class="text-label-small text-secondary uppercase tracking-wide">Audit Session</label>
@@ -2236,6 +2260,124 @@
                 hasDateRange: true,
                 canExport: true
             },
+            'fc-dep-12': {
+                name: 'Depreciation Forecast — 12 Months',
+                description: 'Projected depreciation for each of the next twelve months',
+                apiEndpoint: '/api/reports/forecast/depreciation-12m',
+                ledger: true,
+                ledgerBase: '/api/reports/forecast',
+                ledgerType: 'depreciation-12m',
+                hasFilters: true,
+                canExport: true
+            },
+            'fc-dep-3y': {
+                name: 'Depreciation Forecast — 3 Years',
+                description: 'Projected depreciation over the next three years',
+                apiEndpoint: '/api/reports/forecast/depreciation-3y',
+                ledger: true,
+                ledgerBase: '/api/reports/forecast',
+                ledgerType: 'depreciation-3y',
+                hasFilters: true,
+                canExport: true
+            },
+            'fc-dep-5y': {
+                name: 'Depreciation Forecast — 5 Years',
+                description: 'Projected depreciation over the next five years',
+                apiEndpoint: '/api/reports/forecast/depreciation-5y',
+                ledger: true,
+                ledgerBase: '/api/reports/forecast',
+                ledgerType: 'depreciation-5y',
+                hasFilters: true,
+                canExport: true
+            },
+            'fc-capex': {
+                name: 'CAPEX Forecast',
+                description: 'Projected capital expenditure: replacements plus a trend-based allowance for new spending',
+                apiEndpoint: '/api/reports/forecast/capex',
+                ledger: true,
+                ledgerBase: '/api/reports/forecast',
+                ledgerType: 'capex',
+                hasFilters: true,
+                canExport: true,
+                hasThreshold: true,
+                thresholdLabel: 'Years ahead',
+                thresholdDefault: 5,
+                hasRate: true,
+                rateLabel: 'Annual cost inflation (%)',
+                rateDefault: 0
+            },
+            'fc-eol': {
+                name: 'Assets Reaching End-of-Life',
+                description: 'Assets whose useful life ends within the horizon',
+                apiEndpoint: '/api/reports/forecast/end-of-life',
+                ledger: true,
+                ledgerBase: '/api/reports/forecast',
+                ledgerType: 'end-of-life',
+                hasFilters: true,
+                canExport: true,
+                hasThreshold: true,
+                thresholdLabel: 'Years ahead',
+                thresholdDefault: 2
+            },
+            'fc-nbv': {
+                name: 'Future NBV Projection',
+                description: 'Projected carrying amounts at future year-ends',
+                apiEndpoint: '/api/reports/forecast/future-nbv',
+                ledger: true,
+                ledgerBase: '/api/reports/forecast',
+                ledgerType: 'future-nbv',
+                hasFilters: true,
+                canExport: true,
+                hasThreshold: true,
+                thresholdLabel: 'Years ahead',
+                thresholdDefault: 5
+            },
+            'fc-maintenance': {
+                name: 'Maintenance Cost Forecast',
+                description: 'Forecast of maintenance expenditure for the next 12 months',
+                apiEndpoint: '/api/reports/forecast/maintenance',
+                ledger: true,
+                ledgerBase: '/api/reports/forecast',
+                ledgerType: 'maintenance',
+                hasFilters: true,
+                canExport: true
+            },
+            'fc-exposure': {
+                name: 'Replacement Cost Exposure',
+                description: 'Estimated cost of replacing assets that are ageing or past their useful life',
+                apiEndpoint: '/api/reports/forecast/replacement-exposure',
+                ledger: true,
+                ledgerBase: '/api/reports/forecast',
+                ledgerType: 'replacement-exposure',
+                hasFilters: true,
+                canExport: true,
+                hasThreshold: true,
+                thresholdLabel: 'Within (years)',
+                thresholdDefault: 3,
+                hasRate: true,
+                rateLabel: 'Annual cost inflation (%)',
+                rateDefault: 0
+            },
+            'fc-age': {
+                name: 'Asset Age Distribution',
+                description: 'Distribution of active assets by age',
+                apiEndpoint: '/api/reports/forecast/age-distribution',
+                ledger: true,
+                ledgerBase: '/api/reports/forecast',
+                ledgerType: 'age-distribution',
+                hasFilters: true,
+                canExport: true
+            },
+            'fc-costbenefit': {
+                name: 'Asset Cost/Benefit Analysis',
+                description: 'Cost of ownership compared with the utilisation data available',
+                apiEndpoint: '/api/reports/forecast/cost-benefit',
+                ledger: true,
+                ledgerBase: '/api/reports/forecast',
+                ledgerType: 'cost-benefit',
+                hasFilters: true,
+                canExport: true
+            },
             'impairment-report': {
                 name: 'Impairment Report',
                 description: 'Impairment losses and reversals recorded within a selected reporting period',
@@ -2806,6 +2948,10 @@
 
         // Filters shared by the on-screen ledger reports and their exports.
         function ledgerParams(config, params) {
+            if (config.hasRate) {
+                const rate = document.getElementById('rateFilter')?.value;
+                if (rate !== undefined && rate !== '') params.append('rate', rate);
+            }
             if (config.hasThreshold) {
                 const threshold = document.getElementById('thresholdFilter')?.value;
                 if (threshold) params.append('threshold', threshold);
@@ -2868,6 +3014,11 @@
             document.getElementById('auditSessionWrapper').classList.toggle('hidden', !config.hasAuditSession || config.ledgerType === 'last-verification');
             document.getElementById('glStatusWrapper').classList.toggle('hidden', !config.hasGlStatus);
             document.getElementById('thresholdWrapper').classList.toggle('hidden', !config.hasThreshold);
+            document.getElementById('rateWrapper').classList.toggle('hidden', !config.hasRate);
+            if (config.hasRate && switchedReport) {
+                document.getElementById('rateLabel').textContent = config.rateLabel;
+                document.getElementById('rateFilter').value = config.rateDefault;
+            }
             if (config.hasThreshold && switchedReport) {
                 document.getElementById('thresholdLabel').textContent = config.thresholdLabel;
                 document.getElementById('thresholdFilter').value = config.thresholdDefault;
