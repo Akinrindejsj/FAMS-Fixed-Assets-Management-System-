@@ -37,6 +37,7 @@ public class ScopedAssetFinder {
                         || (a.getCategory() != null && a.getCategory().equalsIgnoreCase(category.trim())))
                 .filter(a -> isBlank(department) || "Global Operations".equalsIgnoreCase(department)
                         || (a.getDepartment() != null && a.getDepartment().equalsIgnoreCase(department.trim())))
+                .filter(ReportFilters::matches)
                 .sorted(Comparator.comparing((Asset a) -> a.getAssetCode() == null ? "" : a.getAssetCode()))
                 .toList();
     }

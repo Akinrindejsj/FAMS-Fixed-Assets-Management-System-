@@ -202,6 +202,7 @@ public class AssetExceptionReportService {
                         || (a.getCategory() != null && a.getCategory().equalsIgnoreCase(category.trim())))
                 .filter(a -> blank(department) || "Global Operations".equalsIgnoreCase(department)
                         || (a.getDepartment() != null && a.getDepartment().equalsIgnoreCase(department.trim())))
+                .filter(ReportFilters::matches)
                 .sorted(Comparator.comparing((Asset a) -> nz(a.getAssetCode())))
                 .toList();
     }

@@ -140,6 +140,9 @@ public class MaintenanceReportService {
     }
 
     private boolean visible(Set<Long> allowed, Asset asset) {
+        if (asset != null && !ReportFilters.matches(asset)) {
+            return false;
+        }
         return allowed == null || (asset != null && allowed.contains(asset.getId()));
     }
 

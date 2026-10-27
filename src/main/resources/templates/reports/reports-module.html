@@ -465,6 +465,29 @@
                         <label id="thresholdLabel" class="text-label-small text-secondary uppercase tracking-wide">Threshold</label>
                         <input id="thresholdFilter" type="number" min="1" step="1" onchange="reloadCurrentReport()" class="w-full h-[38px] px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none">
                     </div>
+                    <div id="assetFilterWrapper" style="display: none;">
+                        <div class="space-y-1.5">
+                            <label class="text-label-small text-secondary uppercase tracking-wide">Cost Centre</label>
+                            <input id="costCentreFilter" type="text" placeholder="Any" onchange="reloadCurrentReport()" class="w-full h-[38px] px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                        </div>
+                        <div class="space-y-1.5">
+                            <label class="text-label-small text-secondary uppercase tracking-wide">Custodian</label>
+                            <input id="custodianFilter" type="text" placeholder="Any" onchange="reloadCurrentReport()" class="w-full h-[38px] px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                        </div>
+                        <div class="space-y-1.5">
+                            <label class="text-label-small text-secondary uppercase tracking-wide">Asset Status</label>
+                            <select id="statusFilter" onchange="reloadCurrentReport()" class="w-full h-[38px] px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                                <option value="">Any status</option>
+                                <option>Assigned</option>
+                                <option>In Stock</option>
+                                <option>Available</option>
+                                <option>Returned</option>
+                                <option>Under Maintenance</option>
+                                <option>Retired</option>
+                                <option>Disposed</option>
+                            </select>
+                        </div>
+                    </div>
                     <div id="rateWrapper" class="hidden space-y-1.5">
                         <label id="rateLabel" class="text-label-small text-secondary uppercase tracking-wide">Rate</label>
                         <input id="rateFilter" type="number" min="0" max="100" step="0.1" onchange="reloadCurrentReport()" class="w-full h-[38px] px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none">
@@ -945,6 +968,13 @@
 
                 <div id="ledgerViewContainer" class="hidden">
                     <div id="ledgerSummary" class="hidden px-5 py-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 border-b border-border-default"></div>
+                    <div id="ledgerToolbar" class="px-5 py-3 flex flex-wrap items-center gap-3 border-b border-border-default">
+                        <label for="ledgerGroupBy" class="text-label-small text-secondary uppercase tracking-wide">Group by</label>
+                        <select id="ledgerGroupBy" onchange="setLedgerGroup(this.value)" class="h-[34px] px-3 bg-surface-canvas border border-border-default rounded-lg text-body-default text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                            <option value="">No grouping</option>
+                        </select>
+                        <span class="text-label-small text-secondary">Click a column heading to sort. Asset codes open the asset.</span>
+                    </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse">
                             <thead id="ledgerHead"></thead>
@@ -1781,6 +1811,7 @@
                 description: 'Active assets in use that have no responsible custodian',
                 apiEndpoint: '/api/reports/exceptions/no-custodian',
                 ledger: true,
+                hasAssetFilters: true,
                 ledgerBase: '/api/reports/exceptions',
                 ledgerType: 'no-custodian',
                 hasFilters: true,
@@ -1791,6 +1822,7 @@
                 description: 'Active assets with no valid physical location',
                 apiEndpoint: '/api/reports/exceptions/no-location',
                 ledger: true,
+                hasAssetFilters: true,
                 ledgerBase: '/api/reports/exceptions',
                 ledgerType: 'no-location',
                 hasFilters: true,
@@ -1801,6 +1833,7 @@
                 description: 'Active assets missing a serial number or manufacturer identification',
                 apiEndpoint: '/api/reports/exceptions/no-serial',
                 ledger: true,
+                hasAssetFilters: true,
                 ledgerBase: '/api/reports/exceptions',
                 ledgerType: 'no-serial',
                 hasFilters: true,
@@ -1811,6 +1844,7 @@
                 description: 'Depreciable assets with no applicable depreciation rule',
                 apiEndpoint: '/api/reports/exceptions/no-depreciation-policy',
                 ledger: true,
+                hasAssetFilters: true,
                 ledgerBase: '/api/reports/exceptions',
                 ledgerType: 'no-depreciation-policy',
                 hasFilters: true,
@@ -1821,6 +1855,7 @@
                 description: 'Assets whose category lacks the ledger mapping needed to post journals',
                 apiEndpoint: '/api/reports/exceptions/no-gl-mapping',
                 ledger: true,
+                hasAssetFilters: true,
                 ledgerBase: '/api/reports/exceptions',
                 ledgerType: 'no-gl-mapping',
                 hasFilters: true,
@@ -1831,6 +1866,7 @@
                 description: 'Assets without a valid acquisition or capitalised cost',
                 apiEndpoint: '/api/reports/exceptions/missing-cost',
                 ledger: true,
+                hasAssetFilters: true,
                 ledgerBase: '/api/reports/exceptions',
                 ledgerType: 'missing-cost',
                 hasFilters: true,
@@ -1841,6 +1877,7 @@
                 description: 'Assets whose depreciation policy has a missing or invalid useful life',
                 apiEndpoint: '/api/reports/exceptions/invalid-useful-life',
                 ledger: true,
+                hasAssetFilters: true,
                 ledgerBase: '/api/reports/exceptions',
                 ledgerType: 'invalid-useful-life',
                 hasFilters: true,
@@ -1851,6 +1888,7 @@
                 description: 'Active assets that have outlived their configured useful life',
                 apiEndpoint: '/api/reports/exceptions/beyond-useful-life',
                 ledger: true,
+                hasAssetFilters: true,
                 ledgerBase: '/api/reports/exceptions',
                 ledgerType: 'beyond-useful-life',
                 hasFilters: true,
@@ -1861,6 +1899,7 @@
                 description: 'Operational assets that have completed depreciation',
                 apiEndpoint: '/api/reports/exceptions/fully-depreciated-active',
                 ledger: true,
+                hasAssetFilters: true,
                 ledgerBase: '/api/reports/exceptions',
                 ledgerType: 'fully-depreciated-active',
                 hasFilters: true,
@@ -1871,6 +1910,7 @@
                 description: 'Unassigned assets with no recent use or movement',
                 apiEndpoint: '/api/reports/exceptions/idle',
                 ledger: true,
+                hasAssetFilters: true,
                 ledgerBase: '/api/reports/exceptions',
                 ledgerType: 'idle',
                 hasFilters: true,
@@ -1884,6 +1924,7 @@
                 description: 'Assets with no meaningful activity over the period',
                 apiEndpoint: '/api/reports/exceptions/dormant',
                 ledger: true,
+                hasAssetFilters: true,
                 ledgerBase: '/api/reports/exceptions',
                 ledgerType: 'dormant',
                 hasFilters: true,
@@ -1897,6 +1938,7 @@
                 description: 'Assets meeting age, condition or maintenance-cost replacement criteria',
                 apiEndpoint: '/api/reports/exceptions/replacement',
                 ledger: true,
+                hasAssetFilters: true,
                 ledgerBase: '/api/reports/exceptions',
                 ledgerType: 'replacement',
                 hasFilters: true,
@@ -1910,6 +1952,7 @@
                 description: 'Assets whose maintenance has stayed open beyond the threshold',
                 apiEndpoint: '/api/reports/exceptions/excessive-maintenance',
                 ledger: true,
+                hasAssetFilters: true,
                 ledgerBase: '/api/reports/exceptions',
                 ledgerType: 'excessive-maintenance',
                 hasFilters: true,
@@ -1923,6 +1966,7 @@
                 description: 'Assets without a successful verification within the required interval',
                 apiEndpoint: '/api/reports/exceptions/not-verified',
                 ledger: true,
+                hasAssetFilters: true,
                 ledgerBase: '/api/reports/exceptions',
                 ledgerType: 'not-verified',
                 hasFilters: true,
@@ -1936,6 +1980,7 @@
                 description: 'Asset codes, serial numbers and barcodes shared by more than one asset',
                 apiEndpoint: '/api/reports/exceptions/duplicates',
                 ledger: true,
+                hasAssetFilters: true,
                 ledgerBase: '/api/reports/exceptions',
                 ledgerType: 'duplicates',
                 hasFilters: true,
@@ -1946,6 +1991,7 @@
                 description: 'Assets missing mandatory master-data fields',
                 apiEndpoint: '/api/reports/exceptions/incomplete-records',
                 ledger: true,
+                hasAssetFilters: true,
                 ledgerBase: '/api/reports/exceptions',
                 ledgerType: 'incomplete-records',
                 hasFilters: true,
@@ -1956,6 +2002,7 @@
                 description: 'Consolidated assessment of data completeness, validity and consistency',
                 apiEndpoint: '/api/reports/exceptions/data-quality',
                 ledger: true,
+                hasAssetFilters: true,
                 ledgerBase: '/api/reports/exceptions',
                 ledgerType: 'data-quality',
                 hasFilters: true,
@@ -1966,6 +2013,7 @@
                 description: 'Asset population, value, activity and key exceptions at a glance',
                 apiEndpoint: '/api/reports/management/executive-summary',
                 ledger: true,
+                hasAssetFilters: true,
                 ledgerBase: '/api/reports/management',
                 ledgerType: 'executive-summary',
                 hasFilters: true,
@@ -1977,6 +2025,7 @@
                 description: 'Capital expenditure by category for the period (defaults to this year to date)',
                 apiEndpoint: '/api/reports/management/capex',
                 ledger: true,
+                hasAssetFilters: true,
                 ledgerBase: '/api/reports/management',
                 ledgerType: 'capex',
                 hasFilters: true,
@@ -1988,6 +2037,7 @@
                 description: 'Newly capitalised assets and capital additions by month (defaults to the last 12 months)',
                 apiEndpoint: '/api/reports/management/monthly-additions',
                 ledger: true,
+                hasAssetFilters: true,
                 ledgerBase: '/api/reports/management',
                 ledgerType: 'monthly-additions',
                 hasFilters: true,
@@ -1999,6 +2049,7 @@
                 description: 'Completed disposals, proceeds and gain or loss by month (defaults to the last 12 months)',
                 apiEndpoint: '/api/reports/management/monthly-disposals',
                 ledger: true,
+                hasAssetFilters: true,
                 ledgerBase: '/api/reports/management',
                 ledgerType: 'monthly-disposals',
                 hasFilters: true,
@@ -2010,6 +2061,7 @@
                 description: 'Depreciation expense by month (defaults to the last 12 months)',
                 apiEndpoint: '/api/reports/management/monthly-depreciation',
                 ledger: true,
+                hasAssetFilters: true,
                 ledgerBase: '/api/reports/management',
                 ledgerType: 'monthly-depreciation',
                 hasFilters: true,
@@ -2021,6 +2073,7 @@
                 description: 'Maintenance expenditure by month (defaults to the last 12 months)',
                 apiEndpoint: '/api/reports/management/maintenance-trend',
                 ledger: true,
+                hasAssetFilters: true,
                 ledgerBase: '/api/reports/management',
                 ledgerType: 'maintenance-trend',
                 hasFilters: true,
@@ -2032,6 +2085,7 @@
                 description: 'Growth in asset population and cost, month by month (defaults to the last 24 months)',
                 apiEndpoint: '/api/reports/management/growth-trend',
                 ledger: true,
+                hasAssetFilters: true,
                 ledgerBase: '/api/reports/management',
                 ledgerType: 'growth-trend',
                 hasFilters: true,
@@ -2043,6 +2097,7 @@
                 description: 'Share of active assets in use, by category',
                 apiEndpoint: '/api/reports/management/utilisation',
                 ledger: true,
+                hasAssetFilters: true,
                 ledgerBase: '/api/reports/management',
                 ledgerType: 'utilisation',
                 hasFilters: true,
@@ -2054,6 +2109,7 @@
                 description: 'Condition of active assets at their latest verification, by category',
                 apiEndpoint: '/api/reports/management/condition-summary',
                 ledger: true,
+                hasAssetFilters: true,
                 ledgerBase: '/api/reports/management',
                 ledgerType: 'condition-summary',
                 hasFilters: true,
@@ -2064,6 +2120,7 @@
                 description: 'Assets expected to reach the end of their useful life, by year',
                 apiEndpoint: '/api/reports/management/replacement-forecast',
                 ledger: true,
+                hasAssetFilters: true,
                 ledgerBase: '/api/reports/management',
                 ledgerType: 'replacement-forecast',
                 hasFilters: true,
@@ -2077,6 +2134,7 @@
                 description: 'The ten active assets with the highest original cost',
                 apiEndpoint: '/api/reports/management/top-cost',
                 ledger: true,
+                hasAssetFilters: true,
                 ledgerBase: '/api/reports/management',
                 ledgerType: 'top-cost',
                 hasFilters: true,
@@ -2087,6 +2145,7 @@
                 description: 'The ten active assets with the highest carrying amount',
                 apiEndpoint: '/api/reports/management/top-nbv',
                 ledger: true,
+                hasAssetFilters: true,
                 ledgerBase: '/api/reports/management',
                 ledgerType: 'top-nbv',
                 hasFilters: true,
@@ -2265,6 +2324,7 @@
                 description: 'Projected depreciation for each of the next twelve months',
                 apiEndpoint: '/api/reports/forecast/depreciation-12m',
                 ledger: true,
+                hasAssetFilters: true,
                 ledgerBase: '/api/reports/forecast',
                 ledgerType: 'depreciation-12m',
                 hasFilters: true,
@@ -2275,6 +2335,7 @@
                 description: 'Projected depreciation over the next three years',
                 apiEndpoint: '/api/reports/forecast/depreciation-3y',
                 ledger: true,
+                hasAssetFilters: true,
                 ledgerBase: '/api/reports/forecast',
                 ledgerType: 'depreciation-3y',
                 hasFilters: true,
@@ -2285,6 +2346,7 @@
                 description: 'Projected depreciation over the next five years',
                 apiEndpoint: '/api/reports/forecast/depreciation-5y',
                 ledger: true,
+                hasAssetFilters: true,
                 ledgerBase: '/api/reports/forecast',
                 ledgerType: 'depreciation-5y',
                 hasFilters: true,
@@ -2295,6 +2357,7 @@
                 description: 'Projected capital expenditure: replacements plus a trend-based allowance for new spending',
                 apiEndpoint: '/api/reports/forecast/capex',
                 ledger: true,
+                hasAssetFilters: true,
                 ledgerBase: '/api/reports/forecast',
                 ledgerType: 'capex',
                 hasFilters: true,
@@ -2311,6 +2374,7 @@
                 description: 'Assets whose useful life ends within the horizon',
                 apiEndpoint: '/api/reports/forecast/end-of-life',
                 ledger: true,
+                hasAssetFilters: true,
                 ledgerBase: '/api/reports/forecast',
                 ledgerType: 'end-of-life',
                 hasFilters: true,
@@ -2324,6 +2388,7 @@
                 description: 'Projected carrying amounts at future year-ends',
                 apiEndpoint: '/api/reports/forecast/future-nbv',
                 ledger: true,
+                hasAssetFilters: true,
                 ledgerBase: '/api/reports/forecast',
                 ledgerType: 'future-nbv',
                 hasFilters: true,
@@ -2337,6 +2402,7 @@
                 description: 'Forecast of maintenance expenditure for the next 12 months',
                 apiEndpoint: '/api/reports/forecast/maintenance',
                 ledger: true,
+                hasAssetFilters: true,
                 ledgerBase: '/api/reports/forecast',
                 ledgerType: 'maintenance',
                 hasFilters: true,
@@ -2347,6 +2413,7 @@
                 description: 'Estimated cost of replacing assets that are ageing or past their useful life',
                 apiEndpoint: '/api/reports/forecast/replacement-exposure',
                 ledger: true,
+                hasAssetFilters: true,
                 ledgerBase: '/api/reports/forecast',
                 ledgerType: 'replacement-exposure',
                 hasFilters: true,
@@ -2363,6 +2430,7 @@
                 description: 'Distribution of active assets by age',
                 apiEndpoint: '/api/reports/forecast/age-distribution',
                 ledger: true,
+                hasAssetFilters: true,
                 ledgerBase: '/api/reports/forecast',
                 ledgerType: 'age-distribution',
                 hasFilters: true,
@@ -2373,6 +2441,7 @@
                 description: 'Cost of ownership compared with the utilisation data available',
                 apiEndpoint: '/api/reports/forecast/cost-benefit',
                 ledger: true,
+                hasAssetFilters: true,
                 ledgerBase: '/api/reports/forecast',
                 ledgerType: 'cost-benefit',
                 hasFilters: true,
@@ -2726,6 +2795,7 @@
                 description: 'Complete maintenance and repair history by asset',
                 apiEndpoint: '/api/reports/maintenance/history',
                 ledger: true,
+                hasAssetFilters: true,
                 ledgerBase: '/api/reports/maintenance',
                 ledgerType: 'history',
                 hasFilters: false,
@@ -2737,6 +2807,7 @@
                 description: 'Planned preventive maintenance activities',
                 apiEndpoint: '/api/reports/maintenance/scheduled',
                 ledger: true,
+                hasAssetFilters: true,
                 ledgerBase: '/api/reports/maintenance',
                 ledgerType: 'scheduled',
                 hasFilters: false,
@@ -2747,6 +2818,7 @@
                 description: 'Maintenance due within the selected period (defaults to the next 30 days)',
                 apiEndpoint: '/api/reports/maintenance/due',
                 ledger: true,
+                hasAssetFilters: true,
                 ledgerBase: '/api/reports/maintenance',
                 ledgerType: 'due',
                 hasFilters: false,
@@ -2758,6 +2830,7 @@
                 description: 'Maintenance that has passed its due date and is not completed',
                 apiEndpoint: '/api/reports/maintenance/overdue',
                 ledger: true,
+                hasAssetFilters: true,
                 ledgerBase: '/api/reports/maintenance',
                 ledgerType: 'overdue',
                 hasFilters: false,
@@ -2768,6 +2841,7 @@
                 description: 'Total maintenance expenditure attributable to each asset',
                 apiEndpoint: '/api/reports/maintenance/cost-by-asset',
                 ledger: true,
+                hasAssetFilters: true,
                 ledgerBase: '/api/reports/maintenance',
                 ledgerType: 'cost-by-asset',
                 hasFilters: false,
@@ -2779,6 +2853,7 @@
                 description: 'Maintenance expenditure by asset class',
                 apiEndpoint: '/api/reports/maintenance/cost-by-category',
                 ledger: true,
+                hasAssetFilters: true,
                 ledgerBase: '/api/reports/maintenance',
                 ledgerType: 'cost-by-category',
                 hasFilters: false,
@@ -2790,6 +2865,7 @@
                 description: 'Maintenance expenditure by branch or site',
                 apiEndpoint: '/api/reports/maintenance/cost-by-location',
                 ledger: true,
+                hasAssetFilters: true,
                 ledgerBase: '/api/reports/maintenance',
                 ledgerType: 'cost-by-location',
                 hasFilters: false,
@@ -2801,6 +2877,7 @@
                 description: 'History of failures, breakdowns and corrective repairs',
                 apiEndpoint: '/api/reports/maintenance/breakdown-history',
                 ledger: true,
+                hasAssetFilters: true,
                 ledgerBase: '/api/reports/maintenance',
                 ledgerType: 'breakdown-history',
                 hasFilters: false,
@@ -2812,6 +2889,7 @@
                 description: 'Periods assets were unavailable due to maintenance or failure',
                 apiEndpoint: '/api/reports/maintenance/downtime',
                 ledger: true,
+                hasAssetFilters: true,
                 ledgerBase: '/api/reports/maintenance',
                 ledgerType: 'downtime',
                 hasFilters: false,
@@ -2823,6 +2901,7 @@
                 description: 'Maintenance and service agreements approaching or past expiry',
                 apiEndpoint: '/api/reports/maintenance/contract-expiry',
                 ledger: true,
+                hasAssetFilters: true,
                 ledgerBase: '/api/reports/maintenance',
                 ledgerType: 'contract-expiry',
                 hasFilters: false,
@@ -2834,6 +2913,7 @@
                 description: 'Assets whose maintenance cost is well above their category average',
                 apiEndpoint: '/api/reports/maintenance/high-cost-assets',
                 ledger: true,
+                hasAssetFilters: true,
                 ledgerBase: '/api/reports/maintenance',
                 ledgerType: 'high-cost-assets',
                 hasFilters: false,
@@ -2948,6 +3028,14 @@
 
         // Filters shared by the on-screen ledger reports and their exports.
         function ledgerParams(config, params) {
+            if (config.hasAssetFilters) {
+                const costCentre = document.getElementById('costCentreFilter')?.value.trim();
+                const custodian = document.getElementById('custodianFilter')?.value.trim();
+                const status = document.getElementById('statusFilter')?.value;
+                if (costCentre) params.append('costCentre', costCentre);
+                if (custodian) params.append('custodian', custodian);
+                if (status) params.append('status', status);
+            }
             if (config.hasRate) {
                 const rate = document.getElementById('rateFilter')?.value;
                 if (rate !== undefined && rate !== '') params.append('rate', rate);
@@ -3015,6 +3103,7 @@
             document.getElementById('glStatusWrapper').classList.toggle('hidden', !config.hasGlStatus);
             document.getElementById('thresholdWrapper').classList.toggle('hidden', !config.hasThreshold);
             document.getElementById('rateWrapper').classList.toggle('hidden', !config.hasRate);
+            document.getElementById('assetFilterWrapper').style.display = config.hasAssetFilters ? 'contents' : 'none';
             if (config.hasRate && switchedReport) {
                 document.getElementById('rateLabel').textContent = config.rateLabel;
                 document.getElementById('rateFilter').value = config.rateDefault;
@@ -4133,6 +4222,11 @@
             return String(value ?? '').replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
         }
 
+        // A column that holds a single asset code can link to the asset's page.
+        function isAssetCodeColumn(column) {
+            return column.key === 'assetCode' || column.key === 'asset';
+        }
+
         function ledgerCell(column, value) {
             if (value === null || value === undefined || value === '') return '';
             if (column.type === 'money') return formatCurrency(value);
@@ -4140,7 +4234,129 @@
                 const cls = value === 'POSTED' ? 'text-status-success' : (value === 'REJECTED' ? 'text-status-error' : 'text-secondary');
                 return `<span class="${cls} font-medium">${ledgerEscape(value)}</span>`;
             }
+            if (isAssetCodeColumn(column) && typeof value === 'string' && value !== '—' && /^\S+$/.test(value)) {
+                return `<a href="/assets/lookup?code=${encodeURIComponent(value)}" target="_blank" rel="noopener" class="text-primary hover:underline">${ledgerEscape(value)}</a>`;
+            }
             return ledgerEscape(value);
+        }
+
+        const ledgerState = { report: null, sortKey: null, sortDir: 1, groupKey: '' };
+        const LEDGER_SUMMABLE_NUMBER = /count|assets|events|items|claims|certifications|checkouts|disposals|changes|runs|records/i;
+
+        function ledgerIsNumeric(column) {
+            return column.type === 'money' || column.type === 'number';
+        }
+
+        function ledgerSortValue(column, value) {
+            if (value === null || value === undefined || value === '') return null;
+            if (ledgerIsNumeric(column)) {
+                const n = Number(value);
+                return Number.isNaN(n) ? null : n;
+            }
+            return String(value).toLowerCase();
+        }
+
+        // Blanks always sort last, whichever direction is chosen.
+        function ledgerComparator(column, direction) {
+            return (a, b) => {
+                const x = ledgerSortValue(column, a[column.key]);
+                const y = ledgerSortValue(column, b[column.key]);
+                if (x === null && y === null) return 0;
+                if (x === null) return 1;
+                if (y === null) return -1;
+                const result = typeof x === 'number' ? x - y : x.localeCompare(y, undefined, { numeric: true });
+                return result * direction;
+            };
+        }
+
+        function ledgerSortedRows() {
+            const { report, sortKey, sortDir, groupKey } = ledgerState;
+            const byKey = Object.fromEntries(report.columns.map(c => [c.key, c]));
+            const rows = report.rows.slice();
+            const groupCompare = groupKey ? ledgerComparator(byKey[groupKey], 1) : null;
+            const sortCompare = sortKey ? ledgerComparator(byKey[sortKey], sortDir) : null;
+            rows.sort((a, b) => {
+                if (groupCompare) {
+                    const g = groupCompare(a, b);
+                    if (g !== 0) return g;
+                }
+                return sortCompare ? sortCompare(a, b) : 0;
+            });
+            return rows;
+        }
+
+        function ledgerSumText(column, rows) {
+            const total = rows.reduce((sum, row) => sum + (Number(row[column.key]) || 0), 0);
+            return column.type === 'money' ? formatCurrency(total) : String(Math.round(total * 100) / 100);
+        }
+
+        function renderLedgerHead() {
+            const th = 'px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider cursor-pointer select-none hover:text-on-surface';
+            const { report, sortKey, sortDir } = ledgerState;
+            document.getElementById('ledgerHead').innerHTML =
+                `<tr class="bg-surface-canvas border-b border-border-default">${report.columns.map(c => {
+                    const arrow = c.key === sortKey ? (sortDir === 1 ? ' ▲' : ' ▼') : '';
+                    return `<th data-sort="${ledgerEscape(c.key)}" class="${th}${ledgerIsNumeric(c) ? ' text-right' : ''}">${ledgerEscape(c.label)}${arrow}</th>`;
+                }).join('')}</tr>`;
+            document.querySelectorAll('#ledgerHead th[data-sort]').forEach(header => {
+                header.addEventListener('click', () => sortLedger(header.getAttribute('data-sort')));
+            });
+        }
+
+        function renderLedgerBody() {
+            const { report, groupKey } = ledgerState;
+            const columns = report.columns;
+            const td = 'px-5 py-3 text-body-default text-on-surface';
+            const align = c => ledgerIsNumeric(c) ? ' text-right' : '';
+            const rowHtml = row => `<tr class="hover:bg-surface-canvas transition-colors">${columns.map(c =>
+                `<td class="${td}${align(c)}">${ledgerCell(c, row[c.key])}</td>`).join('')}</tr>`;
+            const rows = ledgerSortedRows();
+            let html = '';
+
+            if (!groupKey) {
+                html = rows.map(rowHtml).join('');
+            } else {
+                const groupColumn = columns.find(c => c.key === groupKey);
+                const groups = [];
+                rows.forEach(row => {
+                    const label = row[groupKey] === null || row[groupKey] === undefined || row[groupKey] === '' ? '(blank)' : String(row[groupKey]);
+                    const last = groups[groups.length - 1];
+                    if (last && last.label === label) last.rows.push(row);
+                    else groups.push({ label, rows: [row] });
+                });
+                const summable = columns.filter(c => c.type === 'money' || (c.type === 'number' && LEDGER_SUMMABLE_NUMBER.test(c.label)));
+                groups.forEach(group => {
+                    html += `<tr class="bg-surface-canvas"><td colspan="${columns.length}" class="px-5 py-2 text-label-small font-medium text-on-surface uppercase tracking-wide">` +
+                        `${ledgerEscape(groupColumn.label)}: ${ledgerEscape(group.label)} (${group.rows.length})</td></tr>`;
+                    html += group.rows.map(rowHtml).join('');
+                    if (summable.length) {
+                        html += `<tr class="font-medium">${columns.map((c, i) => {
+                            if (summable.includes(c)) return `<td class="${td}${align(c)}">${ledgerSumText(c, group.rows)}</td>`;
+                            return `<td class="${td}">${i === 0 ? 'Subtotal' : ''}</td>`;
+                        }).join('')}</tr>`;
+                    }
+                });
+            }
+
+            if (report.totals && Object.keys(report.totals).length) {
+                html += `<tr class="bg-surface-canvas font-medium">${columns.map(c =>
+                    `<td class="${td}${align(c)}">${ledgerCell(c, report.totals[c.key])}</td>`).join('')}</tr>`;
+            }
+            document.getElementById('ledgerBody').innerHTML = html;
+        }
+
+        function sortLedger(key) {
+            if (!ledgerState.report) return;
+            if (ledgerState.sortKey === key) ledgerState.sortDir = -ledgerState.sortDir;
+            else { ledgerState.sortKey = key; ledgerState.sortDir = 1; }
+            renderLedgerHead();
+            renderLedgerBody();
+        }
+
+        function setLedgerGroup(key) {
+            if (!ledgerState.report) return;
+            ledgerState.groupKey = key || '';
+            renderLedgerBody();
         }
 
         function renderLedgerReport(report) {
@@ -4149,21 +4365,20 @@
                 showEmptyState();
                 return;
             }
-            const th = 'px-5 py-3 text-label-small font-label-small text-secondary uppercase tracking-wider';
-            const columns = report.columns;
-            document.getElementById('ledgerHead').innerHTML =
-                `<tr class="bg-surface-canvas border-b border-border-default">${columns.map(c =>
-                    `<th class="${th}${(c.type === 'money' || c.type === 'number') ? ' text-right' : ''}">${ledgerEscape(c.label)}</th>`).join('')}</tr>`;
+            ledgerState.report = report;
+            ledgerState.sortKey = null;
+            ledgerState.sortDir = 1;
+            ledgerState.groupKey = '';
 
-            const td = 'px-5 py-3 text-body-default text-on-surface';
-            const body = report.rows.map(row =>
-                `<tr class="hover:bg-surface-canvas transition-colors">${columns.map(c =>
-                    `<td class="${td}${(c.type === 'money' || c.type === 'number') ? ' text-right' : ''}">${ledgerCell(c, row[c.key])}</td>`).join('')}</tr>`).join('');
-            const totals = report.totals && Object.keys(report.totals).length
-                ? `<tr class="bg-surface-canvas font-medium">${columns.map(c =>
-                    `<td class="${td}${(c.type === 'money' || c.type === 'number') ? ' text-right' : ''}">${ledgerCell(c, report.totals[c.key])}</td>`).join('')}</tr>`
-                : '';
-            document.getElementById('ledgerBody').innerHTML = body + totals;
+            const groupSelect = document.getElementById('ledgerGroupBy');
+            groupSelect.innerHTML = '<option value="">No grouping</option>' + report.columns
+                .filter(c => !ledgerIsNumeric(c))
+                .map(c => `<option value="${ledgerEscape(c.key)}">${ledgerEscape(c.label)}</option>`).join('');
+            groupSelect.value = '';
+            document.getElementById('ledgerToolbar').classList.toggle('hidden', report.rows.length < 2);
+
+            renderLedgerHead();
+            renderLedgerBody();
 
             const summary = document.getElementById('ledgerSummary');
             summary.innerHTML = summaryEntries.map(([label, value]) =>
